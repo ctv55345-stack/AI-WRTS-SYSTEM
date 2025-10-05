@@ -1,0 +1,172 @@
+from app.models import db
+from app.models.martial_routine import MartialRoutine
+from app.models.evaluation_criteria import EvaluationCriteria
+from app.models.weapon import Weapon
+from datetime import datetime
+
+
+class RoutineService:
+    @staticmethod
+    def get_all_weapons():
+        return Weapon.query.filter_by(is_active=True).order_by(Weapon.display_order).all()
+
+    @staticmethod
+    def get_routines_by_instructor(instructor_id: int, filters=None):
+        query = MartialRoutine.query.filter_by(instructor_id=instructor_id)
+
+        if filters:
+            if filters.get('level'):
+                query = query.filter_by(level=filters['level'])
+            if filters.get('weapon_id'):
+                query = query.filter_by(weapon_id=filters['weapon_id'])
+            if filters.get('is_published') is not None:
+                query = query.filter_by(is_published=filters['is_published'])
+
+        return query.order_by(MartialRoutine.created_at.desc()).all()
+
+    @staticmethod
+    def get_routine_by_id(routine_id: int):
+        return MartialRoutine.query.get(routine_id)
+
+    @staticmethod
+    def create_routine(data: dict, instructor_id: int):
+        if MartialRoutine.query.filter_by(routine_code=data['routine_code']).first():
+            return {'success': False, 'message': 'Mã bài võ đã tồn tại'}
+
+        routine = MartialRoutine(
+            routine_code=data['routine_code'],
+            routine_name=data['routine_name'],
+            description=data.get('description'),
+            weapon_id=data['weapon_id'],
+            level=data['level'],
+            difficulty_score=data.get('difficulty_score', 1.0),
+            reference_video_url=data.get('reference_video_url'),
+            thumbnail_url=data.get('thumbnail_url'),
+            duration_seconds=data['duration_seconds'],
+            total_moves=data.get('total_moves', 1),
+            instructor_id=instructor_id,
+            pass_threshold=data.get('pass_threshold', 70.00),
+            is_published=False,
+            is_active=True,
+        )
+
+        db.session.add(routine)
+        db.session.commit()
+        return {'success': True, 'routine': routine}
+
+    @staticmethod
+    def update_routine(routine_id: int, data: dict, instructor_id: int):
+        routine = MartialRoutine.query.get(routine_id)
+        if not routine:
+            return {'success': False, 'message': 'Không tìm thấy bài võ'}
+
+        if routine.instructor_id != instructor_id:
+            return {'success': False, 'message': 'Bạn không có quyền sửa bài võ này'}
+
+        routine.routine_name = data['routine_name']
+        routine.description = data.get('description')
+        routine.weapon_id = data['weapon_id']
+        routine.level = data['level']
+        routine.difficulty_score = data.get('difficulty_score', routine.difficulty_score)
+        routine.reference_video_url = data.get('reference_video_url', routine.reference_video_url)
+        routine.thumbnail_url = data.get('thumbnail_url', routine.thumbnail_url)
+        routine.duration_seconds = data['duration_seconds']
+        routine.total_moves = data.get('total_moves', routine.total_moves)
+        routine.pass_threshold = data.get('pass_threshold', routine.pass_threshold)
+
+        db.session.commit()
+        return {'success': True, 'routine': routine}
+
+    @staticmethod
+    def publish_routine(routine_id: int, instructor_id: int):
+        routine = MartialRoutine.query.get(routine_id)
+        if not routine:
+            return {'success': False, 'message': 'Không tìm thấy bài võ'}
+
+        if routine.instructor_id != instructor_id:
+            return {'success': False, 'message': 'Bạn không có quyền'}
+
+        routine.is_published = True
+        db.session.commit()
+        return {'success': True, 'routine': routine}
+
+    @staticmethod
+    def unpublish_routine(routine_id: int, instructor_id: int):
+        routine = MartialRoutine.query.get(routine_id)
+        if not routine:
+            return {'success': False, 'message': 'Không tìm thấy bài võ'}
+
+        if routine.instructor_id != instructor_id:
+            return {'success': False, 'message': 'Bạn không có quyền'}
+
+        routine.is_published = False
+        db.session.commit()
+        return {'success': True, 'routine': routine}
+
+    @staticmethod
+    def delete_routine(routine_id: int, instructor_id: int):
+        from app.models.training_video import TrainingVideo
+
+        routine = MartialRoutine.query.get(routine_id)
+        if not routine:
+            return {'success': False, 'message': 'Không tìm thấy bài võ'}
+
+        if routine.instructor_id != instructor_id:
+            return {'success': False, 'message': 'Bạn không có quyền xóa bài võ này'}
+
+        video_count = TrainingVideo.query.filter_by(routine_id=routine_id).count()
+        if video_count > 0:
+            return {'success': False, 'message': f'Không thể xóa - đã có {video_count} video bài tập'}
+
+        db.session.delete(routine)
+        db.session.commit()
+        return {'success': True}
+
+    @staticmethod
+    def get_criteria_by_routine(routine_id: int):
+        return EvaluationCriteria.query.filter_by(routine_id=routine_id).order_by(EvaluationCriteria.display_order).all()
+
+    @staticmethod
+    def add_criteria(routine_id: int, data: dict):
+        existing_total = db.session.query(db.func.sum(EvaluationCriteria.weight_percentage)).filter_by(routine_id=routine_id).scalar() or 0
+
+        if existing_total + data['weight_percentage'] > 100:
+            return {'success': False, 'message': f'Tổng trọng số vượt quá 100% (hiện tại: {existing_total}%)'}
+
+        criteria = EvaluationCriteria(
+            routine_id=routine_id,
+            criteria_name=data['criteria_name'],
+            criteria_code=data['criteria_code'],
+            weight_percentage=data['weight_percentage'],
+            description=data.get('description'),
+            evaluation_method=data.get('evaluation_method'),
+            display_order=data.get('display_order', 0),
+        )
+
+        db.session.add(criteria)
+        db.session.commit()
+        return {'success': True, 'criteria': criteria}
+
+    @staticmethod
+    def delete_criteria(criteria_id: int):
+        criteria = EvaluationCriteria.query.get(criteria_id)
+        if not criteria:
+            return {'success': False, 'message': 'Không tìm thấy tiêu chí'}
+
+        db.session.delete(criteria)
+        db.session.commit()
+        return {'success': True}
+
+    @staticmethod
+    def get_published_routines(filters=None):
+        query = MartialRoutine.query.filter_by(is_published=True, is_active=True)
+
+        if filters:
+            if filters.get('level'):
+                query = query.filter_by(level=filters['level'])
+            if filters.get('weapon_id'):
+                query = query.filter_by(weapon_id=filters['weapon_id'])
+
+        return query.order_by(MartialRoutine.created_at.desc()).all()
+
+

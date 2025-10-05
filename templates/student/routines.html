@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Danh sách bài võ</title>
+</head>
+<body>
+    <h1>DANH SÁCH BÀI VÕ</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="GET">
+        <label>Cấp độ:</label>
+        <select name="level" onchange="this.form.submit()">
+            <option value="">Tất cả</option>
+            <option value="beginner" {{ 'selected' if request.args.get('level') == 'beginner' }}>Sơ cấp</option>
+            <option value="intermediate" {{ 'selected' if request.args.get('level') == 'intermediate' }}>Trung cấp</option>
+            <option value="advanced" {{ 'selected' if request.args.get('level') == 'advanced' }}>Nâng cao</option>
+        </select>
+
+        <label>Binh khí:</label>
+        <select name="weapon_id" onchange="this.form.submit()">
+            <option value="">Tất cả</option>
+            {% for w in weapons %}
+            <option value="{{ w.weapon_id }}" {{ 'selected' if request.args.get('weapon_id')|int == w.weapon_id }}>{{ w.weapon_name_vi }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    {% if routines %}
+        {% for r in routines %}
+        <div>
+            <h3>{{ r.routine_name }}</h3>
+            <p>
+                <strong>Binh khí:</strong> {{ r.weapon.weapon_name_vi }} |
+                <strong>Cấp độ:</strong> {% if r.level == 'beginner' %}Sơ cấp{% elif r.level == 'intermediate' %}Trung cấp{% elif r.level == 'advanced' %}Nâng cao{% endif %} |
+                <strong>Độ khó:</strong> {{ r.difficulty_score }}/10<br>
+                <strong>Thời lượng:</strong> {{ (r.duration_seconds / 60)|round(1) }} phút |
+                <strong>Số động tác:</strong> {{ r.total_moves }} |
+                <strong>Ngưỡng đạt:</strong> {{ r.pass_threshold }}%
+            </p>
+            {% if r.description %}
+            <p><em>{{ r.description }}</em></p>
+            {% endif %}
+            <p>
+                <a href="{{ url_for('student.routine_detail', routine_id=r.routine_id) }}">Xem chi tiết</a>
+            </p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Chưa có bài võ nào được xuất bản</p>
+    {% endif %}
+
+    <hr>
+    <p><a href="{{ url_for('student.dashboard') }}">Về Dashboard</a></p>
+</body>
+</html>
+

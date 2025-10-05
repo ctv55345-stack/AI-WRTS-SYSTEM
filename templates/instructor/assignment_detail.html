@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chi tiết bài tập</title>
+</head>
+<body>
+    <h1>CHI TIẾT BÀI TẬP</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <table>
+        <tr><td>Bài võ</td><td><strong>{{ assignment.routine.routine_name }}</strong></td></tr>
+        <tr><td>Loại gán</td><td>{{ 'Cá nhân' if assignment.assignment_type == 'individual' else 'Lớp học' }}</td></tr>
+        <tr><td>Gán cho</td>
+            <td>
+                {% if assignment.assignment_type == 'individual' %}
+                    {{ assignment.student.full_name }} ({{ assignment.student.username }})
+                {% else %}
+                    Lớp {{ assignment.class_obj.class_name }}
+                {% endif %}
+            </td>
+        </tr>
+        <tr><td>Độ ưu tiên</td><td>{{ assignment.priority }}</td></tr>
+        <tr><td>Bắt buộc</td><td>{{ 'Có' if assignment.is_mandatory else 'Không' }}</td></tr>
+        {% if assignment.deadline %}
+        <tr><td>Deadline</td><td>{{ assignment.deadline.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+        {% endif %}
+        <tr><td>Hướng dẫn</td><td>{{ assignment.instructions or 'Không có' }}</td></tr>
+        <tr><td>Ngày gán</td><td>{{ assignment.created_at.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+    </table>
+
+    <h2>TRẠNG THÁI NỘP BÀI ({{ status_list|selectattr('submitted')|list|length }}/{{ status_list|length }})</h2>
+    {% for status in status_list %}
+    <div>
+        <strong>{{ status.student.full_name }}</strong> ({{ status.student.username }})
+        {% if status.submitted %}
+            <span>Đã nộp ({{ status.video_count }} video)</span>
+            {% if status.latest_video %}<br><small>Lần cuối: {{ status.latest_video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</small>{% endif %}
+        {% else %}
+            <span>Chưa nộp</span>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <hr>
+    <p>
+        <form method="POST" action="{{ url_for('instructor.delete_assignment', assignment_id=assignment.assignment_id) }}">
+            {{ csrf_token() }}
+            <button type="submit" onclick="return confirm('Xác nhận xóa bài tập?')">Xóa bài tập</button>
+        </form>
+    </p>
+
+    <hr>
+    <p><a href="{{ url_for('instructor.assignments') }}">Về danh sách</a></p>
+</body>
+</html>
+

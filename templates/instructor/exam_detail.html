@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chi tiết bài kiểm tra</title>
+</head>
+<body>
+    <h1>CHI TIẾT BÀI KIỂM TRA</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <table>
+        <tr><td>Tên</td><td><strong>{{ exam.exam_name }}</strong></td></tr>
+        <tr><td>Mã</td><td>{{ exam.exam_code }}</td></tr>
+        <tr><td>Loại</td><td>{{ exam.exam_type }}</td></tr>
+        <tr><td>Bài võ</td><td>{{ exam.routine.routine_name }}</td></tr>
+        {% if exam.class_id %}<tr><td>Lớp</td><td>{{ exam.class_obj.class_name }}</td></tr>{% endif %}
+        <tr><td>Thời gian</td><td>{{ exam.start_time.strftime('%d/%m/%Y %H:%M') }} - {{ exam.end_time.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+        <tr><td>Thời lượng</td><td>{{ exam.duration_minutes }} phút</td></tr>
+        <tr><td>Điểm đạt</td><td>{{ exam.pass_score }}%</td></tr>
+        <tr><td>Số lần thi</td><td>{{ exam.max_attempts }}</td></tr>
+        <tr><td>Trạng thái</td><td>{{ 'Đã xuất bản' if exam.is_published else 'Nháp' }}</td></tr>
+    </table>
+
+    <h2>KẾT QUẢ</h2>
+    {% if results %}
+        {% for r in results %}
+        <div>
+            <p>
+                <strong>Học viên:</strong> {{ r.student.full_name }} ({{ r.student.username }}) |
+                <strong>Lần:</strong> {{ r.attempt_number }} |
+                <strong>Điểm:</strong> {{ r.score if r.score is not none else 'Chưa chấm' }} |
+                <strong>Thời gian:</strong> {{ r.submitted_at.strftime('%d/%m/%Y %H:%M') }}
+            </p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Chưa có kết quả</p>
+    {% endif %}
+
+    <hr>
+    <p>
+        <form method="POST" action="{{ url_for('instructor.publish_exam', exam_id=exam.exam_id) }}" style="display:inline;">
+            {{ csrf_token() }}
+            <button type="submit">Xuất bản</button>
+        </form>
+        <form method="POST" action="{{ url_for('instructor.delete_exam', exam_id=exam.exam_id) }}" style="display:inline;">
+            {{ csrf_token() }}
+            <button type="submit" onclick="return confirm('Xác nhận xóa bài kiểm tra?')">Xóa</button>
+        </form>
+    </p>
+
+    <hr>
+    <p><a href="{{ url_for('instructor.exams') }}">Về danh sách</a></p>
+</body>
+</html>
+

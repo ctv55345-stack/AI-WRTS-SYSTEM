@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chi tiết lớp học</title>
+</head>
+<body>
+    <h1>CHI TIẾT LỚP HỌC</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div>
+                    <strong>[{{ category|upper }}]</strong> {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <h2>THÔNG TIN LỚP</h2>
+    <table>
+        <tr>
+            <td>Mã lớp</td>
+            <td><strong>{{ class_obj.class_code }}</strong></td>
+        </tr>
+        <tr>
+            <td>Tên lớp</td>
+            <td><strong>{{ class_obj.class_name }}</strong></td>
+        </tr>
+        <tr>
+            <td>Mô tả</td>
+            <td>{{ class_obj.description or 'Không có mô tả' }}</td>
+        </tr>
+        <tr>
+            <td>Giảng viên</td>
+            <td>
+                {{ class_obj.instructor.full_name }}<br>
+                <small>Email: {{ class_obj.instructor.email }}</small><br>
+                <small>SĐT: {{ class_obj.instructor.phone or 'Chưa cập nhật' }}</small>
+            </td>
+        </tr>
+        <tr>
+            <td>Cấp độ</td>
+            <td>
+                {% if class_obj.level == 'beginner' %}Sơ cấp
+                {% elif class_obj.level == 'intermediate' %}Trung cấp
+                {% elif class_obj.level == 'advanced' %}Nâng cao
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>Số học viên</td>
+            <td>{{ class_obj.current_students }}/{{ class_obj.max_students }} học viên</td>
+        </tr>
+        <tr>
+            <td>Thời gian</td>
+            <td>
+                <strong>Bắt đầu:</strong> {{ class_obj.start_date.strftime('%d/%m/%Y') }}<br>
+                <strong>Kết thúc:</strong> {{ class_obj.end_date.strftime('%d/%m/%Y') if class_obj.end_date else 'Chưa xác định' }}
+            </td>
+        </tr>
+        <tr>
+            <td>Trạng thái đăng ký</td>
+            <td>
+                <strong>
+                {% if enrollment.enrollment_status == 'active' %}Đang học
+                {% elif enrollment.enrollment_status == 'completed' %}Đã hoàn thành
+                {% elif enrollment.enrollment_status == 'suspended' %}Tạm dừng
+                {% elif enrollment.enrollment_status == 'dropped' %}Đã rời
+                {% endif %}
+                </strong><br>
+                <small>Ngày đăng ký: {{ enrollment.enrolled_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                {% if enrollment.completed_at %}
+                <br><small>Ngày hoàn thành: {{ enrollment.completed_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                {% endif %}
+            </td>
+        </tr>
+        {% if enrollment.notes %}
+        <tr>
+            <td>Ghi chú</td>
+            <td>{{ enrollment.notes }}</td>
+        </tr>
+        {% endif %}
+    </table>
+    
+    <hr>
+    
+    <h2>LỊCH HỌC ({{ schedules|length }})</h2>
+    {% if schedules %}
+        <div>
+            {% for s in schedules %}
+            <div>
+                <h4>{{ s.day_display }}</h4>
+                <p>
+                    <strong>{{ s.time_start.strftime('%H:%M') }} - {{ s.time_end.strftime('%H:%M') }}</strong><br>
+                    {% if s.location %}
+                    {{ s.location }}<br>
+                    {% endif %}
+                    {% if s.notes %}
+                    {{ s.notes }}
+                    {% endif %}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Chưa có lịch học cụ thể</p>
+    {% endif %}
+    
+    <hr>
+    
+    <h2>HỌC VIÊN CÙNG LỚP ({{ classmates|length }})</h2>
+    {% if classmates %}
+        {% for cm in classmates %}
+        <div>
+            <strong>{{ cm.student.full_name }}</strong>
+            {% if cm.student.phone %}-{% endif %}
+            <br>
+            <small>Đăng ký: {{ cm.enrolled_at.strftime('%d/%m/%Y') }}</small>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Không có học viên khác trong lớp</p>
+    {% endif %}
+    
+    <hr>
+    <p>
+        <a href="{{ url_for('student.classes') }}">← Về danh sách lớp học</a> |
+        <a href="{{ url_for('student.dashboard') }}">🏠 Dashboard</a>
+    </p>
+</body>
+</html>
+

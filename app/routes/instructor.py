@@ -1,7 +1,13 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, session
 from app.services.class_service import ClassService
+from app.services.routine_service import RoutineService
+from app.services.assignment_service import AssignmentService
+from app.services.exam_service import ExamService
 from app.utils.decorators import login_required, role_required
 from app.forms.class_forms import ClassCreateForm, ClassEditForm, EnrollStudentForm
+from app.forms.routine_forms import RoutineCreateForm, CriteriaForm
+from app.forms.assignment_forms import AssignmentCreateForm
+from app.forms.exam_forms import ExamCreateForm
 from app.forms.class_forms import ClassCreateForm, ClassEditForm, EnrollStudentForm
 from app.forms.schedule_forms import ScheduleForm
 from app.services.schedule_service import ScheduleService
@@ -276,3 +282,316 @@ def remove_student(enrollment_id: int):
         flash(result['message'], 'error')
 
     return redirect(url_for('instructor.class_detail', class_id=class_id))
+
+
+# ============ ROUTINE MANAGEMENT ============
+
+@instructor_bp.route('/routines')
+@login_required
+@role_required('INSTRUCTOR')
+def routines():
+    level_filter = None
+    weapon_filter = None
+    status_filter = None
+    filters = {}
+    if level_filter:
+        filters['level'] = level_filter
+    if weapon_filter:
+        filters['weapon_id'] = weapon_filter
+    if status_filter == 'published':
+        filters['is_published'] = True
+    elif status_filter == 'draft':
+        filters['is_published'] = False
+    routines = RoutineService.get_routines_by_instructor(session['user_id'], filters)
+    weapons = RoutineService.get_all_weapons()
+    return render_template('instructor/routines.html', routines=routines, weapons=weapons)
+
+
+@instructor_bp.route('/routines/create', methods=['GET', 'POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def create_routine():
+    form = RoutineCreateForm()
+    weapons = RoutineService.get_all_weapons()
+    form.weapon_id.choices = [(0, '-- Chọn binh khí --')] + [(w.weapon_id, w.weapon_name_vi) for w in weapons]
+    if form.validate_on_submit():
+        data = {
+            'routine_code': form.routine_code.data,
+            'routine_name': form.routine_name.data,
+            'description': form.description.data,
+            'weapon_id': form.weapon_id.data,
+            'level': form.level.data,
+            'difficulty_score': form.difficulty_score.data,
+            'duration_seconds': form.duration_seconds.data,
+            'total_moves': form.total_moves.data,
+            'pass_threshold': form.pass_threshold.data,
+            'reference_video_url': form.reference_video_url.data,
+        }
+        result = RoutineService.create_routine(data, session['user_id'])
+        if result['success']:
+            flash('Tạo bài võ thành công! (Nháp)', 'success')
+            return redirect(url_for('instructor.routine_detail', routine_id=result['routine'].routine_id))
+        else:
+            flash(result['message'], 'error')
+    return render_template('instructor/routine_create.html', form=form)
+
+
+@instructor_bp.route('/routines/<int:routine_id>')
+@login_required
+@role_required('INSTRUCTOR')
+def routine_detail(routine_id: int):
+    routine = RoutineService.get_routine_by_id(routine_id)
+    if not routine or routine.instructor_id != session['user_id']:
+        flash('Không tìm thấy bài võ', 'error')
+        return redirect(url_for('instructor.routines'))
+    criteria = RoutineService.get_criteria_by_routine(routine_id)
+    total_weight = sum(c.weight_percentage for c in criteria)
+    return render_template('instructor/routine_detail.html', routine=routine, criteria=criteria, total_weight=total_weight)
+
+
+@instructor_bp.route('/routines/<int:routine_id>/edit', methods=['GET', 'POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def edit_routine(routine_id: int):
+    routine = RoutineService.get_routine_by_id(routine_id)
+    if not routine or routine.instructor_id != session['user_id']:
+        flash('Không tìm thấy bài võ', 'error')
+        return redirect(url_for('instructor.routines'))
+    form = RoutineCreateForm(obj=routine)
+    weapons = RoutineService.get_all_weapons()
+    form.weapon_id.choices = [(w.weapon_id, w.weapon_name_vi) for w in weapons]
+    if form.validate_on_submit():
+        data = {
+            'routine_name': form.routine_name.data,
+            'description': form.description.data,
+            'weapon_id': form.weapon_id.data,
+            'level': form.level.data,
+            'difficulty_score': form.difficulty_score.data,
+            'duration_seconds': form.duration_seconds.data,
+            'total_moves': form.total_moves.data,
+            'pass_threshold': form.pass_threshold.data,
+            'reference_video_url': form.reference_video_url.data,
+        }
+        result = RoutineService.update_routine(routine_id, data, session['user_id'])
+        if result['success']:
+            flash('Cập nhật bài võ thành công!', 'success')
+            return redirect(url_for('instructor.routine_detail', routine_id=routine_id))
+        else:
+            flash(result['message'], 'error')
+    return render_template('instructor/routine_edit.html', form=form, routine=routine)
+
+
+@instructor_bp.route('/routines/<int:routine_id>/publish', methods=['POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def publish_routine(routine_id: int):
+    result = RoutineService.publish_routine(routine_id, session['user_id'])
+    flash('Đã xuất bản bài võ!' if result['success'] else result['message'], 'success' if result['success'] else 'error')
+    return redirect(url_for('instructor.routine_detail', routine_id=routine_id))
+
+
+@instructor_bp.route('/routines/<int:routine_id>/unpublish', methods=['POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def unpublish_routine(routine_id: int):
+    result = RoutineService.unpublish_routine(routine_id, session['user_id'])
+    flash('Đã gỡ xuất bản bài võ!' if result['success'] else result['message'], 'success' if result['success'] else 'error')
+    return redirect(url_for('instructor.routine_detail', routine_id=routine_id))
+
+
+@instructor_bp.route('/routines/<int:routine_id>/delete', methods=['POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def delete_routine(routine_id: int):
+    result = RoutineService.delete_routine(routine_id, session['user_id'])
+    if result['success']:
+        flash('Xóa bài võ thành công!', 'success')
+        return redirect(url_for('instructor.routines'))
+    else:
+        flash(result['message'], 'error')
+        return redirect(url_for('instructor.routine_detail', routine_id=routine_id))
+
+
+@instructor_bp.route('/routines/<int:routine_id>/criteria/add', methods=['GET', 'POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def add_criteria(routine_id: int):
+    routine = RoutineService.get_routine_by_id(routine_id)
+    if not routine or routine.instructor_id != session['user_id']:
+        flash('Không tìm thấy bài võ', 'error')
+        return redirect(url_for('instructor.routines'))
+    form = CriteriaForm()
+    if form.validate_on_submit():
+        data = {
+            'criteria_name': form.criteria_name.data,
+            'criteria_code': form.criteria_code.data,
+            'weight_percentage': form.weight_percentage.data,
+            'description': form.description.data,
+            'evaluation_method': form.evaluation_method.data,
+        }
+        result = RoutineService.add_criteria(routine_id, data)
+        if result['success']:
+            flash('Thêm tiêu chí đánh giá thành công!', 'success')
+            return redirect(url_for('instructor.routine_detail', routine_id=routine_id))
+        else:
+            flash(result['message'], 'error')
+    return render_template('instructor/criteria_add.html', form=form, routine=routine)
+
+
+@instructor_bp.route('/criteria/<int:criteria_id>/delete', methods=['POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def delete_criteria(criteria_id: int):
+    from app.models.evaluation_criteria import EvaluationCriteria
+    criteria = EvaluationCriteria.query.get(criteria_id)
+    if not criteria or criteria.routine.instructor_id != session['user_id']:
+        flash('Không tìm thấy tiêu chí', 'error')
+        return redirect(url_for('instructor.routines'))
+    routine_id = criteria.routine_id
+    result = RoutineService.delete_criteria(criteria_id)
+    flash('Xóa tiêu chí thành công!' if result['success'] else result['message'], 'success' if result['success'] else 'error')
+    return redirect(url_for('instructor.routine_detail', routine_id=routine_id))
+
+
+# ============ ASSIGNMENT MANAGEMENT ============
+
+@instructor_bp.route('/assignments')
+@login_required
+@role_required('INSTRUCTOR')
+def assignments():
+    assignments = AssignmentService.get_assignments_by_instructor(session['user_id'])
+    return render_template('instructor/assignments.html', assignments=assignments)
+
+
+@instructor_bp.route('/assignments/create', methods=['GET', 'POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def create_assignment():
+    form = AssignmentCreateForm()
+    routines = RoutineService.get_routines_by_instructor(session['user_id'], {'is_published': True})
+    form.routine_id.choices = [(0, '-- Chọn bài võ --')] + [(r.routine_id, r.routine_name) for r in routines]
+    from app.models.class_enrollment import ClassEnrollment
+    instructor_classes = ClassService.get_classes_by_instructor(session['user_id'])
+    student_ids = set()
+    for cls in instructor_classes:
+        enrollments = ClassEnrollment.query.filter_by(class_id=cls.class_id, enrollment_status='active').all()
+        student_ids.update([e.student_id for e in enrollments])
+    from app.models.user import User
+    students = User.query.filter(User.user_id.in_(student_ids)).all() if student_ids else []
+    form.assigned_to_student.choices = [(0, '-- Chọn học viên --')] + [(s.user_id, s.full_name) for s in students]
+    form.assigned_to_class.choices = [(0, '-- Chọn lớp --')] + [(c.class_id, c.class_name) for c in instructor_classes]
+    if form.validate_on_submit():
+        data = {
+            'routine_id': form.routine_id.data,
+            'assignment_type': form.assignment_type.data,
+            'assigned_to_student': form.assigned_to_student.data if form.assignment_type.data == 'individual' else None,
+            'assigned_to_class': form.assigned_to_class.data if form.assignment_type.data == 'class' else None,
+            'deadline': form.deadline.data,
+            'instructions': form.instructions.data,
+            'priority': form.priority.data,
+            'is_mandatory': form.is_mandatory.data,
+        }
+        result = AssignmentService.create_assignment(data, session['user_id'])
+        if result['success']:
+            flash('Gán bài tập thành công!', 'success')
+            return redirect(url_for('instructor.assignments'))
+        else:
+            flash(result['message'], 'error')
+    return render_template('instructor/assignment_create.html', form=form)
+
+
+@instructor_bp.route('/assignments/<int:assignment_id>')
+@login_required
+@role_required('INSTRUCTOR')
+def assignment_detail(assignment_id: int):
+    assignment = AssignmentService.get_assignment_by_id(assignment_id)
+    if not assignment or assignment.assigned_by != session['user_id']:
+        flash('Không tìm thấy bài tập', 'error')
+        return redirect(url_for('instructor.assignments'))
+    status_list = AssignmentService.get_submission_status(assignment_id)
+    return render_template('instructor/assignment_detail.html', assignment=assignment, status_list=status_list)
+
+
+@instructor_bp.route('/assignments/<int:assignment_id>/delete', methods=['POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def delete_assignment(assignment_id: int):
+    result = AssignmentService.delete_assignment(assignment_id, session['user_id'])
+    flash('Xóa bài tập thành công!' if result['success'] else result['message'], 'success' if result['success'] else 'error')
+    return redirect(url_for('instructor.assignments'))
+
+
+# ============ EXAM MANAGEMENT ============
+
+@instructor_bp.route('/exams')
+@login_required
+@role_required('INSTRUCTOR')
+def exams():
+    exams = ExamService.get_exams_by_instructor(session['user_id'])
+    return render_template('instructor/exams.html', exams=exams)
+
+
+@instructor_bp.route('/exams/create', methods=['GET', 'POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def create_exam():
+    form = ExamCreateForm()
+    routines = RoutineService.get_routines_by_instructor(session['user_id'], {'is_published': True})
+    form.routine_id.choices = [(0, '-- Chọn bài võ --')] + [(r.routine_id, r.routine_name) for r in routines]
+    classes = ClassService.get_classes_by_instructor(session['user_id'])
+    form.class_id.choices = [(0, '-- Không chọn (tất cả) --')] + [(c.class_id, c.class_name) for c in classes]
+    if form.validate_on_submit():
+        data = {
+            'exam_code': form.exam_code.data,
+            'exam_name': form.exam_name.data,
+            'description': form.description.data,
+            'class_id': form.class_id.data if form.class_id.data else None,
+            'routine_id': form.routine_id.data,
+            'exam_type': form.exam_type.data,
+            'start_time': form.start_time.data,
+            'end_time': form.end_time.data,
+            'duration_minutes': form.duration_minutes.data,
+            'pass_score': form.pass_score.data,
+            'max_attempts': form.max_attempts.data,
+        }
+        result = ExamService.create_exam(data, session['user_id'])
+        if result['success']:
+            flash('Tạo bài kiểm tra thành công! (Nháp)', 'success')
+            return redirect(url_for('instructor.exam_detail', exam_id=result['exam'].exam_id))
+        else:
+            flash(result['message'], 'error')
+    return render_template('instructor/exam_create.html', form=form)
+
+
+@instructor_bp.route('/exams/<int:exam_id>')
+@login_required
+@role_required('INSTRUCTOR')
+def exam_detail(exam_id: int):
+    exam = ExamService.get_exam_by_id(exam_id)
+    if not exam or exam.instructor_id != session['user_id']:
+        flash('Không tìm thấy bài kiểm tra', 'error')
+        return redirect(url_for('instructor.exams'))
+    results = ExamService.get_exam_results(exam_id)
+    return render_template('instructor/exam_detail.html', exam=exam, results=results)
+
+
+@instructor_bp.route('/exams/<int:exam_id>/publish', methods=['POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def publish_exam(exam_id: int):
+    result = ExamService.publish_exam(exam_id, session['user_id'])
+    flash('Đã xuất bản bài kiểm tra!' if result['success'] else result['message'], 'success' if result['success'] else 'error')
+    return redirect(url_for('instructor.exam_detail', exam_id=exam_id))
+
+
+@instructor_bp.route('/exams/<int:exam_id>/delete', methods=['POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def delete_exam(exam_id: int):
+    result = ExamService.delete_exam(exam_id, session['user_id'])
+    if result['success']:
+        flash('Xóa bài kiểm tra thành công!', 'success')
+        return redirect(url_for('instructor.exams'))
+    else:
+        flash(result['message'], 'error')
+        return redirect(url_for('instructor.exam_detail', exam_id=exam_id))

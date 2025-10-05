@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bài kiểm tra của tôi</title>
+</head>
+<body>
+    <h1>BÀI KIỂM TRA CỦA TÔI</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h2>BÀI KIỂM TRA SẮP TỚI ({{ upcoming|length }})</h2>
+    {% if upcoming %}
+        {% for item in upcoming %}
+        <div>
+            <h3>{{ item.exam.exam_name }}</h3>
+            <p>
+                <strong>Loại:</strong> {{ item.exam.exam_type }} |
+                <strong>Bài võ:</strong> {{ item.exam.routine.routine_name }}<br>
+                <strong>Thời gian thi:</strong> {{ item.exam.start_time.strftime('%d/%m/%Y %H:%M') }} - {{ item.exam.end_time.strftime('%d/%m/%Y %H:%M') }}<br>
+                <strong>Thời lượng:</strong> {{ item.exam.duration_minutes }} phút |
+                <strong>Điểm đạt:</strong> {{ item.exam.pass_score }}% |
+                <strong>Số lần thi:</strong> {{ item.attempts_used }}/{{ item.exam.max_attempts }}
+            </p>
+            {% if item.can_attempt %}
+            <p>Có thể thi</p>
+            {% else %}
+            <p>Chưa đến giờ hoặc đã hết lượt thi</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Không có bài kiểm tra sắp tới</p>
+    {% endif %}
+
+    <hr>
+
+    <h2>BÀI KIỂM TRA ĐÃ QUA ({{ past|length }})</h2>
+    {% if past %}
+        {% for item in past %}
+        <div>
+            <h3>{{ item.exam.exam_name }}</h3>
+            <p>
+                <strong>Thời gian:</strong> {{ item.exam.start_time.strftime('%d/%m/%Y') }}<br>
+                <strong>Số lần đã thi:</strong> {{ item.attempts_used }}/{{ item.exam.max_attempts }}
+            </p>
+            {% if item.results %}
+                <p><strong>Kết quả:</strong></p>
+                {% for result in item.results %}
+                <p>
+                    Lần {{ result.attempt_number }}:
+                    {% if result.score %}
+                        <strong>{{ result.score }}% ({{ 'ĐẠT' if result.score >= item.exam.pass_score else 'KHÔNG ĐẠT' }})</strong>
+                    {% else %}
+                        <span>Chờ chấm điểm</span>
+                    {% endif %}
+                </p>
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Chưa có bài kiểm tra nào</p>
+    {% endif %}
+
+    <hr>
+    <p><a href="{{ url_for('student.dashboard') }}">Về Dashboard</a></p>
+</body>
+</html>
+

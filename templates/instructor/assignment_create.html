@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gán bài tập mới</title>
+    <script>
+        function toggleFields() {
+            var type = document.querySelector('input[name="assignment_type"]:checked').value;
+            document.getElementById('student_field').style.display = (type === 'individual') ? 'block' : 'none';
+            document.getElementById('class_field').style.display = (type === 'class') ? 'block' : 'none';
+        }
+    </script>
+    </head>
+<body>
+    <h1>GÁN BÀI TẬP MỚI</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <p>{{ form.routine_id.label }}<br>{{ form.routine_id() }}</p>
+
+        <p>
+            {{ form.assignment_type.label }}<br>
+            {% for choice in form.assignment_type %}
+                <label>{{ choice(onclick="toggleFields()") }} {{ choice.label.text }}</label>
+            {% endfor %}
+        </p>
+
+        <div id="student_field" style="display:block;">
+            <p>{{ form.assigned_to_student.label }}<br>{{ form.assigned_to_student() }}</p>
+        </div>
+        <div id="class_field" style="display:none;">
+            <p>{{ form.assigned_to_class.label }}<br>{{ form.assigned_to_class() }}</p>
+        </div>
+
+        <p>{{ form.deadline.label }}<br>{{ form.deadline() }}<br><small>Để trống nếu không có deadline</small></p>
+        <p>{{ form.priority.label }}<br>{{ form.priority() }}</p>
+        <p><label>{{ form.is_mandatory() }} {{ form.is_mandatory.label }}</label></p>
+        <p>{{ form.instructions.label }}<br>{{ form.instructions(rows=4, cols=60) }}</p>
+
+        <p><button type="submit">Gán bài tập</button></p>
+    </form>
+
+    <hr>
+    <p><a href="{{ url_for('instructor.assignments') }}">Quay lại</a></p>
+</body>
+</html>
+

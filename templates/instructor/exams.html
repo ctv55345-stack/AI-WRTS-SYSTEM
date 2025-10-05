@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quản lý kiểm tra</title>
+</head>
+<body>
+    <h1>QUẢN LÝ BÀI KIỂM TRA</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <p><a href="{{ url_for('instructor.create_exam') }}">+ Tạo bài kiểm tra mới</a></p>
+
+    {% if exams %}
+        {% for e in exams %}
+        <div>
+            <h3>
+                {{ e.exam_name }}
+                <span>{{ 'Đã xuất bản' if e.is_published else 'Nháp' }}</span>
+            </h3>
+            <p>
+                <strong>Mã:</strong> {{ e.exam_code }} |
+                <strong>Loại:</strong> {{ e.exam_type }} |
+                <strong>Bài võ:</strong> {{ e.routine.routine_name }}<br>
+                {% if e.class_id %}<strong>Lớp:</strong> {{ e.class_obj.class_name }} |{% endif %}
+                <strong>Thời gian:</strong> {{ e.start_time.strftime('%d/%m/%Y %H:%M') }} - {{ e.end_time.strftime('%d/%m/%Y %H:%M') }}<br>
+                <strong>Thời lượng làm bài:</strong> {{ e.duration_minutes }} phút |
+                <strong>Điểm đạt:</strong> {{ e.pass_score }}% |
+                <strong>Số lần thi:</strong> {{ e.max_attempts }}
+            </p>
+            <p>
+                <a href="{{ url_for('instructor.exam_detail', exam_id=e.exam_id) }}">Chi tiết & kết quả</a>
+            </p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Chưa có bài kiểm tra nào. <a href="{{ url_for('instructor.create_exam') }}">Tạo bài kiểm tra đầu tiên</a></p>
+    {% endif %}
+
+    <hr>
+    <p><a href="{{ url_for('instructor.dashboard') }}">Về Dashboard</a></p>
+</body>
+</html>
+

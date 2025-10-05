@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Thêm tiêu chí đánh giá</title>
+</head>
+<body>
+    <h1>THÊM TIÊU CHÍ ĐÁNH GIÁ</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <p><strong>Bài võ:</strong> {{ routine.routine_name }}</p>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <p>{{ form.criteria_name.label }}<br>{{ form.criteria_name(size=40) }}</p>
+        <p>{{ form.criteria_code.label }}<br>{{ form.criteria_code(size=30) }}<br><small>VD: TECHNIQUE, POSTURE, TIMING</small></p>
+        <p>{{ form.weight_percentage.label }}<br>{{ form.weight_percentage() }} <small>(%)</small></p>
+        <p>{{ form.description.label }}<br>{{ form.description(rows=3, cols=50) }}</p>
+        <p>{{ form.evaluation_method.label }}<br>{{ form.evaluation_method(size=40) }}<br><small>VD: AI_ANALYSIS, MANUAL_SCORING</small></p>
+        <p><button type="submit">Thêm tiêu chí</button></p>
+    </form>
+
+    <hr>
+    <p><a href="{{ url_for('instructor.routine_detail', routine_id=routine.routine_id) }}">Về chi tiết bài võ</a></p>
+</body>
+</html>
+

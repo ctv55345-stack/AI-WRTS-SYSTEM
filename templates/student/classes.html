@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lớp học của tôi</title>
+</head>
+<body>
+    <h1>LỚP HỌC CỦA TÔI</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if enrollments %}
+        {% for e in enrollments %}
+        <div>
+            <h3>
+                {{ e.class_obj.class_name }} 
+                <span>
+                    {% if e.enrollment_status == 'active' %}Đang học
+                    {% elif e.enrollment_status == 'completed' %}Đã hoàn thành
+                    {% elif e.enrollment_status == 'suspended' %}Tạm dừng
+                    {% elif e.enrollment_status == 'dropped' %}Đã rời
+                    {% endif %}
+                </span>
+            </h3>
+            
+            <p>
+                <strong>Mã lớp:</strong> {{ e.class_obj.class_code }}<br>
+                <strong>Giảng viên:</strong> {{ e.class_obj.instructor.full_name }}<br>
+                <strong>Cấp độ:</strong> 
+                {% if e.class_obj.level == 'beginner' %}Sơ cấp
+                {% elif e.class_obj.level == 'intermediate' %}Trung cấp
+                {% elif e.class_obj.level == 'advanced' %}Nâng cao
+                {% endif %}<br>
+                <strong>Số học viên:</strong> {{ e.class_obj.current_students }}/{{ e.class_obj.max_students }}<br>
+                <strong>Ngày đăng ký:</strong> {{ e.enrolled_at.strftime('%d/%m/%Y %H:%M') }}<br>
+                {% if e.completed_at %}
+                <strong>Ngày hoàn thành:</strong> {{ e.completed_at.strftime('%d/%m/%Y %H:%M') }}<br>
+                {% endif %}
+                {% if e.notes %}
+                <strong>Ghi chú:</strong> {{ e.notes }}<br>
+                {% endif %}
+            </p>
+            
+            <p>
+                <a href="{{ url_for('student.class_detail', class_id=e.class_id) }}">Xem chi tiết lớp</a>
+            </p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Bạn chưa đăng ký lớp học nào.</p>
+    {% endif %}
+    
+    <hr>
+    <p>
+        <a href="{{ url_for('student.dashboard') }}">← Về Dashboard</a>
+    </p>
+</body>
+</html>
+

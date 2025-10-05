@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quản lý bài tập</title>
+</head>
+<body>
+    <h1>QUẢN LÝ BÀI TẬP</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <p><a href="{{ url_for('instructor.create_assignment') }}">+ Gán bài tập mới</a></p>
+
+    {% if assignments %}
+        {% for a in assignments %}
+        <div>
+            <h3>
+                {{ a.routine.routine_name }}
+                <span>{{ 'Cá nhân' if a.assignment_type == 'individual' else 'Lớp học' }}</span>
+            </h3>
+            <p>
+                <strong>Gán cho:</strong>
+                {% if a.assignment_type == 'individual' %}
+                    {{ a.student.full_name }} ({{ a.student.username }})
+                {% else %}
+                    Lớp {{ a.class_obj.class_name }}
+                {% endif %}<br>
+                <strong>Độ ưu tiên:</strong> {{ a.priority }}<br>
+                {% if a.deadline %}<strong>Deadline:</strong> {{ a.deadline.strftime('%d/%m/%Y %H:%M') }}<br>{% endif %}
+                <strong>Ngày gán:</strong> {{ a.created_at.strftime('%d/%m/%Y %H:%M') }}
+            </p>
+            <p>
+                <a href="{{ url_for('instructor.assignment_detail', assignment_id=a.assignment_id) }}">Xem chi tiết & trạng thái nộp bài</a>
+            </p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Chưa có bài tập nào. <a href="{{ url_for('instructor.create_assignment') }}">Gán bài tập đầu tiên</a></p>
+    {% endif %}
+
+    <hr>
+    <p><a href="{{ url_for('instructor.dashboard') }}">Về Dashboard</a></p>
+</body>
+</html>
+

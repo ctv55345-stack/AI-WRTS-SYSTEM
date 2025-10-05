@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tạo bài võ mới</title>
+    <title>Sửa bài võ</title>
 </head>
 <body>
-    <h1>TẠO BÀI VÕ MỚI</h1>
+    <h1>SỬA BÀI VÕ</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -14,10 +14,11 @@
         {% endif %}
     {% endwith %}
 
+    <p><strong>Mã:</strong> {{ routine.routine_code }} (không thể đổi)</p>
+
     <form method="POST">
         {{ form.hidden_tag() }}
 
-        <p>{{ form.routine_code.label }}<br>{{ form.routine_code(size=30) }}</p>
         <p>{{ form.routine_name.label }}<br>{{ form.routine_name(size=50) }}</p>
         <p>{{ form.description.label }}<br>{{ form.description(rows=4, cols=50) }}</p>
         <p>{{ form.weapon_id.label }}<br>{{ form.weapon_id() }}</p>
@@ -27,11 +28,12 @@
         <p>{{ form.total_moves.label }}<br>{{ form.total_moves() }}</p>
         <p>{{ form.pass_threshold.label }}<br>{{ form.pass_threshold() }}</p>
         <p>{{ form.reference_video_url.label }}<br>{{ form.reference_video_url(size=60) }}</p>
-        <p><button type="submit">Tạo bài võ (Nháp)</button></p>
+
+        <p><button type="submit">Lưu thay đổi</button></p>
     </form>
 
     <hr>
-    <p><a href="{{ url_for('instructor.routines') }}">Về danh sách</a></p>
+    <p><a href="{{ url_for('instructor.routine_detail', routine_id=routine.routine_id) }}">Về chi tiết bài võ</a></p>
 </body>
 </html>
 

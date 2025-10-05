@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tạo bài kiểm tra</title>
+</head>
+<body>
+    <h1>TẠO BÀI KIỂM TRA</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <p>{{ form.exam_code.label }}<br>{{ form.exam_code(size=30) }}</p>
+        <p>{{ form.exam_name.label }}<br>{{ form.exam_name(size=50) }}</p>
+        <p>{{ form.description.label }}<br>{{ form.description(rows=3, cols=60) }}</p>
+        <p>{{ form.class_id.label }}<br>{{ form.class_id() }}</p>
+        <p>{{ form.routine_id.label }}<br>{{ form.routine_id() }}</p>
+        <p>{{ form.exam_type.label }}<br>{{ form.exam_type() }}</p>
+        <p>{{ form.start_time.label }}<br>{{ form.start_time() }}</p>
+        <p>{{ form.end_time.label }}<br>{{ form.end_time() }}</p>
+        <p>{{ form.duration_minutes.label }}<br>{{ form.duration_minutes() }}</p>
+        <p>{{ form.pass_score.label }}<br>{{ form.pass_score() }}</p>
+        <p>{{ form.max_attempts.label }}<br>{{ form.max_attempts() }}</p>
+        <p><button type="submit">Tạo bài kiểm tra (Nháp)</button></p>
+    </form>
+
+    <hr>
+    <p><a href="{{ url_for('instructor.exams') }}">Về danh sách</a></p>
+</body>
+</html>
+

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chi tiết bài võ</title>
+</head>
+<body>
+    <h1>CHI TIẾT BÀI VÕ</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <table>
+        <tr><td>Trạng thái</td><td><strong>{{ 'Đã xuất bản' if routine.is_published else 'Nháp' }}</strong></td></tr>
+        <tr><td>Mã bài võ</td><td><strong>{{ routine.routine_code }}</strong></td></tr>
+        <tr><td>Tên bài võ</td><td><strong>{{ routine.routine_name }}</strong></td></tr>
+        <tr><td>Mô tả</td><td>{{ routine.description or 'Không có' }}</td></tr>
+        <tr><td>Binh khí</td><td>{{ routine.weapon.weapon_name_vi }} ({{ routine.weapon.weapon_name_en }})</td></tr>
+        <tr><td>Cấp độ</td><td>{{ routine.level }}</td></tr>
+        <tr><td>Độ khó</td><td>{{ routine.difficulty_score }}/10</td></tr>
+        <tr><td>Thời lượng</td><td>{{ routine.duration_seconds }} giây ({{ (routine.duration_seconds / 60)|round(1) }} phút)</td></tr>
+        <tr><td>Số động tác</td><td>{{ routine.total_moves }}</td></tr>
+        <tr><td>Ngưỡng đạt</td><td>{{ routine.pass_threshold }}%</td></tr>
+        <tr><td>Video mẫu</td><td>{% if routine.reference_video_url %}<a href="{{ routine.reference_video_url }}" target="_blank">Xem video</a>{% else %}Chưa có{% endif %}</td></tr>
+        <tr><td>Ngày tạo</td><td>{{ routine.created_at.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+        <tr><td>Cập nhật lần cuối</td><td>{{ routine.updated_at.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+    </table>
+
+    <h2>TIÊU CHÍ ĐÁNH GIÁ (Tổng: {{ total_weight }}%)</h2>
+    <p><a href="{{ url_for('instructor.add_criteria', routine_id=routine.routine_id) }}">+ Thêm tiêu chí</a></p>
+
+    {% if criteria %}
+        {% for c in criteria %}
+        <div>
+            <strong>{{ c.criteria_name }}</strong> ({{ c.criteria_code }}) - <strong>{{ c.weight_percentage }}%</strong>
+            {% if c.description %}<br><small>{{ c.description }}</small>{% endif %}
+            {% if c.evaluation_method %}<br><small>Phương pháp: {{ c.evaluation_method }}</small>{% endif %}
+            <form method="POST" action="{{ url_for('instructor.delete_criteria', criteria_id=c.criteria_id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" onclick="return confirm('Xác nhận xóa?')">Xóa</button>
+            </form>
+        </div>
+        {% endfor %}
+        {% if total_weight < 100 %}
+        <p>Tổng trọng số chưa đủ 100% (còn {{ 100 - total_weight }}%)</p>
+        {% elif total_weight > 100 %}
+        <p>Tổng trọng số vượt quá 100%!</p>
+        {% else %}
+        <p>Tổng trọng số hợp lệ (100%)</p>
+        {% endif %}
+    {% else %}
+        <p>Chưa có tiêu chí đánh giá nào</p>
+    {% endif %}
+
+    <h2>THAO TÁC</h2>
+    <p>
+        <a href="{{ url_for('instructor.edit_routine', routine_id=routine.routine_id) }}">Sửa bài võ</a>
+        {% if routine.is_published %}
+            <form method="POST" action="{{ url_for('instructor.unpublish_routine', routine_id=routine.routine_id) }}" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit">Gỡ xuất bản</button>
+            </form>
+        {% else %}
+            <form method="POST" action="{{ url_for('instructor.publish_routine', routine_id=routine.routine_id) }}" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit">Xuất bản</button>
+            </form>
+        {% endif %}
+        <form method="POST" action="{{ url_for('instructor.delete_routine', routine_id=routine.routine_id) }}" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" onclick="return confirm('Xác nhận xóa bài võ?')">Xóa</button>
+        </form>
+    </p>
+
+    <hr>
+    <p><a href="{{ url_for('instructor.routines') }}">Về danh sách</a></p>
+</body>
+</html>
+

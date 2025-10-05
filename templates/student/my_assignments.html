@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bài tập của tôi</title>
+</head>
+<body>
+    <h1>BÀI TẬP CỦA TÔI</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h2>BÀI TẬP ĐANG CHỜ ({{ pending|length }})</h2>
+    {% if pending %}
+        {% for a in pending %}
+        <div>
+            <h3>{{ a.routine.routine_name }}</h3>
+            <p>
+                <strong>Độ ưu tiên:</strong> {{ a.priority|upper }} |
+                <strong>Bắt buộc:</strong> {{ 'Có' if a.is_mandatory else 'Không' }}<br>
+                {% if a.deadline %}
+                <strong>Deadline:</strong> {{ a.deadline.strftime('%d/%m/%Y %H:%M') }}<br>
+                {% endif %}
+                <strong>Ngày gán:</strong> {{ a.created_at.strftime('%d/%m/%Y') }}
+            </p>
+            {% if a.instructions %}
+            <p><em>Hướng dẫn: {{ a.instructions }}</em></p>
+            {% endif %}
+            <p>
+                <a href="{{ url_for('student.routine_detail', routine_id=a.routine_id) }}">Xem bài võ</a>
+            </p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Không có bài tập nào đang chờ</p>
+    {% endif %}
+
+    <hr>
+
+    <h2>BÀI TẬP ĐÃ NỘP ({{ completed|length }})</h2>
+    {% if completed %}
+        {% for item in completed %}
+        <div>
+            <h3>{{ item.assignment.routine.routine_name }}</h3>
+            <p>
+                <strong>Đã nộp:</strong> {{ item.video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}
+            </p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Chưa có bài tập nào</p>
+    {% endif %}
+
+    <hr>
+    <p><a href="{{ url_for('student.dashboard') }}">Về Dashboard</a></p>
+</body>
+</html>
+
