@@ -23,7 +23,7 @@ class User(db.Model):
     last_login_at = db.Column(db.DateTime)
     
     # Relationships
-    classes_as_instructor = db.relationship('Class', foreign_keys='Class.instructor_id', backref='instructor', lazy=True)
+    classes_as_instructor = db.relationship('Class', foreign_keys='Class.instructor_id', back_populates='instructor', lazy=True)    
     enrollments = db.relationship('ClassEnrollment', foreign_keys='ClassEnrollment.student_id', backref='student', lazy=True)
     routines_created = db.relationship('MartialRoutine', foreign_keys='MartialRoutine.instructor_id', backref='creator', lazy=True)
     assignments_created = db.relationship('Assignment', foreign_keys='Assignment.assigned_by', backref='assigner', lazy=True)

@@ -1,5 +1,6 @@
 from . import db
 from datetime import datetime
+from .class_enrollment import ClassEnrollment
 
 class Class(db.Model):
     __tablename__ = 'classes'
@@ -29,7 +30,7 @@ class Class(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    instructor = db.relationship('User', foreign_keys=[instructor_id], backref='taught_classes')
+    instructor = db.relationship('User', foreign_keys=[instructor_id], back_populates='classes_as_instructor')
     approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_classes')
     enrollments = db.relationship('ClassEnrollment', backref='class_obj', lazy=True, cascade='all, delete-orphan')
     assignments = db.relationship('Assignment', foreign_keys='Assignment.assigned_to_class', backref='class_obj', lazy=True, cascade='all, delete-orphan')
@@ -45,3 +46,18 @@ class Class(db.Model):
         db.Index('idx_classes_level', 'level'),
         db.Index('idx_approval_status', 'approval_status'),
     )
+
+    @property
+    def actual_students_count(self):
+        return ClassEnrollment.query.filter_by(
+            class_id=self.class_id,
+            enrollment_status='active'
+        ).count()
+    @property
+    def approval_status_display(self):
+        status_map = {
+            'pending': 'Chờ duyệt',
+            'approved': 'Đã duyệt',
+            'rejected': 'Từ chối'
+        }
+        return status_map.get(self.approval_status, self.approval_status)

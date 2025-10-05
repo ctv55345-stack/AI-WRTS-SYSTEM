@@ -236,16 +236,20 @@ class ClassService:
 
     @staticmethod
     def format_schedule(class_obj):
+        if hasattr(class_obj, 'schedules') and class_obj.schedules:
+            from app.services.schedule_service import ScheduleService
+            return ScheduleService.format_schedules(class_obj.schedules)
+        
         if not class_obj.schedule_days:
             return "Chưa có lịch học"
-
+        
         days_map = {'2': 'T2', '3': 'T3', '4': 'T4', '5': 'T5', '6': 'T6', '7': 'T7', 'cn': 'CN'}
         days = [days_map.get(d, d) for d in class_obj.schedule_days.split(',')]
-
+        
         time_range = ""
         if class_obj.schedule_time_start and class_obj.schedule_time_end:
             time_range = f" - {class_obj.schedule_time_start.strftime('%H:%M')}-{class_obj.schedule_time_end.strftime('%H:%M')}"
-
+        
         schedule_str = f"{', '.join(days)}{time_range}"
         if class_obj.schedule_note:
             schedule_str += f" ({class_obj.schedule_note})"

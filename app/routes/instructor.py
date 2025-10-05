@@ -32,28 +32,8 @@ def classes():
 @login_required
 @role_required('INSTRUCTOR')
 def create_class():
-    form = ClassCreateForm()
-
-    if form.validate_on_submit():
-        data = {
-            'class_code': form.class_code.data,
-            'class_name': form.class_name.data,
-            'description': form.description.data,
-            'level': form.level.data,
-            'max_students': form.max_students.data,
-            'start_date': form.start_date.data,
-            'end_date': form.end_date.data,
-            'schedule': form.schedule.data,
-        }
-
-        result = ClassService.create_class(data, session['user_id'])
-        if result['success']:
-            flash('Tạo lớp học thành công!', 'success')
-            return redirect(url_for('instructor.classes'))
-        else:
-            flash(result['message'], 'error')
-
-    return render_template('instructor/class_create.html', form=form)
+    flash('Bạn không có quyền tạo lớp trực tiếp. Vui lòng gửi đề xuất lớp học.', 'error')
+    return redirect(url_for('instructor.propose_class'))
 
 
 @instructor_bp.route('/classes/<int:class_id>')
@@ -86,6 +66,12 @@ def my_proposals():
 @role_required('INSTRUCTOR')
 def propose_class():
     form = ClassCreateForm()
+
+    if form.is_submitted() and not form.validate():
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{getattr(form, field).label.text}: {error}", 'error')
+
     if form.validate_on_submit():
         data = {
             'class_code': form.class_code.data,
@@ -102,6 +88,7 @@ def propose_class():
             return redirect(url_for('instructor.my_proposals'))
         else:
             flash(result['message'], 'error')
+
     return render_template('instructor/class_propose.html', form=form)
 @instructor_bp.route('/classes/<int:class_id>/schedules')
 @login_required
@@ -210,7 +197,6 @@ def edit_class(class_id: int):
             'level': form.level.data,
             'max_students': form.max_students.data,
             'end_date': form.end_date.data,
-            'schedule': form.schedule.data,
             'is_active': form.is_active.data,
         }
 
