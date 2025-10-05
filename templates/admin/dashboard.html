@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+</head>
+<body>
+    <h1>ADMIN DASHBOARD</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <p>Xin chào, {{ session.full_name }}</p>
+    
+    <h2>QUẢN LÝ</h2>
+    <ul>
+        <li><a href="{{ url_for('admin.users') }}">Quản lý tài khoản</a></li>
+        <li><a href="{{ url_for('auth.profile') }}">Thông tin cá nhân</a></li>
+        <li><a href="{{ url_for('auth.logout') }}">Đăng xuất</a></li>
+    </ul>
+</body>
+</html>

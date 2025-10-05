@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Đề xuất lớp học mới</title>
+    
+    
+</head>
+<body>
+    <h1>ĐỀ XUẤT LỚP HỌC MỚI</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <p>
+            {{ form.class_code.label }}<br>
+            {{ form.class_code(size=20) }}
+            {% if form.class_code.errors %}
+                {% for error in form.class_code.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            {{ form.class_name.label }}<br>
+            {{ form.class_name(size=50) }}
+            {% if form.class_name.errors %}
+                {% for error in form.class_name.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            {{ form.description.label }}<br>
+            {{ form.description(rows=3, cols=50) }}
+        </p>
+        
+        <p>
+            {{ form.level.label }}<br>
+            {{ form.level() }}
+        </p>
+        
+        <p>
+            {{ form.max_students.label }}<br>
+            {{ form.max_students() }}
+        </p>
+        
+        <p>
+            {{ form.start_date.label }}<br>
+            {{ form.start_date() }}
+        </p>
+        
+        <p>
+            {{ form.end_date.label }}<br>
+            {{ form.end_date() }}
+        </p>
+        
+        <p>
+            <button type="submit">Gửi đề xuất</button>
+        </p>
+    </form>
+    
+    <p><a href="{{ url_for('instructor.dashboard') }}">Quay lại Dashboard</a></p>
+</body>
+</html>
+
+

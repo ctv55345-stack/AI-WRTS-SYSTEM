@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lớp chờ duyệt</title>
+    
+    
+</head>
+<body>
+    <h1>LỚP HỌC CHỜ DUYỆT</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if pending %}
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Mã lớp</th>
+                <th>Tên lớp</th>
+                <th>Giảng viên</th>
+                <th>Cấp độ</th>
+                <th>Số HV tối đa</th>
+                <th>Ngày bắt đầu</th>
+                <th>Ngày đề xuất</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for class in pending %}
+            <tr>
+                <td>{{ class.class_code }}</td>
+                <td>{{ class.class_name }}</td>
+                <td>{{ class.instructor.full_name }}</td>
+                <td>{{ class.level }}</td>
+                <td>{{ class.max_students }}</td>
+                <td>{{ class.start_date }}</td>
+                <td>{{ class.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    <a href="{{ url_for('manager.review_class', class_id=class.class_id) }}">Xét duyệt</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Không có lớp học nào chờ duyệt</p>
+    {% endif %}
+    
+    <p><a href="{{ url_for('manager.dashboard') }}">Về Dashboard</a></p>
+</body>
+</html>
+
+

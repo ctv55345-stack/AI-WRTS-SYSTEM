@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quản lý lịch học</title>
+</head>
+<body>
+    <h1>QUẢN LÝ LỊCH HỌC</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <p><strong>Lớp:</strong> {{ class_obj.class_name }} ({{ class_obj.class_code }})</p>
+    
+    <p><a href="{{ url_for('instructor.add_schedule', class_id=class_obj.class_id) }}">+ Thêm lịch học mới</a></p>
+    
+    {% if schedules %}
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Ngày</th>
+                <th>Giờ học</th>
+                <th>Địa điểm</th>
+                <th>Ghi chú</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for schedule in schedules %}
+            <tr>
+                <td>{{ schedule.day_display }}</td>
+                <td>{{ schedule.time_start.strftime('%H:%M') }} - {{ schedule.time_end.strftime('%H:%M') }}</td>
+                <td>{{ schedule.location or '-' }}</td>
+                <td>{{ schedule.notes or '-' }}</td>
+                <td>{{ 'Hoạt động' if schedule.is_active else 'Tạm dừng' }}</td>
+                <td>
+                    <a href="{{ url_for('instructor.edit_schedule', schedule_id=schedule.schedule_id) }}">Sửa</a> |
+                    <form method="POST" action="{{ url_for('instructor.delete_schedule', schedule_id=schedule.schedule_id) }}" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" onclick="return confirm('Xác nhận xóa?')">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Chưa có lịch học nào</p>
+    {% endif %}
+    
+    <p>
+        <a href="{{ url_for('instructor.class_detail', class_id=class_obj.class_id) }}">Về chi tiết lớp</a> |
+        <a href="{{ url_for('instructor.classes') }}">Về danh sách lớp</a>
+    </p>
+</body>
+</html>

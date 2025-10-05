@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chỉnh sửa lớp học</title>
+</head>
+<body>
+    <h1>CHỈNH SỬA LỚP HỌC</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <p><strong>Mã lớp:</strong> {{ class_obj.class_code }} (không thể đổi)</p>
+    
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <p>
+            {{ form.class_name.label }}<br>
+            {{ form.class_name(size=50, value=class_obj.class_name) }}
+            {% if form.class_name.errors %}
+                {% for error in form.class_name.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            {{ form.description.label }}<br>
+            {{ form.description(rows=3, cols=50) }}
+        </p>
+        
+        <p>
+            {{ form.level.label }}<br>
+            {{ form.level() }}
+        </p>
+        
+        <p>
+            {{ form.max_students.label }}<br>
+            {{ form.max_students(value=class_obj.max_students) }}
+            {% if form.max_students.errors %}
+                {% for error in form.max_students.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            <strong>Ngày bắt đầu:</strong> {{ class_obj.start_date }} (không thể đổi)
+        </p>
+        
+        <p>
+            {{ form.end_date.label }}<br>
+            {{ form.end_date(value=class_obj.end_date or '') }}
+        </p>
+        
+        <p>
+            {{ form.schedule.label }}<br>
+            {{ form.schedule(size=50, value=class_obj.schedule or '') }}
+        </p>
+        
+        <p>
+            <label>
+                {{ form.is_active(checked=class_obj.is_active) }}
+                {{ form.is_active.label }}
+            </label>
+        </p>
+        
+        <p>
+            <button type="submit">Lưu thay đổi</button>
+        </p>
+    </form>
+    
+    <p><a href="{{ url_for('instructor.class_detail', class_id=class_obj.class_id) }}">Quay lại</a></p>
+</body>
+</html>

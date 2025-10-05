@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tạo tài khoản</title>
+</head>
+<body>
+    <h1>TẠO TÀI KHOẢN MỚI</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST">
+        <p>
+            <label>Tên đăng nhập:</label><br>
+            <input type="text" name="username" required minlength="3">
+        </p>
+        <p>
+            <label>Mật khẩu:</label><br>
+            <input type="password" name="password" required minlength="6">
+        </p>
+        <p>
+            <label>Email:</label><br>
+            <input type="email" name="email" required>
+        </p>
+        <p>
+            <label>Họ và tên:</label><br>
+            <input type="text" name="full_name" required>
+        </p>
+        <p>
+            <label>Số điện thoại:</label><br>
+            <input type="text" name="phone">
+        </p>
+        <p>
+            <label>Ngày sinh:</label><br>
+            <input type="date" name="date_of_birth">
+        </p>
+        <p>
+            <label>Giới tính:</label><br>
+            <select name="gender">
+                <option value="">-- Chọn --</option>
+                <option value="male">Nam</option>
+                <option value="female">Nữ</option>
+                <option value="other">Khác</option>
+            </select>
+        </p>
+        <p>
+            <label>Địa chỉ:</label><br>
+            <textarea name="address" rows="3"></textarea>
+        </p>
+        <p>
+            <label>Vai trò:</label><br>
+            <select name="role_id" required>
+                <option value="">-- Chọn vai trò --</option>
+                {% for role in roles %}
+                <option value="{{ role.role_id }}">{{ role.role_name }}</option>
+                {% endfor %}
+            </select>
+        </p>
+        <p>
+            <button type="submit">Tạo tài khoản</button>
+        </p>
+    </form>
+    
+    <p>
+        <a href="{{ url_for('admin.users') }}">Quay lại</a>
+    </p>
+</body>
+</html>

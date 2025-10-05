@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Xét duyệt lớp học</title>
+    
+    
+</head>
+<body>
+    <h1>XÉT DUYỆT LỚP HỌC</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <h2>THÔNG TIN LỚP HỌC</h2>
+    <table border="1">
+        <tr>
+            <td><strong>Mã lớp:</strong></td>
+            <td>{{ class_obj.class_code }}</td>
+        </tr>
+        <tr>
+            <td><strong>Tên lớp:</strong></td>
+            <td>{{ class_obj.class_name }}</td>
+        </tr>
+        <tr>
+            <td><strong>Giảng viên:</strong></td>
+            <td>{{ class_obj.instructor.full_name }} ({{ class_obj.instructor.username }})</td>
+        </tr>
+        <tr>
+            <td><strong>Mô tả:</strong></td>
+            <td>{{ class_obj.description or 'Không có' }}</td>
+        </tr>
+        <tr>
+            <td><strong>Cấp độ:</strong></td>
+            <td>{{ class_obj.level }}</td>
+        </tr>
+        <tr>
+            <td><strong>Số học viên tối đa:</strong></td>
+            <td>{{ class_obj.max_students }}</td>
+        </tr>
+        <tr>
+            <td><strong>Ngày bắt đầu:</strong></td>
+            <td>{{ class_obj.start_date }}</td>
+        </tr>
+        <tr>
+            <td><strong>Ngày kết thúc:</strong></td>
+            <td>{{ class_obj.end_date or 'Chưa xác định' }}</td>
+        </tr>
+        <tr>
+            <td><strong>Ngày đề xuất:</strong></td>
+            <td>{{ class_obj.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        </tr>
+    </table>
+    
+    <hr>
+    
+    <h2>QUYẾT ĐỊNH</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <p>
+            {{ form.decision.label }}<br>
+            {% for choice in form.decision %}
+                <label>
+                    {{ choice() }} {{ choice.label.text }}
+                </label><br>
+            {% endfor %}
+            {% if form.decision.errors %}
+                {% for error in form.decision.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            {{ form.rejection_reason.label }}<br>
+            {{ form.rejection_reason(rows=4, cols=50) }}
+            {% if form.rejection_reason.errors %}
+                {% for error in form.rejection_reason.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            <button type="submit">Xác nhận</button>
+        </p>
+    </form>
+    
+    <p><a href="{{ url_for('manager.pending_classes') }}">Quay lại</a></p>
+</body>
+</html>
+
+

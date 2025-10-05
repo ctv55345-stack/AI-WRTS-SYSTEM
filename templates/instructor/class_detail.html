@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chi tiết lớp học</title>
+</head>
+<body>
+    <h1>CHI TIẾT LỚP HỌC</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <h2>THÔNG TIN LỚP</h2>
+    <table border="1">
+        <tr>
+            <td>Mã lớp:</td>
+            <td>{{ class_obj.class_code }}</td>
+        </tr>
+        <tr>
+            <td>Tên lớp:</td>
+            <td>{{ class_obj.class_name }}</td>
+        </tr>
+        <tr>
+            <td>Mô tả:</td>
+            <td>{{ class_obj.description or 'Chưa có' }}</td>
+        </tr>
+        <tr>
+            <td>Cấp độ:</td>
+            <td>{{ class_obj.level }}</td>
+        </tr>
+        <tr>
+            <td>Số học viên:</td>
+            <td>{{ class_obj.current_students }}/{{ class_obj.max_students }}</td>
+        </tr>
+        <tr>
+            <td>Ngày bắt đầu:</td>
+            <td>{{ class_obj.start_date }}</td>
+        </tr>
+        <tr>
+            <td>Ngày kết thúc:</td>
+            <td>{{ class_obj.end_date or 'Chưa xác định' }}</td>
+        </tr>
+        <tr>
+            <td>Lịch học:</td>
+            <td>{{ ClassService.format_schedule(class_obj) }}</td>
+        </tr>
+        <tr>
+            <td>Trạng thái:</td>
+            <td>{{ 'Hoạt động' if class_obj.is_active else 'Tạm dừng' }}</td>
+        </tr>
+    </table>
+    
+    <p>
+        <a href="{{ url_for('instructor.edit_class', class_id=class_obj.class_id) }}">Chỉnh sửa lớp</a> |
+        <a href="{{ url_for('instructor.class_schedules', class_id=class_obj.class_id) }}">Quản lý lịch học</a>
+    </p>
+    
+    <hr>
+    
+    <h2>DANH SÁCH HỌC VIÊN ({{ enrollments|length }})</h2>
+    <p><a href="{{ url_for('instructor.add_student', class_id=class_obj.class_id) }}">+ Thêm học viên</a></p>
+    
+    {% if enrollments %}
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Họ tên</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Ngày đăng ký</th>
+                <th>Trạng thái</th>
+                <th>Ghi chú</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in enrollments %}
+            <tr>
+                <td>{{ e.student.full_name }}</td>
+                <td>{{ e.student.username }}</td>
+                <td>{{ e.student.email }}</td>
+                <td>{{ e.enrolled_at.strftime('%Y-%m-%d') }}</td>
+                <td>{{ e.enrollment_status }}</td>
+                <td>{{ e.notes or '' }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('instructor.remove_student', enrollment_id=e.enrollment_id) }}" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" onclick="return confirm('Xác nhận xóa?')">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Chưa có học viên nào</p>
+    {% endif %}
+    
+    <p><a href="{{ url_for('instructor.classes') }}">Quay lại danh sách lớp</a></p>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Đề xuất của tôi</title>
+    
+    
+</head>
+<body>
+    <h1>ĐỀ XUẤT LỚP HỌC CỦA TÔI</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <p><a href="{{ url_for('instructor.propose_class') }}">+ Đề xuất lớp mới</a></p>
+    
+    {% if proposals %}
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Mã lớp</th>
+                <th>Tên lớp</th>
+                <th>Cấp độ</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Lý do từ chối</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proposal in proposals %}
+            <tr>
+                <td>{{ proposal.class_code }}</td>
+                <td>{{ proposal.class_name }}</td>
+                <td>{{ proposal.level }}</td>
+                <td><strong>{{ proposal.approval_status_display }}</strong></td>
+                <td>{{ proposal.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ proposal.rejection_reason or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Chưa có đề xuất nào</p>
+    {% endif %}
+    
+    <p><a href="{{ url_for('instructor.dashboard') }}">Về Dashboard</a></p>
+</body>
+</html>
+
+

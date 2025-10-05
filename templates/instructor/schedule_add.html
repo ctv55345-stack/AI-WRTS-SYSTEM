@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Thêm lịch học</title>
+</head>
+<body>
+    <h1>THÊM LỊCH HỌC MỚI</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <p><strong>Lớp:</strong> {{ class_obj.class_name }} ({{ class_obj.class_code }})</p>
+    
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <p>
+            {{ form.day_of_week.label }}<br>
+            {{ form.day_of_week() }}
+            {% if form.day_of_week.errors %}
+                {% for error in form.day_of_week.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            {{ form.time_start.label }} (VD: 18:00)<br>
+            {{ form.time_start() }}
+            {% if form.time_start.errors %}
+                {% for error in form.time_start.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            {{ form.time_end.label }} (VD: 20:00)<br>
+            {{ form.time_end() }}
+            {% if form.time_end.errors %}
+                {% for error in form.time_end.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            {{ form.location.label }}<br>
+            {{ form.location(size=40) }}
+        </p>
+        
+        <p>
+            {{ form.notes.label }}<br>
+            {{ form.notes(rows=3, cols=40) }}
+        </p>
+        
+        <p>
+            <label>
+                {{ form.is_active(checked=True) }}
+                {{ form.is_active.label }}
+            </label>
+        </p>
+        
+        <p>
+            <button type="submit">Thêm lịch học</button>
+        </p>
+    </form>
+    
+    <p><a href="{{ url_for('instructor.class_schedules', class_id=class_obj.class_id) }}">Quay lại</a></p>
+</body>
+</html>

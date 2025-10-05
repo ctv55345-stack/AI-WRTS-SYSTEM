@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quản lý tài khoản</title>
+</head>
+<body>
+    <h1>QUẢN LÝ TÀI KHOẢN</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <p>
+        <a href="{{ url_for('admin.create_user') }}">+ Tạo tài khoản mới</a>
+    </p>
+    
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Họ tên</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.user_id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.full_name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.role.role_name }}</td>
+                <td>{{ 'Hoạt động' if user.is_active else 'Vô hiệu hóa' }}</td>
+                <td>
+                    <a href="{{ url_for('admin.edit_user', user_id=user.user_id) }}">Sửa</a> |
+                    <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.user_id) }}" style="display:inline;">
+                        <button type="submit" onclick="return confirm('Xác nhận xóa?')">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <p>
+        <a href="{{ url_for('admin.dashboard') }}">Về Dashboard</a>
+    </p>
+</body>
+</html>

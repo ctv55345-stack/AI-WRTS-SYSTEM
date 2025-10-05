@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Thêm học viên</title>
+</head>
+<body>
+    <h1>THÊM HỌC VIÊN VÀO LỚP</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <p><strong>Lớp:</strong> {{ class_obj.class_name }} ({{ class_obj.class_code }})</p>
+    <p><strong>Số học viên hiện tại:</strong> {{ class_obj.current_students }}/{{ class_obj.max_students }}</p>
+    
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <p>
+            {{ form.student_id.label }}<br>
+            {{ form.student_id() }}
+            {% if form.student_id.errors %}
+                {% for error in form.student_id.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            {{ form.notes.label }}<br>
+            {{ form.notes(rows=3, cols=50) }}
+        </p>
+        
+        <p>
+            <button type="submit">Thêm học viên</button>
+        </p>
+    </form>
+    
+    <p><a href="{{ url_for('instructor.class_detail', class_id=class_obj.class_id) }}">Quay lại</a></p>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Đăng nhập</title>
+</head>
+<body>
+    <h1>ĐĂNG NHẬP</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <p>
+            {{ form.username.label }}<br>
+            {{ form.username(size=32) }}
+            {% if form.username.errors %}
+                {% for error in form.username.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            {{ form.password.label }}<br>
+            {{ form.password(size=32) }}
+            {% if form.password.errors %}
+                {% for error in form.password.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            <button type="submit">Đăng nhập</button>
+        </p>
+    </form>
+    
+    <p>
+        <a href="{{ url_for('auth.register') }}">Đăng ký tài khoản mới</a> |
+        <a href="{{ url_for('auth.forgot_password') }}">Quên mật khẩu?</a>
+    </p>
+</body>
+</html>

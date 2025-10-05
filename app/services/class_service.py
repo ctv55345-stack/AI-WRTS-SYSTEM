@@ -1,0 +1,252 @@
+from datetime import datetime
+from app.models import db
+from app.models.class_model import Class
+from app.models.class_enrollment import ClassEnrollment
+from app.models.user import User
+from app.models.role import Role
+
+
+class ClassService:
+    @staticmethod
+    def create_class_proposal(data: dict, instructor_id: int):
+        if Class.query.filter_by(class_code=data['class_code']).first():
+            return {'success': False, 'message': 'Mã lớp đã tồn tại'}
+
+        new_class = Class(
+            class_code=data['class_code'],
+            class_name=data['class_name'],
+            description=data.get('description'),
+            instructor_id=instructor_id,
+            level=data['level'],
+            max_students=data['max_students'],
+            start_date=data['start_date'],
+            end_date=data.get('end_date'),
+            approval_status='pending',
+            is_active=False,
+        )
+
+        db.session.add(new_class)
+        db.session.commit()
+        return {'success': True, 'class': new_class}
+
+    @staticmethod
+    def get_pending_proposals():
+        return Class.query.filter_by(approval_status='pending').order_by(Class.created_at.desc()).all()
+
+    @staticmethod
+    def get_approved_classes_by_instructor(instructor_id: int):
+        return Class.query.filter_by(instructor_id=instructor_id, approval_status='approved').all()
+
+    @staticmethod
+    def get_my_proposals(instructor_id: int):
+        return Class.query.filter_by(instructor_id=instructor_id).order_by(Class.created_at.desc()).all()
+
+    @staticmethod
+    def approve_class(class_id: int, manager_id: int):
+        class_obj = Class.query.get(class_id)
+        if not class_obj:
+            return {'success': False, 'message': 'Không tìm thấy lớp học'}
+        if class_obj.approval_status != 'pending':
+            return {'success': False, 'message': 'Lớp này đã được xử lý'}
+
+        class_obj.approval_status = 'approved'
+        class_obj.approved_by = manager_id
+        class_obj.approved_at = datetime.utcnow()
+        class_obj.is_active = True
+
+        db.session.commit()
+        return {'success': True, 'class': class_obj}
+
+    @staticmethod
+    def reject_class(class_id: int, manager_id: int, reason: str):
+        class_obj = Class.query.get(class_id)
+        if not class_obj:
+            return {'success': False, 'message': 'Không tìm thấy lớp học'}
+        if class_obj.approval_status != 'pending':
+            return {'success': False, 'message': 'Lớp này đã được xử lý'}
+
+        class_obj.approval_status = 'rejected'
+        class_obj.approved_by = manager_id
+        class_obj.approved_at = datetime.utcnow()
+        class_obj.rejection_reason = reason
+        class_obj.is_active = False
+
+        db.session.commit()
+        return {'success': True, 'class': class_obj}
+    @staticmethod
+    def get_all_classes():
+        return Class.query.all()
+
+    @staticmethod
+    def get_classes_by_instructor(instructor_id: int):
+        return Class.query.filter_by(instructor_id=instructor_id).all()
+
+    @staticmethod
+    def get_class_by_id(class_id: int):
+        return Class.query.get(class_id)
+
+    @staticmethod
+    def create_class(data: dict, instructor_id: int):
+        if Class.query.filter_by(class_code=data['class_code']).first():
+            return {'success': False, 'message': 'Mã lớp đã tồn tại'}
+
+        schedule_days_str = ','.join(data.get('schedule_days', [])) if data.get('schedule_days') else None
+
+        new_class = Class(
+            class_code=data['class_code'],
+            class_name=data['class_name'],
+            description=data.get('description'),
+            instructor_id=instructor_id,
+            level=data['level'],
+            max_students=data['max_students'],
+            start_date=data['start_date'],
+            end_date=data.get('end_date'),
+            schedule_days=schedule_days_str,
+            schedule_time_start=data.get('schedule_time_start'),
+            schedule_time_end=data.get('schedule_time_end'),
+            schedule_note=data.get('schedule_note'),
+            is_active=True,
+        )
+
+        db.session.add(new_class)
+        db.session.commit()
+        return {'success': True, 'class': new_class}
+
+    @staticmethod
+    def update_class(class_id: int, data: dict):
+        class_obj = Class.query.get(class_id)
+        if not class_obj:
+            return {'success': False, 'message': 'Không tìm thấy lớp học'}
+
+        schedule_days_str = ','.join(data.get('schedule_days', [])) if data.get('schedule_days') else None
+
+        class_obj.class_name = data['class_name']
+        class_obj.description = data.get('description')
+        class_obj.level = data['level']
+        class_obj.max_students = data['max_students']
+        class_obj.end_date = data.get('end_date')
+        class_obj.schedule_days = schedule_days_str
+        class_obj.schedule_time_start = data.get('schedule_time_start')
+        class_obj.schedule_time_end = data.get('schedule_time_end')
+        class_obj.schedule_note = data.get('schedule_note')
+        class_obj.is_active = data.get('is_active', True)
+
+        db.session.commit()
+        return {'success': True, 'class': class_obj}
+
+    @staticmethod
+    def delete_class(class_id: int):
+        class_obj = Class.query.get(class_id)
+        if not class_obj:
+            return {'success': False, 'message': 'Không tìm thấy lớp học'}
+
+        db.session.delete(class_obj)
+        db.session.commit()
+        return {'success': True}
+
+    @staticmethod
+    def get_enrolled_students(class_id: int):
+        return ClassEnrollment.query.filter_by(class_id=class_id).all()
+
+    @staticmethod
+    def get_available_students(class_id: int):
+        student_role = Role.query.filter_by(role_code='STUDENT').first()
+        if not student_role:
+            return []
+
+        all_students = User.query.filter_by(role_id=student_role.role_id, is_active=True).all()
+        enrolled_ids = [e.student_id for e in ClassEnrollment.query.filter_by(class_id=class_id).all()]
+        return [s for s in all_students if s.user_id not in enrolled_ids]
+
+    @staticmethod
+    def enroll_student(class_id: int, student_id: int, notes: str | None = None):
+        class_obj = Class.query.get(class_id)
+        if not class_obj:
+            return {'success': False, 'message': 'Không tìm thấy lớp học'}
+
+        student = User.query.get(student_id)
+        if not student:
+            return {'success': False, 'message': 'Không tìm thấy học viên'}
+
+        existing = ClassEnrollment.query.filter_by(class_id=class_id, student_id=student_id).first()
+        if existing:
+            return {'success': False, 'message': 'Học viên đã đăng ký lớp này'}
+
+        if class_obj.current_students >= class_obj.max_students:
+            return {'success': False, 'message': 'Lớp đã đầy'}
+
+        enrollment = ClassEnrollment(
+            class_id=class_id,
+            student_id=student_id,
+            enrollment_status='active',
+            notes=notes,
+        )
+
+        db.session.add(enrollment)
+        db.session.commit()
+        return {'success': True, 'enrollment': enrollment}
+
+    @staticmethod
+    def remove_student(enrollment_id: int):
+        enrollment = ClassEnrollment.query.get(enrollment_id)
+        if not enrollment:
+            return {'success': False, 'message': 'Không tìm thấy đăng ký'}
+
+        db.session.delete(enrollment)
+        db.session.commit()
+        return {'success': True}
+
+    @staticmethod
+    def update_enrollment_status(enrollment_id: int, status: str):
+        enrollment = ClassEnrollment.query.get(enrollment_id)
+        if not enrollment:
+            return {'success': False, 'message': 'Không tìm thấy đăng ký'}
+
+        enrollment.enrollment_status = status
+        if status == 'completed':
+            enrollment.completed_at = datetime.utcnow()
+
+        db.session.commit()
+        return {'success': True, 'enrollment': enrollment}
+
+    @staticmethod
+    def get_statistics():
+        total_classes = Class.query.count()
+        active_classes = Class.query.filter_by(is_active=True).count()
+        total_enrollments = ClassEnrollment.query.filter_by(enrollment_status='active').count()
+
+        beginner_classes = Class.query.filter_by(level='beginner', is_active=True).count()
+        intermediate_classes = Class.query.filter_by(level='intermediate', is_active=True).count()
+        advanced_classes = Class.query.filter_by(level='advanced', is_active=True).count()
+
+        student_role = Role.query.filter_by(role_code='STUDENT').first()
+        total_students = (
+            User.query.filter_by(role_id=student_role.role_id, is_active=True).count() if student_role else 0
+        )
+
+        return {
+            'total_classes': total_classes,
+            'active_classes': active_classes,
+            'total_enrollments': total_enrollments,
+            'beginner_classes': beginner_classes,
+            'intermediate_classes': intermediate_classes,
+            'advanced_classes': advanced_classes,
+            'total_students': total_students,
+        }
+
+    @staticmethod
+    def format_schedule(class_obj):
+        if not class_obj.schedule_days:
+            return "Chưa có lịch học"
+
+        days_map = {'2': 'T2', '3': 'T3', '4': 'T4', '5': 'T5', '6': 'T6', '7': 'T7', 'cn': 'CN'}
+        days = [days_map.get(d, d) for d in class_obj.schedule_days.split(',')]
+
+        time_range = ""
+        if class_obj.schedule_time_start and class_obj.schedule_time_end:
+            time_range = f" - {class_obj.schedule_time_start.strftime('%H:%M')}-{class_obj.schedule_time_end.strftime('%H:%M')}"
+
+        schedule_str = f"{', '.join(days)}{time_range}"
+        if class_obj.schedule_note:
+            schedule_str += f" ({class_obj.schedule_note})"
+        return schedule_str

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instructor Dashboard</title>
+</head>
+<body>
+    <h1>INSTRUCTOR DASHBOARD</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <p>Xin chào, {{ session.full_name }}</p>
+    
+    <h2>LỚP HỌC ĐÃ ĐƯỢC DUYỆT ({{ approved_classes|length }})</h2>
+    <p>
+        <a href="{{ url_for('instructor.propose_class') }}">+ Đề xuất lớp mới</a> |
+        <a href="{{ url_for('instructor.my_proposals') }}">Đề xuất của tôi</a>
+    </p>
+    
+    {% if approved_classes %}
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Mã lớp</th>
+                <th>Tên lớp</th>
+                <th>Cấp độ</th>
+                <th>Học viên</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for class in approved_classes %}
+            <tr>
+                <td>{{ class.class_code }}</td>
+                <td>{{ class.class_name }}</td>
+                <td>{{ class.level }}</td>
+                <td>{{ class.current_students }}/{{ class.max_students }}</td>
+                <td>{{ 'Hoạt động' if class.is_active else 'Tạm dừng' }}</td>
+                <td>
+                    <a href="{{ url_for('instructor.class_detail', class_id=class.class_id) }}">Chi tiết</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Chưa có lớp học nào</p>
+    {% endif %}
+    
+    <hr>
+    <h2>ĐỀ XUẤT GẦN ĐÂY</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Mã lớp</th>
+                <th>Tên lớp</th>
+                <th>Trạng thái duyệt</th>
+                <th>Ngày tạo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proposal in (my_proposals or [])[:5] %}
+            <tr>
+                <td>{{ proposal.class_code }}</td>
+                <td>{{ proposal.class_name }}</td>
+                <td><strong>{{ proposal.approval_status_display }}</strong></td>
+                <td>{{ proposal.created_at.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <hr>
+    <p>
+        <a href="{{ url_for('instructor.classes') }}">Quản lý lớp học</a> |
+        <a href="{{ url_for('auth.profile') }}">Thông tin cá nhân</a> |
+        <a href="{{ url_for('auth.logout') }}">Đăng xuất</a>
+    </p>
+</body>
+</html>

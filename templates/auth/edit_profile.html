@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chỉnh sửa thông tin</title>
+</head>
+<body>
+    <h1>CHỈNH SỬA THÔNG TIN CÁ NHÂN</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <p>
+            {{ form.full_name.label }}<br>
+            {{ form.full_name(size=32, value=user.full_name) }}
+        </p>
+        
+        <p>
+            {{ form.phone.label }}<br>
+            {{ form.phone(size=32, value=user.phone or '') }}
+        </p>
+        
+        <p>
+            {{ form.date_of_birth.label }}<br>
+            {{ form.date_of_birth(value=user.date_of_birth or '') }}
+        </p>
+        
+        <p>
+            {{ form.gender.label }}<br>
+            {{ form.gender() }}
+        </p>
+        
+        <p>
+            {{ form.address.label }}<br>
+            {{ form.address(rows=3, cols=40) }}
+        </p>
+        
+        <p>
+            <button type="submit">Lưu thay đổi</button>
+        </p>
+    </form>
+    
+    <p>
+        <a href="{{ url_for('auth.profile') }}">Hủy</a>
+    </p>
+</body>
+</html>
