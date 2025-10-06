@@ -138,3 +138,10 @@ test-output/
 
 # Editor backups
 *~
+# Video uploads
+uploads/
+videos/
+*.mp4
+*.avi
+*.mov
+*.mkv

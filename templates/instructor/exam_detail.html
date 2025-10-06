@@ -46,11 +46,11 @@
     <hr>
     <p>
         <form method="POST" action="{{ url_for('instructor.publish_exam', exam_id=exam.exam_id) }}" style="display:inline;">
-            {{ csrf_token() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit">Xuất bản</button>
         </form>
         <form method="POST" action="{{ url_for('instructor.delete_exam', exam_id=exam.exam_id) }}" style="display:inline;">
-            {{ csrf_token() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" onclick="return confirm('Xác nhận xóa bài kiểm tra?')">Xóa</button>
         </form>
     </p>

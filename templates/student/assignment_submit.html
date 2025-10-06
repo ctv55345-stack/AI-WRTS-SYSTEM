@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nộp Bài Tập - {{ assignment.routine.routine_name }}</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .info-box { background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .form-group { margin: 20px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="file"] { width: 100%; padding: 10px; }
+        textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #45a049; }
+        .back-link { color: #666; text-decoration: none; margin-left: 15px; }
+        .deadline { color: #f44336; font-weight: bold; }
+        .flash-message { margin: 15px 0; padding: 10px 15px; border-radius: 4px; }
+        .flash-error { background: #ffebee; color: #c62828; border: 1px solid #c62828; }
+        .flash-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
+        .flash-info { background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; }
+    </style>
+</head>
+<body>
+    <h1>📤 Nộp Bài Tập</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message 
+            {% if category == 'error' %}flash-error{% elif category == 'success' %}flash-success{% else %}flash-info{% endif %}">
+            <strong>[{{ category|upper }}]</strong> {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="info-box">
+        <h3>{{ assignment.routine.routine_name }}</h3>
+        <p><strong>Mã bài:</strong> {{ assignment.routine.routine_code }}</p>
+        <p><strong>Hạn nộp:</strong> <span class="deadline">{{ assignment.deadline.strftime('%d/%m/%Y %H:%M') }}</span></p>
+        {% if assignment.instructions %}
+        <p><strong>Hướng dẫn:</strong> {{ assignment.instructions }}</p>
+        {% endif %}
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label for="video_file">📹 Chọn file video *</label>
+            <input type="file" id="video_file" name="video_file" accept="video/mp4,video/avi,video/mov,video/x-matroska" required>
+            <small>Định dạng: mp4, avi, mov, mkv | Tối đa: 500MB</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="notes">📝 Ghi chú (tùy chọn)</label>
+            <textarea id="notes" name="notes" rows="4" placeholder="VD: Tập ở nhà, chưa thuộc hết động tác..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <button type="submit">✅ Nộp Bài</button>
+            <a href="{{ url_for('student.my_assignments') }}" class="back-link">← Quay lại</a>
+        </div>
+    </form>
+</body>
+</html>

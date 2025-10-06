@@ -22,8 +22,24 @@
         <p>{{ form.class_id.label }}<br>{{ form.class_id() }}</p>
         <p>{{ form.routine_id.label }}<br>{{ form.routine_id() }}</p>
         <p>{{ form.exam_type.label }}<br>{{ form.exam_type() }}</p>
-        <p>{{ form.start_time.label }}<br>{{ form.start_time() }}</p>
-        <p>{{ form.end_time.label }}<br>{{ form.end_time() }}</p>
+        <p>
+            {{ form.start_time.label }}<br>
+            {{ form.start_time(type='datetime-local') }}
+            {% if form.start_time.errors %}
+                {% for error in form.start_time.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        <p>
+            {{ form.end_time.label }}<br>
+            {{ form.end_time(type='datetime-local') }}
+            {% if form.end_time.errors %}
+                {% for error in form.end_time.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
         <p>{{ form.duration_minutes.label }}<br>{{ form.duration_minutes() }}</p>
         <p>{{ form.pass_score.label }}<br>{{ form.pass_score() }}</p>
         <p>{{ form.max_attempts.label }}<br>{{ form.max_attempts() }}</p>

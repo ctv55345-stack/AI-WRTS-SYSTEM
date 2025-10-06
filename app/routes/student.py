@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session, flash, redirect, url_for
+from flask import Blueprint, render_template, session, flash, redirect, url_for, request
 from app.utils.decorators import login_required, role_required
 from app.models.class_enrollment import ClassEnrollment
 from app.models.class_model import Class
@@ -8,6 +8,8 @@ from sqlalchemy import and_
 from app.services.routine_service import RoutineService
 from app.services.assignment_service import AssignmentService
 from app.services.exam_service import ExamService
+from app.services.video_service import VideoService
+from app.services.ai_service import AIService
 
 
 student_bp = Blueprint('student', __name__, url_prefix='/student')
@@ -208,21 +210,78 @@ def my_assignments():
     return render_template('student/my_assignments.html', pending=pending, completed=completed)
 
 
-@student_bp.route('/assignments/<int:assignment_id>/submit', methods=['POST'])
+@student_bp.route('/assignments/<int:assignment_id>/submit', methods=['GET', 'POST'])
 @login_required
 @role_required('STUDENT')
 def submit_assignment(assignment_id):
-    # Check if can submit
-    check = AssignmentService.can_submit(assignment_id, session['user_id'])
+    """Nộp bài tập - Upload video"""
     
-    if not check['can_submit']:
-        flash(check['message'], 'error')
-        return redirect(url_for('student.my_assignments'))
+    # GET: Hiển thị form upload
+    if request.method == 'GET':
+        assignment = AssignmentService.get_assignment_by_id(assignment_id)
+        
+        if not assignment:
+            flash('Không tìm thấy bài tập', 'error')
+            return redirect(url_for('student.my_assignments'))
+        
+        # Kiểm tra quyền submit
+        check = AssignmentService.can_submit(assignment_id, session['user_id'])
+        if not check['can_submit']:
+            flash(check['message'], 'error')
+            return redirect(url_for('student.my_assignments'))
+        
+        return render_template('student/assignment_submit.html', assignment=assignment)
     
-    # Process submission...
-    # This would typically handle file upload and create TrainingVideo record
-    flash('Chức năng nộp bài đang được phát triển. Vui lòng liên hệ giảng viên.', 'info')
-    return redirect(url_for('student.my_assignments'))
+    # POST: Xử lý upload video
+    if request.method == 'POST':
+        # Kiểm tra quyền submit
+        check = AssignmentService.can_submit(assignment_id, session['user_id'])
+        
+        if not check['can_submit']:
+            flash(check['message'], 'error')
+            return redirect(url_for('student.my_assignments'))
+        
+        # Validate file upload
+        if 'video_file' not in request.files:
+            flash('Không tìm thấy file video', 'error')
+            return redirect(url_for('student.submit_assignment', assignment_id=assignment_id))
+        
+        video_file = request.files['video_file']
+        
+        if video_file.filename == '':
+            flash('Chưa chọn file', 'error')
+            return redirect(url_for('student.submit_assignment', assignment_id=assignment_id))
+        
+        # Kiểm tra định dạng file
+        allowed_extensions = {'mp4', 'avi', 'mov', 'mkv'}
+        file_ext = video_file.filename.rsplit('.', 1)[1].lower() if '.' in video_file.filename else ''
+        
+        if file_ext not in allowed_extensions:
+            flash(f'Định dạng không hợp lệ. Chỉ chấp nhận: {", ".join(allowed_extensions)}', 'error')
+            return redirect(url_for('student.submit_assignment', assignment_id=assignment_id))
+        
+        try:
+            # Lấy thông tin assignment
+            assignment = AssignmentService.get_assignment_by_id(assignment_id)
+            
+            # Lưu video với assignment_id
+            video = VideoService.save_video(
+                file=video_file,
+                student_id=session['user_id'],
+                routine_id=assignment.routine_id,
+                assignment_id=assignment_id,
+                notes=request.form.get('notes', '')
+            )
+            
+            # Trigger AI phân tích (nếu có)
+            AIService.process_video_mock(video.video_id)
+            
+            flash('Nộp bài thành công! Hệ thống đang phân tích video...', 'success')
+            return redirect(url_for('student.my_assignments'))
+            
+        except Exception as e:
+            flash(f'Lỗi khi nộp bài: {str(e)}', 'error')
+            return redirect(url_for('student.submit_assignment', assignment_id=assignment_id))
 
 
 @student_bp.route('/my-exams')
