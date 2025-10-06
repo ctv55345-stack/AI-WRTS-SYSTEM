@@ -10,6 +10,9 @@ from app.services.assignment_service import AssignmentService
 from app.services.exam_service import ExamService
 from app.services.video_service import VideoService
 from app.services.ai_service import AIService
+from app.services.analytics_service import AnalyticsService
+from app.services.goal_service import GoalService
+from app.forms.goal_forms import GoalCreateForm
 
 
 student_bp = Blueprint('student', __name__, url_prefix='/student')
@@ -306,3 +309,79 @@ def my_exams():
         else:
             past.append(exam_info)
     return render_template('student/my_exams.html', upcoming=upcoming, past=past)
+
+
+# ============ ANALYTICS & GOALS ============
+
+@student_bp.route('/analytics')
+@login_required
+@role_required('STUDENT')
+def analytics():
+    """Dashboard phân tích học viên"""
+    student_id = session['user_id']
+    
+    overview = AnalyticsService.get_student_overview(student_id)
+    score_data = AnalyticsService.get_score_progression(student_id, days=30)
+    completion = AnalyticsService.get_routine_completion(student_id)
+    strengths = AnalyticsService.get_strengths_weaknesses(student_id)
+    
+    return render_template('student/analytics.html',
+                         overview=overview,
+                         score_data=score_data,
+                         completion=completion,
+                         strengths=strengths)
+
+@student_bp.route('/goals')
+@login_required
+@role_required('STUDENT')
+def goals():
+    """Quản lý mục tiêu"""
+    student_id = session['user_id']
+    active_goals = GoalService.get_student_goals(student_id, status='active')
+    completed_goals = GoalService.get_student_goals(student_id, status='completed')
+    
+    return render_template('student/goals.html',
+                         active_goals=active_goals,
+                         completed_goals=completed_goals)
+
+@student_bp.route('/goals/create', methods=['GET', 'POST'])
+@login_required
+@role_required('STUDENT')
+def create_goal():
+    """Tạo mục tiêu mới"""
+    form = GoalCreateForm()
+    
+    if form.validate_on_submit():
+        data = {
+            'goal_type': form.goal_type.data,
+            'goal_title': form.goal_title.data,
+            'goal_description': form.goal_description.data,
+            'target_value': form.target_value.data,
+            'unit_of_measurement': form.unit_of_measurement.data,
+            'start_date': form.start_date.data,
+            'deadline': form.deadline.data
+        }
+        
+        result = GoalService.create_goal(session['user_id'], data)
+        
+        if result['success']:
+            flash('Tạo mục tiêu thành công!', 'success')
+            return redirect(url_for('student.goals'))
+        else:
+            flash('Có lỗi xảy ra', 'error')
+    
+    return render_template('student/goal_create.html', form=form)
+
+@student_bp.route('/goals/<int:goal_id>/delete', methods=['POST'])
+@login_required
+@role_required('STUDENT')
+def delete_goal(goal_id):
+    """Xóa mục tiêu"""
+    result = GoalService.delete_goal(goal_id)
+    
+    if result['success']:
+        flash('Xóa mục tiêu thành công!', 'success')
+    else:
+        flash(result['message'], 'error')
+    
+    return redirect(url_for('student.goals'))

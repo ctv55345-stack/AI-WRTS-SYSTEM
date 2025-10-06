@@ -57,6 +57,18 @@
         </tr>
     </table>
     
+    <h2>HỖ TRỢ & PHẢN HỒI</h2>
+    <p>
+        <a href="{{ url_for('shared.submit_feedback') }}">Gửi phản hồi</a> |
+        <a href="{{ url_for('shared.my_feedback') }}">Phản hồi của tôi</a>
+    </p>
+    
+    <h2>PHÂN TÍCH & BÁO CÁO</h2>
+    <p>
+        <a href="{{ url_for('manager.analytics') }}">📊 Phân tích toàn hệ thống</a> |
+        <a href="{{ url_for('manager.export_system_report') }}">📄 Xuất báo cáo</a>
+    </p>
+    
     <p>
         <a href="{{ url_for('manager.statistics') }}">Xem chi tiết thống kê</a> |
         <a href="{{ url_for('auth.profile') }}">Thông tin cá nhân</a> |

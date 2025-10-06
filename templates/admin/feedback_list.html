@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head><title>Quản lý phản hồi</title></head>
+<body>
+    <h1>QUẢN LÝ PHẢN HỒI</h1>
+    
+    <p>Filter: 
+        <a href="{{ url_for('admin.feedback_list') }}">Tất cả</a> |
+        <a href="{{ url_for('admin.feedback_list', status='pending') }}">Chờ xử lý</a> |
+        <a href="{{ url_for('admin.feedback_list', status='resolved') }}">Đã giải quyết</a>
+    </p>
+    
+    {% if feedbacks %}
+        <table border="1">
+            <tr>
+                <th>Người gửi</th>
+                <th>Loại</th>
+                <th>Tiêu đề</th>
+                <th>Ưu tiên</th>
+                <th>Trạng thái</th>
+                <th>Ngày gửi</th>
+                <th>Thao tác</th>
+            </tr>
+            {% for fb in feedbacks %}
+            <tr>
+                <td>{{ fb.user.full_name }}</td>
+                <td>{{ fb.feedback_type }}</td>
+                <td>{{ fb.subject }}</td>
+                <td>{{ fb.priority }}</td>
+                <td>{{ fb.feedback_status }}</td>
+                <td>{{ fb.created_at.strftime('%d/%m/%Y') }}</td>
+                <td>
+                    <a href="{{ url_for('admin.feedback_detail', feedback_id=fb.feedback_id) }}">
+                        Xử lý
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Không có phản hồi nào</p>
+    {% endif %}
+</body>
+</html>

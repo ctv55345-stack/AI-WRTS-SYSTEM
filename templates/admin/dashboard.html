@@ -19,8 +19,15 @@
     <h2>QUẢN LÝ</h2>
     <ul>
         <li><a href="{{ url_for('admin.users') }}">Quản lý tài khoản</a></li>
+        <li><a href="{{ url_for('admin.feedback_list') }}">Quản lý phản hồi</a></li>
         <li><a href="{{ url_for('auth.profile') }}">Thông tin cá nhân</a></li>
         <li><a href="{{ url_for('auth.logout') }}">Đăng xuất</a></li>
+    </ul>
+    
+    <h2>HỖ TRỢ & PHẢN HỒI</h2>
+    <ul>
+        <li><a href="{{ url_for('shared.submit_feedback') }}">Gửi phản hồi</a></li>
+        <li><a href="{{ url_for('shared.my_feedback') }}">Phản hồi của tôi</a></li>
     </ul>
 </body>
 </html>

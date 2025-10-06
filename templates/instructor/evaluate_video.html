@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head><title>Chấm điểm video</title></head>
+<body>
+    <h1>CHẤM ĐIỂM VIDEO</h1>
+    
+    <h2>Thông tin</h2>
+    <p><strong>Học viên:</strong> {{ video.student.full_name }}</p>
+    <p><strong>Bài võ:</strong> {{ video.routine.routine_name }}</p>
+    <p><strong>Ngày nộp:</strong> {{ video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</p>
+    
+    <h2>So sánh video</h2>
+    <div style="display: flex; gap: 20px;">
+        <div>
+            <h3>Video học viên</h3>
+            <video controls width="400">
+                <source src="{{ url_for('static', filename=video.video_url.replace('static/', '')) }}" type="video/mp4">
+            </video>
+        </div>
+        
+        <div>
+            <h3>Video mẫu chuẩn</h3>
+            {% if video.routine.reference_video_url %}
+                <video controls width="400">
+                    <source src="{{ video.routine.reference_video_url }}" type="video/mp4">
+                </video>
+            {% else %}
+                <p>Chưa có video mẫu</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if ai_analysis %}
+    <h2>Kết quả AI (Tham khảo)</h2>
+    <table border="1">
+        <tr><td>Điểm tổng AI</td><td><strong>{{ ai_analysis.overall_score }}/100</strong></td></tr>
+        <tr><td>Kỹ thuật</td><td>{{ ai_analysis.technique_score }}/100</td></tr>
+        <tr><td>Tư thế</td><td>{{ ai_analysis.posture_score }}/100</td></tr>
+        <tr><td>Nhịp điệu</td><td>{{ ai_analysis.timing_score }}/100</td></tr>
+    </table>
+    {% endif %}
+    
+    <h2>Chấm điểm thủ công</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <p>{{ form.overall_score.label }}<br>{{ form.overall_score() }}</p>
+        <p>{{ form.technique_score.label }}<br>{{ form.technique_score() }}</p>
+        <p>{{ form.posture_score.label }}<br>{{ form.posture_score() }}</p>
+        <p>{{ form.spirit_score.label }}<br>{{ form.spirit_score() }}</p>
+        
+        <p>{{ form.strengths.label }}<br>{{ form.strengths(rows=4, cols=60) }}</p>
+        <p>{{ form.improvements_needed.label }}<br>{{ form.improvements_needed(rows=4, cols=60) }}</p>
+        <p>{{ form.comments.label }}<br>{{ form.comments(rows=4, cols=60) }}</p>
+        
+        <p>{{ form.is_passed() }} {{ form.is_passed.label }}</p>
+        
+        <p>{{ form.submit() }}</p>
+    </form>
+    
+    <p><a href="{{ url_for('instructor.pending_evaluations') }}">Quay lại</a></p>
+</body>
+</html>

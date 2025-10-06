@@ -1,5 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, session
 from app.services.class_service import ClassService
+from app.services.analytics_service import AnalyticsService
+from app.services.report_service import ReportService
 from app.utils.decorators import login_required, role_required
 from app.forms.class_forms import ClassApprovalForm
 
@@ -68,3 +70,31 @@ def review_class(class_id: int):
 def all_classes():
     classes = ClassService.get_all_classes()
     return render_template('manager/all_classes.html', classes=classes)
+
+
+# ============ ANALYTICS ============
+
+@manager_bp.route('/analytics')
+@login_required
+@role_required('MANAGER')
+def analytics():
+    """Dashboard phân tích toàn hệ thống"""
+    overview = AnalyticsService.get_system_overview()
+    instructor_perf = AnalyticsService.get_instructor_performance()
+    trends = AnalyticsService.get_trends_data(days=30)
+    
+    return render_template('manager/analytics.html',
+                         overview=overview,
+                         instructor_perf=instructor_perf,
+                         trends=trends)
+
+@manager_bp.route('/report/system')
+@login_required
+@role_required('MANAGER')
+def export_system_report():
+    """Export báo cáo toàn hệ thống (JSON)"""
+    from flask import jsonify
+    
+    report = ReportService.generate_system_report()
+    
+    return jsonify(report)

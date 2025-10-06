@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head><title>Gửi phản hồi</title></head>
+<body>
+    <h1>GỬI PHẢN HỒI</h1>
+    
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <p>{{ form.feedback_type.label }}<br>{{ form.feedback_type() }}</p>
+        <p>{{ form.subject.label }}<br>{{ form.subject(size=60) }}</p>
+        <p>{{ form.content.label }}<br>{{ form.content(rows=8, cols=60) }}</p>
+        
+        <p>{{ form.submit() }}</p>
+    </form>
+</body>
+</html>

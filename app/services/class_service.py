@@ -160,6 +160,8 @@ class ClassService:
 
     @staticmethod
     def enroll_student(class_id: int, student_id: int, notes: str | None = None):
+        from app.models.class_schedule import ClassSchedule
+        
         class_obj = Class.query.get(class_id)
         if not class_obj:
             return {'success': False, 'message': 'Không tìm thấy lớp học'}
@@ -175,6 +177,54 @@ class ClassService:
         if class_obj.current_students >= class_obj.max_students:
             return {'success': False, 'message': 'Lớp đã đầy'}
 
+        new_schedules = ClassSchedule.query.filter_by(
+            class_id=class_id,
+            is_active=True
+        ).all()
+        
+        if new_schedules:
+            # Lấy tất cả lớp học sinh đang học
+            student_enrollments = ClassEnrollment.query.filter_by(
+                student_id=student_id,
+                enrollment_status='active'
+            ).all()
+            
+            student_class_ids = [e.class_id for e in student_enrollments]
+            
+            if student_class_ids:
+                # Lấy tất cả lịch học của các lớp đang học
+                existing_schedules = ClassSchedule.query.filter(
+                    ClassSchedule.class_id.in_(student_class_ids),
+                    ClassSchedule.is_active == True
+                ).all()
+                
+                # Kiểm tra conflict
+                for new_sch in new_schedules:
+                    for exist_sch in existing_schedules:
+                        # Kiểm tra cùng ngày
+                        if new_sch.day_of_week == exist_sch.day_of_week:
+                            # Kiểm tra trùng giờ
+                            if (new_sch.time_start < exist_sch.time_end and 
+                                new_sch.time_end > exist_sch.time_start):
+                                
+                                days_map = {
+                                    'monday': 'Thứ 2', 'tuesday': 'Thứ 3', 
+                                    'wednesday': 'Thứ 4', 'thursday': 'Thứ 5',
+                                    'friday': 'Thứ 6', 'saturday': 'Thứ 7', 
+                                    'sunday': 'Chủ nhật'
+                                }
+                                day_vn = days_map.get(exist_sch.day_of_week, exist_sch.day_of_week)
+                                
+                                conflict_class = Class.query.get(exist_sch.class_id)
+                                conflict_msg = (
+                                    f'Học sinh đã có lịch học vào {day_vn} '
+                                    f'{exist_sch.time_start.strftime("%H:%M")}-'
+                                    f'{exist_sch.time_end.strftime("%H:%M")} '
+                                    f'(Lớp: {conflict_class.class_name})'
+                                )
+                                return {'success': False, 'message': conflict_msg}
+
+        # Nếu không trùng lịch → cho phép enroll
         enrollment = ClassEnrollment(
             class_id=class_id,
             student_id=student_id,
@@ -185,7 +235,6 @@ class ClassService:
         db.session.add(enrollment)
         db.session.commit()
         return {'success': True, 'enrollment': enrollment}
-
     @staticmethod
     def remove_student(enrollment_id: int):
         enrollment = ClassEnrollment.query.get(enrollment_id)

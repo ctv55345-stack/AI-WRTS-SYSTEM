@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head><title>Phân tích giảng viên</title></head>
+<body>
+    <h1>PHÂN TÍCH GIẢNG VIÊN</h1>
+    
+    <h2>Các lớp của tôi</h2>
+    <table border="1">
+        <tr>
+            <th>Lớp</th>
+            <th>Số học viên</th>
+            <th>Thao tác</th>
+        </tr>
+        {% for class in classes %}
+        <tr>
+            <td>{{ class.class_name }}</td>
+            <td>{{ class.current_students }}</td>
+            <td>
+                <a href="{{ url_for('instructor.class_analytics', class_id=class.class_id) }}">
+                    Xem chi tiết
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+    <h2>Thống kê bài võ</h2>
+    <table border="1">
+        <tr>
+            <th>Bài võ</th>
+            <th>Số lần sử dụng</th>
+            <th>Điểm TB</th>
+        </tr>
+        {% for stat in routine_stats %}
+        <tr>
+            <td>{{ stat.routine.routine_name }}</td>
+            <td>{{ stat.usage_count }}</td>
+            <td>{{ stat.avg_score }}/100</td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+    <p><a href="{{ url_for('instructor.dashboard') }}">Về Dashboard</a></p>
+</body>
+</html>

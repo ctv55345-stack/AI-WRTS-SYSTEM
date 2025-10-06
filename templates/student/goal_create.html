@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Tạo mục tiêu</title></head>
+<body>
+    <h1>TẠO MỤC TIÊU MỚI</h1>
+    
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <p>{{ form.goal_type.label }}<br>{{ form.goal_type() }}</p>
+        <p>{{ form.goal_title.label }}<br>{{ form.goal_title(size=60) }}</p>
+        <p>{{ form.goal_description.label }}<br>{{ form.goal_description(rows=4, cols=60) }}</p>
+        <p>{{ form.target_value.label }}<br>{{ form.target_value() }}</p>
+        <p>{{ form.unit_of_measurement.label }}<br>{{ form.unit_of_measurement() }}<br><small>VD: điểm, lần, bài võ</small></p>
+        <p>{{ form.start_date.label }}<br>{{ form.start_date() }}</p>
+        <p>{{ form.deadline.label }}<br>{{ form.deadline() }}</p>
+        
+        <p>{{ form.submit() }}</p>
+    </form>
+    
+    <p><a href="{{ url_for('student.goals') }}">Quay lại</a></p>
+</body>
+</html>

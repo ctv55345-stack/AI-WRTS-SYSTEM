@@ -59,6 +59,23 @@
         <li><a href="{{ url_for('student.my_exams') }}">Bài kiểm tra của tôi</a></li>
         <li><a href="{{ url_for('student_videos.upload') }}">Upload Video Bài Tập</a></li>
         <li><a href="{{ url_for('student_videos.history') }}">Lịch Sử Video</a></li>
+    </ul>
+    
+    <h2>PHÂN TÍCH & MỤC TIÊU</h2>
+    <ul>
+        <li><a href="{{ url_for('student.analytics') }}">📊 Phân tích học tập</a></li>
+        <li><a href="{{ url_for('student.goals') }}">🎯 Mục tiêu của tôi</a></li>
+        <li><a href="{{ url_for('student.create_goal') }}">➕ Tạo mục tiêu mới</a></li>
+    </ul>
+    
+    <h2>HỖ TRỢ & PHẢN HỒI</h2>
+    <ul>
+        <li><a href="{{ url_for('shared.submit_feedback') }}">Gửi phản hồi</a></li>
+        <li><a href="{{ url_for('shared.my_feedback') }}">Phản hồi của tôi</a></li>
+    </ul>
+    
+    <h2>TÀI KHOẢN</h2>
+    <ul>
         <li><a href="{{ url_for('auth.profile') }}">Thông tin cá nhân</a></li>
         <li><a href="{{ url_for('auth.change_password') }}">Đổi mật khẩu</a></li>
         <li><a href="{{ url_for('auth.logout') }}">Đăng xuất</a></li>

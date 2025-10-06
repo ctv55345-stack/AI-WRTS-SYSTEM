@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head><title>Phản hồi của tôi</title></head>
+<body>
+    <h1>PHẢN HỒI CỦA TÔI</h1>
+    
+    <p><a href="{{ url_for('shared.submit_feedback') }}">+ Gửi phản hồi mới</a></p>
+    
+    {% if feedbacks %}
+        <table border="1">
+            <tr>
+                <th>Loại</th>
+                <th>Tiêu đề</th>
+                <th>Trạng thái</th>
+                <th>Ngày gửi</th>
+            </tr>
+            {% for fb in feedbacks %}
+            <tr>
+                <td>{{ fb.feedback_type }}</td>
+                <td>{{ fb.subject }}</td>
+                <td>{{ fb.feedback_status }}</td>
+                <td>{{ fb.created_at.strftime('%d/%m/%Y') }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Chưa có phản hồi nào</p>
+    {% endif %}
+</body>
+</html>

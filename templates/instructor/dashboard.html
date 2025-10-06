@@ -19,7 +19,9 @@
     <p>
         <a href="{{ url_for('instructor.routines') }}">Quản lý bài võ</a> |
         <a href="{{ url_for('instructor.assignments') }}">Quản lý bài tập</a> |
-        <a href="{{ url_for('instructor.exams') }}">Quản lý kiểm tra</a>
+        <a href="{{ url_for('instructor.exams') }}">Quản lý kiểm tra</a> |
+        <a href="{{ url_for('instructor.pending_evaluations') }}">Chấm điểm video</a> |
+        <a href="{{ url_for('instructor.analytics') }}">📊 Phân tích</a>
     </p>
     
     <h2>LỚP HỌC ĐÃ ĐƯỢC DUYỆT ({{ approved_classes|length }})</h2>
@@ -81,6 +83,13 @@
             {% endfor %}
         </tbody>
     </table>
+    
+    <hr>
+    <h2>HỖ TRỢ & PHẢN HỒI</h2>
+    <p>
+        <a href="{{ url_for('shared.submit_feedback') }}">Gửi phản hồi</a> |
+        <a href="{{ url_for('shared.my_feedback') }}">Phản hồi của tôi</a>
+    </p>
     
     <hr>
     <p>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>Chi tiết phản hồi</title></head>
+<body>
+    <h1>CHI TIẾT PHẢN HỒI</h1>
+    
+    <h2>Thông tin</h2>
+    <table border="1">
+        <tr><td>Người gửi</td><td>{{ feedback.user.full_name }} ({{ feedback.user.username }})</td></tr>
+        <tr><td>Loại</td><td>{{ feedback.feedback_type }}</td></tr>
+        <tr><td>Tiêu đề</td><td><strong>{{ feedback.subject }}</strong></td></tr>
+        <tr><td>Nội dung</td><td>{{ feedback.content }}</td></tr>
+        <tr><td>Ngày gửi</td><td>{{ feedback.created_at.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+    </table>
+    
+    <h2>Xử lý phản hồi</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        
+        <p>{{ form.priority.label }}<br>{{ form.priority() }}</p>
+        <p>{{ form.feedback_status.label }}<br>{{ form.feedback_status() }}</p>
+        <p>{{ form.resolution_notes.label }}<br>{{ form.resolution_notes(rows=6, cols=60) }}</p>
+        
+        <p>{{ form.submit() }}</p>
+    </form>
+    
+    <p><a href="{{ url_for('admin.feedback_list') }}">Quay lại</a></p>
+</body>
+</html>

@@ -6,6 +6,9 @@ from app.services.class_service import ClassService
 from app.services.routine_service import RoutineService
 from app.services.assignment_service import AssignmentService
 from app.services.exam_service import ExamService
+from app.services.evaluation_service import EvaluationService
+from app.services.analytics_service import AnalyticsService
+from app.services.report_service import ReportService
 from app.utils.decorators import login_required, role_required
 from app.forms.class_forms import ClassCreateForm, ClassEditForm, EnrollStudentForm
 from app.forms.routine_forms import RoutineCreateForm, CriteriaForm
@@ -13,6 +16,7 @@ from app.forms.assignment_forms import AssignmentCreateForm
 from app.forms.exam_forms import ExamCreateForm
 from app.forms.class_forms import ClassCreateForm, ClassEditForm, EnrollStudentForm
 from app.forms.schedule_forms import ScheduleForm
+from app.forms.evaluation_forms import ManualEvaluationForm
 from app.services.schedule_service import ScheduleService
 from app.models.class_enrollment import ClassEnrollment
 
@@ -652,3 +656,130 @@ def delete_exam(exam_id: int):
     else:
         flash(result['message'], 'error')
         return redirect(url_for('instructor.exam_detail', exam_id=exam_id))
+
+
+# ============ EVALUATION MANAGEMENT ============
+
+@instructor_bp.route('/evaluations/pending')
+@login_required
+@role_required('INSTRUCTOR')
+def pending_evaluations():
+    """Danh sách video chờ chấm điểm"""
+    videos = EvaluationService.get_pending_submissions(session['user_id'])
+    return render_template('instructor/pending_evaluations.html', videos=videos)
+
+@instructor_bp.route('/videos/<int:video_id>/evaluate', methods=['GET', 'POST'])
+@login_required
+@role_required('INSTRUCTOR')
+def evaluate_video(video_id):
+    """Chấm điểm video thủ công"""
+    from app.services.video_service import VideoService
+    
+    video_data = VideoService.get_video_with_analysis(video_id)
+    if not video_data:
+        flash('Không tìm thấy video', 'error')
+        return redirect(url_for('instructor.pending_evaluations'))
+    
+    video = video_data['video']
+    ai_analysis = video_data['ai_analysis']
+    
+    # Kiểm tra quyền (giảng viên của lớp học sinh đang học)
+    from app.models.class_enrollment import ClassEnrollment
+    from app.models.class_model import Class
+    
+    enrollment = ClassEnrollment.query.filter_by(
+        student_id=video.student_id,
+        enrollment_status='active'
+    ).first()
+    
+    if not enrollment or enrollment.class_obj.instructor_id != session['user_id']:
+        flash('Bạn không có quyền chấm điểm video này', 'error')
+        return redirect(url_for('instructor.pending_evaluations'))
+    
+    form = ManualEvaluationForm()
+    
+    if form.validate_on_submit():
+        data = {
+            'overall_score': form.overall_score.data,
+            'technique_score': form.technique_score.data,
+            'posture_score': form.posture_score.data,
+            'spirit_score': form.spirit_score.data,
+            'strengths': form.strengths.data,
+            'improvements_needed': form.improvements_needed.data,
+            'comments': form.comments.data,
+            'is_passed': form.is_passed.data
+        }
+        
+        result = EvaluationService.create_evaluation(
+            video_id, 
+            session['user_id'], 
+            data
+        )
+        
+        if result['success']:
+            flash('Chấm điểm thành công! Đã gửi thông báo cho học viên.', 'success')
+            return redirect(url_for('instructor.pending_evaluations'))
+        else:
+            flash(result['message'], 'error')
+    
+    return render_template('instructor/evaluate_video.html',
+                         video=video,
+                         ai_analysis=ai_analysis,
+                         form=form)
+
+
+# ============ ANALYTICS ============
+
+@instructor_bp.route('/analytics')
+@login_required
+@role_required('INSTRUCTOR')
+def analytics():
+    """Dashboard phân tích giảng viên"""
+    instructor_id = session['user_id']
+    
+    # Lấy các lớp của giảng viên
+    classes = ClassService.get_approved_classes_by_instructor(instructor_id)
+    
+    # Thống kê bài võ
+    routine_stats = AnalyticsService.get_routine_usage_stats(instructor_id)
+    
+    return render_template('instructor/analytics.html',
+                         classes=classes,
+                         routine_stats=routine_stats)
+
+@instructor_bp.route('/classes/<int:class_id>/analytics')
+@login_required
+@role_required('INSTRUCTOR')
+def class_analytics(class_id):
+    """Phân tích chi tiết lớp học"""
+    class_obj = ClassService.get_class_by_id(class_id)
+    
+    if not class_obj or class_obj.instructor_id != session['user_id']:
+        flash('Không tìm thấy lớp học', 'error')
+        return redirect(url_for('instructor.classes'))
+    
+    overview = AnalyticsService.get_class_overview(class_id)
+    rankings = AnalyticsService.get_student_ranking(class_id)
+    
+    return render_template('instructor/class_analytics.html',
+                         class_obj=class_obj,
+                         overview=overview,
+                         rankings=rankings)
+
+@instructor_bp.route('/classes/<int:class_id>/report')
+@login_required
+@role_required('INSTRUCTOR')
+def export_class_report(class_id):
+    """Export báo cáo lớp học (JSON)"""
+    from flask import jsonify
+    
+    class_obj = ClassService.get_class_by_id(class_id)
+    
+    if not class_obj or class_obj.instructor_id != session['user_id']:
+        flash('Không tìm thấy lớp học', 'error')
+        return redirect(url_for('instructor.classes'))
+    
+    report = ReportService.generate_class_report(class_id)
+    
+    # Trả về JSON (có thể mở rộng export PDF/Excel)
+    return jsonify(report)

@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.services.user_service import UserService
 from app.utils.decorators import login_required, role_required
 from app.forms.admin_forms import CreateUserForm, EditUserForm
+from app.forms.feedback_forms import FeedbackResponseForm
+from app.services.feedback_service import FeedbackService
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -92,3 +94,54 @@ def delete_user(user_id):
     else:
         flash(result['message'], 'error')
     return redirect(url_for('admin.users'))
+
+
+# ============ FEEDBACK MANAGEMENT ============
+
+@admin_bp.route('/feedback')
+@login_required
+@role_required('ADMIN')
+def feedback_list():
+    """Danh sách feedback"""
+    status = request.args.get('status')
+    feedback_type = request.args.get('type')
+    
+    filters = {}
+    if status:
+        filters['status'] = status
+    if feedback_type:
+        filters['type'] = feedback_type
+    
+    feedbacks = FeedbackService.get_all_feedback(filters)
+    return render_template('admin/feedback_list.html', feedbacks=feedbacks)
+
+@admin_bp.route('/feedback/<int:feedback_id>', methods=['GET', 'POST'])
+@login_required
+@role_required('ADMIN')
+def feedback_detail(feedback_id):
+    """Chi tiết & xử lý feedback"""
+    feedback = FeedbackService.get_feedback_by_id(feedback_id)
+    if not feedback:
+        flash('Không tìm thấy phản hồi', 'error')
+        return redirect(url_for('admin.feedback_list'))
+    
+    form = FeedbackResponseForm(obj=feedback)
+    
+    if form.validate_on_submit():
+        data = {
+            'priority': form.priority.data,
+            'feedback_status': form.feedback_status.data,
+            'resolution_notes': form.resolution_notes.data
+        }
+        
+        result = FeedbackService.update_feedback(feedback_id, data)
+        
+        if result['success']:
+            flash('Cập nhật phản hồi thành công!', 'success')
+            return redirect(url_for('admin.feedback_list'))
+        else:
+            flash(result['message'], 'error')
+    
+    return render_template('admin/feedback_detail.html', 
+                         feedback=feedback, 
+                         form=form)

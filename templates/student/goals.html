@@ -1,20 +1,128 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Mục Tiêu Học Tập</title>
+    <title>Mục tiêu của tôi</title>
+    <style>
+        .goal-card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: white;
+        }
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .goal-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .goal-deadline {
+            color: #666;
+            font-size: 14px;
+        }
+        .progress-container {
+            background: #f0f0f0;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: width 0.5s ease;
+        }
+        .progress-text {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .completed-badge {
+            background: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
-    <h1>MỤC TIÊU HỌC TẬP</h1>
+    <h1>🎯 MỤC TIÊU CỦA TÔI</h1>
     
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
+    <p><a href="{{ url_for('student.create_goal') }}">➕ Tạo mục tiêu mới</a></p>
+    
+    <h2>Mục tiêu đang hoạt động</h2>
+    {% if active_goals %}
+        {% for goal in active_goals %}
+        <div class="goal-card">
+            <div class="goal-header">
                 <div>
-                    <strong>[{{ category|upper }}]</strong> {{ message }}
+                    <div class="goal-title">{{ goal.goal_title }}</div>
+                    {% if goal.goal_description %}
+                    <div style="color: #666; margin-top: 5px;">{{ goal.goal_description }}</div>
+                    {% endif %}
                 </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+                <div class="goal-deadline">
+                    ⏰ {{ goal.deadline.strftime('%d/%m/%Y') }}
+                </div>
+            </div>
+            
+            {% set progress_percent = ((goal.current_value / goal.target_value * 100)|round(1)) %}
+            
+            <div class="progress-container">
+                <div class="progress-bar" style="width: {{ progress_percent }}%">
+                    {{ progress_percent }}%
+                </div>
+            </div>
+            
+            <div class="progress-text">
+                <strong>{{ goal.current_value }}</strong> / {{ goal.target_value }} {{ goal.unit_of_measurement }}
+            </div>
+            
+            <form method="POST" action="{{ url_for('student.delete_goal', goal_id=goal.goal_id) }}" style="margin-top: 10px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" onclick="return confirm('Xóa mục tiêu?')" 
+                        style="background: #f44336; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">
+                    🗑️ Xóa
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Chưa có mục tiêu nào đang hoạt động</p>
+    {% endif %}
+    
+    <h2>✅ Đã hoàn thành</h2>
+    {% if completed_goals %}
+        {% for goal in completed_goals %}
+        <div class="goal-card" style="background: #f0f9f0; border-color: #4CAF50;">
+            <div class="goal-header">
+                <div>
+                    <div class="goal-title">{{ goal.goal_title }}</div>
+                    <span class="completed-badge">Hoàn thành</span>
+                </div>
+                <div class="goal-deadline">
+                    🎉 {{ goal.completed_at.strftime('%d/%m/%Y') }}
+                </div>
+            </div>
+            <div class="progress-text">
+                {{ goal.target_value }} {{ goal.unit_of_measurement }}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>Chưa hoàn thành mục tiêu nào</p>
+    {% endif %}
     
     <p><a href="{{ url_for('student.dashboard') }}">← Về Dashboard</a></p>
 </body>

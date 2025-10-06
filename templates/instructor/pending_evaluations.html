@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head><title>Video chờ chấm điểm</title></head>
+<body>
+    <h1>VIDEO CHỜ CHẤM ĐIỂM</h1>
+    
+    {% if videos %}
+        <table border="1">
+            <tr>
+                <th>Học viên</th>
+                <th>Bài võ</th>
+                <th>Ngày nộp</th>
+                <th>AI Score</th>
+                <th>Thao tác</th>
+            </tr>
+            {% for video in videos %}
+            <tr>
+                <td>{{ video.student.full_name }}</td>
+                <td>{{ video.routine.routine_name }}</td>
+                <td>{{ video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>
+                    {% if video.ai_analysis %}
+                        {{ video.ai_analysis.overall_score }}/100
+                    {% else %}
+                        Chưa có
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('instructor.evaluate_video', video_id=video.video_id) }}">
+                        Chấm điểm
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Không có video nào chờ chấm điểm</p>
+    {% endif %}
+    
+    <p><a href="{{ url_for('instructor.dashboard') }}">Về Dashboard</a></p>
+</body>
+</html>
