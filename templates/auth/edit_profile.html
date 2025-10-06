@@ -1,54 +1,159 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Chỉnh sửa thông tin</title>
-</head>
-<body>
-    <h1>CHỈNH SỬA THÔNG TIN CÁ NHÂN</h1>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p><strong>[{{ category }}]</strong> {{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
-    <form method="POST">
-        {{ form.hidden_tag() }}
+{% extends "base/base.html" %}
+
+{% block title %}Chỉnh sửa thông tin - AI-WRTS System{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/auth.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar">
+                    {% if user.avatar_url %}
+                        <img src="{{ user.avatar_url }}" alt="{{ user.full_name }}">
+                    {% else %}
+                        {{ user.full_name[0]|upper }}
+                    {% endif %}
+                </div>
+                
+                <label class="profile-avatar-upload">
+                    <input type="file" name="avatar" accept="image/*">
+                    <i class="fas fa-camera"></i>
+                </label>
+            </div>
+            
+            <h1 class="profile-name">Chỉnh sửa thông tin cá nhân</h1>
+            <p class="auth-subtitle">Cập nhật thông tin của bạn</p>
+        </div>
         
-        <p>
-            {{ form.full_name.label }}<br>
-            {{ form.full_name(size=32, value=user.full_name) }}
-        </p>
-        
-        <p>
-            {{ form.phone.label }}<br>
-            {{ form.phone(size=32, value=user.phone or '') }}
-        </p>
-        
-        <p>
-            {{ form.date_of_birth.label }}<br>
-            {{ form.date_of_birth(value=user.date_of_birth or '') }}
-        </p>
-        
-        <p>
-            {{ form.gender.label }}<br>
-            {{ form.gender() }}
-        </p>
-        
-        <p>
-            {{ form.address.label }}<br>
-            {{ form.address(rows=3, cols=40) }}
-        </p>
-        
-        <p>
-            <button type="submit">Lưu thay đổi</button>
-        </p>
-    </form>
-    
-    <p>
-        <a href="{{ url_for('auth.profile') }}">Hủy</a>
-    </p>
-</body>
-</html>
+        <div class="profile-body">
+            <form method="POST" enctype="multipart/form-data" class="auth-form" novalidate>
+                {{ form.hidden_tag() }}
+                
+                <div class="profile-section">
+                    <h3 class="profile-section-title">
+                        <i class="fas fa-user"></i>
+                        Thông tin cơ bản
+                    </h3>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="full_name" class="form-label">
+                                <i class="fas fa-id-card"></i>
+                                {{ form.full_name.label.text }}
+                            </label>
+                            {{ form.full_name(
+                                class="form-control" + (" is-invalid" if form.full_name.errors else ""),
+                                placeholder="Nguyễn Văn A"
+                            ) }}
+                            {% if form.full_name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.full_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">
+                                <i class="fas fa-phone"></i>
+                                {{ form.phone.label.text }}
+                            </label>
+                            {{ form.phone(
+                                class="form-control" + (" is-invalid" if form.phone.errors else ""),
+                                placeholder="0912345678"
+                            ) }}
+                            {% if form.phone.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.phone.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="date_of_birth" class="form-label">
+                                <i class="fas fa-calendar"></i>
+                                {{ form.date_of_birth.label.text }}
+                            </label>
+                            {{ form.date_of_birth(
+                                class="form-control" + (" is-invalid" if form.date_of_birth.errors else ""),
+                                type="date"
+                            ) }}
+                            {% if form.date_of_birth.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.date_of_birth.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="gender" class="form-label">
+                                <i class="fas fa-venus-mars"></i>
+                                {{ form.gender.label.text }}
+                            </label>
+                            {{ form.gender(
+                                class="form-select" + (" is-invalid" if form.gender.errors else "")
+                            ) }}
+                            {% if form.gender.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.gender.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="address" class="form-label">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ form.address.label.text }}
+                            </label>
+                            {{ form.address(
+                                class="form-control" + (" is-invalid" if form.address.errors else ""),
+                                placeholder="123 Đường ABC, Quận XYZ"
+                            ) }}
+                            {% if form.address.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.address.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-actions">
+                    <button type="submit" class="profile-action-btn primary auth-submit-btn">
+                        <i class="fas fa-save btn-text"></i>
+                        <span class="btn-text">Lưu thay đổi</span>
+                        <i class="fas fa-spinner spinner"></i>
+                    </button>
+                    
+                    <a href="{{ url_for('auth.profile') }}" class="profile-action-btn secondary">
+                        <i class="fas fa-times"></i>
+                        <span>Hủy</span>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}
