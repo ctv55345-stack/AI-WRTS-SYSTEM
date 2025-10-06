@@ -30,6 +30,29 @@
         <tr><td>Cập nhật lần cuối</td><td>{{ routine.updated_at.strftime('%d/%m/%Y %H:%M') }}</td></tr>
     </table>
 
+    {% if routine.reference_video_url %}
+    <div class="video-container">
+        <h2>🎥 VIDEO MẪU CHUẨN</h2>
+        
+        {% if routine.reference_video_url.startswith('/static') %}
+            <!-- Video upload lên server -->
+            <video width="640" height="360" controls>
+                <source src="{{ routine.reference_video_url }}" type="video/mp4">
+                Trình duyệt không hỗ trợ video
+            </video>
+        {% else %}
+            <!-- Video từ URL bên ngoài -->
+            <p>
+                <a href="{{ routine.reference_video_url }}" target="_blank" 
+                   style="padding:10px 20px; background:#dc3545; color:white; 
+                          text-decoration:none; border-radius:4px;">
+                    ▶️ Xem video mẫu
+                </a>
+            </p>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <h2>TIÊU CHÍ ĐÁNH GIÁ (Tổng: {{ total_weight }}%)</h2>
     <p><a href="{{ url_for('instructor.add_criteria', routine_id=routine.routine_id) }}">+ Thêm tiêu chí</a></p>
 

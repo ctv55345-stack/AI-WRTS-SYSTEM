@@ -1,59 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Student Dashboard</title>
+    <title>Dashboard Học Viên</title>
 </head>
 <body>
-    <h1>HỌC VIÊN DASHBOARD</h1>
+    <h1>DASHBOARD HỌC VIÊN</h1>
+    
+    <p>Xin chào, <strong>{{ session.full_name }}</strong> ({{ session.role_code }})</p>
     
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+                <div>
+                    <strong>[{{ category|upper }}]</strong> {{ message }}
+                </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
     
-    <p>Xin chào, <strong>{{ session.full_name }}</strong></p>
-
     <h2>THỐNG KÊ NHANH</h2>
-    <div>
-        <h3>{{ active_classes }}</h3>
-        <p>Lớp đang học</p>
-    </div>
-    <div>
-        <h3>{{ completed_classes }}</h3>
-        <p>Lớp đã hoàn thành</p>
-    </div>
-
-    <hr>
-
+    <table>
+        <tr>
+            <td>Lớp đang học:</td>
+            <td><strong>{{ active_classes }}</strong></td>
+        </tr>
+        <tr>
+            <td>Lớp đã hoàn thành:</td>
+            <td><strong>{{ completed_classes }}</strong></td>
+        </tr>
+    </table>
+    
     <h2>LỊCH HỌC HÔM NAY</h2>
     {% if today_schedules %}
         {% for schedule in today_schedules %}
         <div>
-            <strong>{{ schedule.class_obj.class_name }}</strong><br>
-            <small>{{ schedule.day_display }}</small> - 
-            {{ schedule.time_start.strftime('%H:%M') }} - {{ schedule.time_end.strftime('%H:%M') }}<br>
-            {% if schedule.location %}
+            <h4>{{ schedule.class_obj.class_name }}</h4>
+            <p>
+                <strong>{{ schedule.time_start.strftime('%H:%M') }} - {{ schedule.time_end.strftime('%H:%M') }}</strong><br>
+                {% if schedule.location %}
                 {{ schedule.location }}<br>
-            {% endif %}
-            <small>Giảng viên: {{ schedule.class_obj.instructor.full_name }}</small>
+                {% endif %}
+                <small>Giảng viên: {{ schedule.class_obj.instructor.full_name }}</small>
+            </p>
+            <p><a href="{{ url_for('student.class_detail', class_id=schedule.class_id) }}">Chi tiết</a></p>
+            <hr>
         </div>
         {% endfor %}
     {% else %}
         <p>Không có lịch học hôm nay</p>
     {% endif %}
-
-    <hr>
-
-    <h2>MENU</h2>
+    
+    <h2>MENU CHỨC NĂNG</h2>
     <ul>
         <li><a href="{{ url_for('student.classes') }}">Lớp học của tôi</a></li>
         <li><a href="{{ url_for('student.all_schedules') }}">Lịch học tuần</a></li>
         <li><a href="{{ url_for('student.routines') }}">Bài võ</a></li>
         <li><a href="{{ url_for('student.my_assignments') }}">Bài tập của tôi</a></li>
         <li><a href="{{ url_for('student.my_exams') }}">Bài kiểm tra của tôi</a></li>
+        <li><a href="{{ url_for('student_videos.upload') }}">Upload Video Bài Tập</a></li>
+        <li><a href="{{ url_for('student_videos.history') }}">Lịch Sử Video</a></li>
         <li><a href="{{ url_for('auth.profile') }}">Thông tin cá nhân</a></li>
         <li><a href="{{ url_for('auth.change_password') }}">Đổi mật khẩu</a></li>
         <li><a href="{{ url_for('auth.logout') }}">Đăng xuất</a></li>

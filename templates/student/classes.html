@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Lớp học của tôi</title>
+    <title>Lớp Học Của Tôi</title>
 </head>
 <body>
     <h1>LỚP HỌC CỦA TÔI</h1>
@@ -9,56 +9,75 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+                <div>
+                    <strong>[{{ category|upper }}]</strong> {{ message }}
+                </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
     
+    <p><a href="{{ url_for('student.dashboard') }}">← Về Dashboard</a></p>
+    
     {% if enrollments %}
         {% for e in enrollments %}
         <div>
-            <h3>
-                {{ e.class_obj.class_name }} 
-                <span>
-                    {% if e.enrollment_status == 'active' %}Đang học
-                    {% elif e.enrollment_status == 'completed' %}Đã hoàn thành
-                    {% elif e.enrollment_status == 'suspended' %}Tạm dừng
-                    {% elif e.enrollment_status == 'dropped' %}Đã rời
-                    {% endif %}
-                </span>
-            </h3>
-            
-            <p>
-                <strong>Mã lớp:</strong> {{ e.class_obj.class_code }}<br>
-                <strong>Giảng viên:</strong> {{ e.class_obj.instructor.full_name }}<br>
-                <strong>Cấp độ:</strong> 
-                {% if e.class_obj.level == 'beginner' %}Sơ cấp
-                {% elif e.class_obj.level == 'intermediate' %}Trung cấp
-                {% elif e.class_obj.level == 'advanced' %}Nâng cao
-                {% endif %}<br>
-                <strong>Số học viên:</strong> {{ e.class_obj.current_students }}/{{ e.class_obj.max_students }}<br>
-                <strong>Ngày đăng ký:</strong> {{ e.enrolled_at.strftime('%d/%m/%Y %H:%M') }}<br>
+            <h3>{{ e.class_obj.class_name }}</h3>
+            <table>
+                <tr>
+                    <td>Mã lớp:</td>
+                    <td><strong>{{ e.class_obj.class_code }}</strong></td>
+                </tr>
+                <tr>
+                    <td>Giảng viên:</td>
+                    <td>{{ e.class_obj.instructor.full_name }}</td>
+                </tr>
+                <tr>
+                    <td>Cấp độ:</td>
+                    <td>
+                        {% if e.class_obj.level == 'beginner' %}Sơ cấp
+                        {% elif e.class_obj.level == 'intermediate' %}Trung cấp
+                        {% elif e.class_obj.level == 'advanced' %}Nâng cao
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Học viên:</td>
+                    <td>{{ e.class_obj.current_students }}/{{ e.class_obj.max_students }}</td>
+                </tr>
+                <tr>
+                    <td>Trạng thái:</td>
+                    <td>
+                        {% if e.enrollment_status == 'active' %}Đang học
+                        {% elif e.enrollment_status == 'completed' %}Đã hoàn thành
+                        {% elif e.enrollment_status == 'suspended' %}Tạm dừng
+                        {% elif e.enrollment_status == 'dropped' %}Đã rời
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Ngày đăng ký:</td>
+                    <td>{{ e.enrolled_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
                 {% if e.completed_at %}
-                <strong>Ngày hoàn thành:</strong> {{ e.completed_at.strftime('%d/%m/%Y %H:%M') }}<br>
+                <tr>
+                    <td>Ngày hoàn thành:</td>
+                    <td>{{ e.completed_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
                 {% endif %}
                 {% if e.notes %}
-                <strong>Ghi chú:</strong> {{ e.notes }}<br>
+                <tr>
+                    <td>Ghi chú:</td>
+                    <td>{{ e.notes }}</td>
+                </tr>
                 {% endif %}
-            </p>
-            
-            <p>
-                <a href="{{ url_for('student.class_detail', class_id=e.class_id) }}">Xem chi tiết lớp</a>
-            </p>
+            </table>
+            <p><a href="{{ url_for('student.class_detail', class_id=e.class_id) }}">Xem chi tiết lớp</a></p>
+            <hr>
         </div>
         {% endfor %}
     {% else %}
-        <p>Bạn chưa đăng ký lớp học nào.</p>
+        <p>Bạn chưa đăng ký lớp học nào</p>
+        <p>Liên hệ với quản lý để được đăng ký lớp học phù hợp.</p>
     {% endif %}
-    
-    <hr>
-    <p>
-        <a href="{{ url_for('student.dashboard') }}">← Về Dashboard</a>
-    </p>
 </body>
 </html>
-

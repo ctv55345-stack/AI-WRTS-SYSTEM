@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lịch Sử Nộp Bài</title>
+</head>
+<body>
+    <h1>LỊCH SỬ NỘP BÀI VIDEO</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div>
+                    <strong>[{{ category|upper }}]</strong> {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <p><a href="{{ url_for('student_videos.upload') }}">Upload Video Mới</a></p>
+    
+    <h2>BỘ LỌC</h2>
+    <form method="GET">
+        <p>
+            {{ filter_form.routine_id.label }}
+            {{ filter_form.routine_id() }}
+            
+            {{ filter_form.status.label }}
+            {{ filter_form.status() }}
+            
+            <button type="submit">Lọc</button>
+            <a href="{{ url_for('student_videos.history') }}">Xóa lọc</a>
+        </p>
+    </form>
+    
+    <hr>
+    
+    <h2>DANH SÁCH VIDEO ({{ videos|length }})</h2>
+    
+    {% if videos %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Bài Võ</th>
+                    <th>Thời Lượng</th>
+                    <th>Ngày Upload</th>
+                    <th>Trạng Thái</th>
+                    <th>Điểm AI</th>
+                    <th>Thao Tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in videos %}
+                <tr>
+                    <td>
+                        <strong>{{ v.routine.routine_name }}</strong><br>
+                        <small>{{ v.routine.routine_code }}</small>
+                    </td>
+                    <td>{{ v.duration_seconds }}s<br>{{ v.file_size_mb }}MB</td>
+                    <td>{{ v.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>
+                        {% if v.processing_status == 'pending' %}
+                            Chờ xử lý
+                        {% elif v.processing_status == 'processing' %}
+                            Đang xử lý
+                        {% elif v.processing_status == 'completed' %}
+                            Hoàn thành
+                        {% elif v.processing_status == 'failed' %}
+                            Thất bại
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if v.ai_analysis %}
+                            <strong>{{ v.ai_analysis.overall_score }}/100</strong>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if v.processing_status == 'completed' %}
+                            <a href="{{ url_for('student_videos.view_result', video_id=v.video_id) }}">Xem Kết Quả</a><br>
+                            <a href="{{ url_for('student_videos.compare', video_id=v.video_id) }}">So Sánh</a>
+                        {% else %}
+                            <small>Đang xử lý...</small>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Bạn chưa upload video nào</p>
+    {% endif %}
+    
+    <hr>
+    <p><a href="{{ url_for('student.dashboard') }}">Về Dashboard</a></p>
+</body>
+</html>

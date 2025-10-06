@@ -16,7 +16,7 @@
 
     <p><strong>Mã:</strong> {{ routine.routine_code }} (không thể đổi)</p>
 
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
 
         <p>{{ form.routine_name.label }}<br>{{ form.routine_name(size=50) }}</p>
@@ -27,7 +27,53 @@
         <p>{{ form.duration_seconds.label }}<br>{{ form.duration_seconds() }}</p>
         <p>{{ form.total_moves.label }}<br>{{ form.total_moves() }}</p>
         <p>{{ form.pass_threshold.label }}<br>{{ form.pass_threshold() }}</p>
-        <p>{{ form.reference_video_url.label }}<br>{{ form.reference_video_url(size=60) }}</p>
+        
+        <fieldset style="border: 1px solid #ddd; padding: 15px; margin: 10px 0;">
+            <legend><strong>Video mẫu chuẩn</strong></legend>
+            
+            {% if routine.reference_video_url %}
+            <p><strong>Video hiện tại:</strong> 
+                {% if routine.reference_video_url.startswith('/static') %}
+                    <video width="320" height="180" controls>
+                        <source src="{{ routine.reference_video_url }}" type="video/mp4">
+                        Trình duyệt không hỗ trợ video
+                    </video>
+                {% else %}
+                    <a href="{{ routine.reference_video_url }}" target="_blank">Xem video hiện tại</a>
+                {% endif %}
+            </p>
+            {% endif %}
+            
+            <p>
+                {{ form.reference_video_url.label }}<br>
+                {{ form.reference_video_url(size=60, placeholder="https://youtube.com/...") }}
+                <br><small>Nhập URL từ YouTube, Vimeo hoặc link trực tiếp</small>
+                {% if form.reference_video_url.errors %}
+                    {% for error in form.reference_video_url.errors %}
+                        <br><span style="color:red;">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </p>
+            
+            <p style="text-align:center; margin: 10px 0;">
+                <strong>--- HOẶC ---</strong>
+            </p>
+            
+            <p>
+                {{ form.reference_video_file.label }}<br>
+                {{ form.reference_video_file() }}
+                <br><small>Chọn file video (mp4, avi, mov, mkv) - Tối đa 500MB</small>
+                {% if form.reference_video_file.errors %}
+                    {% for error in form.reference_video_file.errors %}
+                        <br><span style="color:red;">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </p>
+            
+            <p style="color:#666; font-size:0.9em;">
+                <strong>Lưu ý:</strong> Nếu upload file, hệ thống sẽ ưu tiên dùng file thay vì URL
+            </p>
+        </fieldset>
 
         <p><button type="submit">Lưu thay đổi</button></p>
     </form>

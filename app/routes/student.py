@@ -190,7 +190,8 @@ def routine_detail(routine_id: int):
 @login_required
 @role_required('STUDENT')
 def my_assignments():
-    assignments = AssignmentService.get_assignments_for_student(session['user_id'])
+    # Use the new method that filters out expired assignments
+    assignments = AssignmentService.get_active_assignments_for_student(session['user_id'])
     from datetime import datetime
     pending = []
     completed = []
@@ -205,6 +206,23 @@ def my_assignments():
         else:
             pending.append(assignment)
     return render_template('student/my_assignments.html', pending=pending, completed=completed)
+
+
+@student_bp.route('/assignments/<int:assignment_id>/submit', methods=['POST'])
+@login_required
+@role_required('STUDENT')
+def submit_assignment(assignment_id):
+    # Check if can submit
+    check = AssignmentService.can_submit(assignment_id, session['user_id'])
+    
+    if not check['can_submit']:
+        flash(check['message'], 'error')
+        return redirect(url_for('student.my_assignments'))
+    
+    # Process submission...
+    # This would typically handle file upload and create TrainingVideo record
+    flash('Chức năng nộp bài đang được phát triển. Vui lòng liên hệ giảng viên.', 'info')
+    return redirect(url_for('student.my_assignments'))
 
 
 @student_bp.route('/my-exams')

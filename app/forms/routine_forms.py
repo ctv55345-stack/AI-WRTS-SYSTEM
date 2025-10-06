@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, TextAreaField, SelectField, IntegerField, DecimalField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError
 
@@ -37,10 +38,27 @@ class RoutineCreateForm(FlaskForm):
         Optional(),
         NumberRange(min=0, max=100, message='Ngưỡng từ 0-100%'),
     ], default=70.00)
-    reference_video_url = StringField('URL video mẫu', validators=[
+    # GIỮ LẠI cả 2 options
+    reference_video_url = StringField('URL video mẫu (YouTube, Vimeo...)', validators=[
         Optional(),
-        Length(max=500, message='URL tối đa 500 ký tự'),
+        Length(max=500, message='URL tối đa 500 ký tự')
     ])
+    
+    reference_video_file = FileField('HOẶC upload video từ máy', validators=[
+        Optional(),
+        FileAllowed(['mp4', 'avi', 'mov', 'mkv'], 'Chỉ chấp nhận video!')
+    ])
+    
+    # Validate: phải có ít nhất 1 trong 2
+    def validate(self, extra_validators=None):
+        if not super().validate(extra_validators):
+            return False
+        
+        if not self.reference_video_url.data and not self.reference_video_file.data:
+            self.reference_video_url.errors.append('Vui lòng nhập URL hoặc upload file video!')
+            return False
+        
+        return True
 
 
 class CriteriaForm(FlaskForm):

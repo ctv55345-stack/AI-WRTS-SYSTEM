@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Lịch học tuần</title>
+    <title>Lịch Học Tuần</title>
 </head>
 <body>
     <h1>LỊCH HỌC TUẦN</h1>
@@ -9,50 +9,48 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
+                <div>
+                    <strong>[{{ category|upper }}]</strong> {{ message }}
+                </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
     
+    <p>
+        <a href="{{ url_for('student.classes') }}">Lớp học của tôi</a> |
+        <a href="{{ url_for('student.dashboard') }}">← Dashboard</a>
+    </p>
+    
+    {% for day_key, day_name in [
+        ('monday', 'Thứ 2'),
+        ('tuesday', 'Thứ 3'),
+        ('wednesday', 'Thứ 4'),
+        ('thursday', 'Thứ 5'),
+        ('friday', 'Thứ 6'),
+        ('saturday', 'Thứ 7'),
+        ('sunday', 'Chủ nhật')
+    ] %}
     <div>
-        {% for day_key, day_name in [
-            ('monday', 'Thứ 2'),
-            ('tuesday', 'Thứ 3'),
-            ('wednesday', 'Thứ 4'),
-            ('thursday', 'Thứ 5'),
-            ('friday', 'Thứ 6'),
-            ('saturday', 'Thứ 7'),
-            ('sunday', 'Chủ nhật')
-        ] %}
-        <div>
-            <h3>{{ day_name }}</h3>
-            
-            {% if schedule_by_day[day_key] %}
-                {% for s in schedule_by_day[day_key] %}
-                <div>
-                    <strong>{{ s.class_obj.class_name }}</strong><br>
-                    {{ s.time_start.strftime('%H:%M') }} - {{ s.time_end.strftime('%H:%M') }}<br>
+        <h3>{{ day_name }}</h3>
+        {% if schedule_by_day[day_key] %}
+            {% for s in schedule_by_day[day_key] %}
+            <div>
+                <h4>{{ s.class_obj.class_name }}</h4>
+                <p>
+                    <strong>{{ s.time_start.strftime('%H:%M') }} - {{ s.time_end.strftime('%H:%M') }}</strong><br>
                     {% if s.location %}
                     {{ s.location }}<br>
                     {% endif %}
-                    <small>GV: {{ s.class_obj.instructor.full_name }}</small><br>
-                    <a href="{{ url_for('student.class_detail', class_id=s.class_id) }}">
-                        <small>Chi tiết</small>
-                    </a>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div>Không có lịch học</div>
-            {% endif %}
-        </div>
-        {% endfor %}
+                    <small>GV: {{ s.class_obj.instructor.full_name }}</small>
+                </p>
+                <p><a href="{{ url_for('student.class_detail', class_id=s.class_id) }}">Chi tiết</a></p>
+                <hr>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>Không có lịch học</p>
+        {% endif %}
     </div>
-    
-    <hr>
-    <p>
-        <a href="{{ url_for('student.classes') }}">Lớp học của tôi</a> |
-        <a href="{{ url_for('student.dashboard') }}">Dashboard</a>
-    </p>
+    {% endfor %}
 </body>
 </html>
-

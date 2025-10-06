@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>So Sánh Video</title>
+</head>
+<body>
+    <h1>SO SÁNH VIDEO</h1>
+    
+    <h2>{{ student_video.routine.routine_name }}</h2>
+    
+    <table border="1" width="100%">
+        <thead>
+            <tr>
+                <th width="50%">VIDEO MẪU CHUẨN</th>
+                <th width="50%">VIDEO CỦA BẠN</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    {% if reference_video %}
+                        <video controls width="100%">
+                            <source src="{{ reference_video }}" type="video/mp4">
+                        </video>
+                    {% else %}
+                        <p>Chưa có video mẫu</p>
+                    {% endif %}
+                </td>
+                <td>
+                    <video controls width="100%">
+                        <source src="{{ url_for('static', filename=student_video.video_url.replace('static/', '')) }}" type="video/mp4">
+                    </video>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <h2>THÔNG TIN VIDEO</h2>
+    <table border="1">
+        <tr>
+            <td>Video Mẫu</td>
+            <td>
+                {% if reference_video %}
+                    <p><strong>Nguồn:</strong> Video chuẩn từ hệ thống</p>
+                    <p><strong>Mục đích:</strong> Tham khảo kỹ thuật chuẩn</p>
+                {% else %}
+                    <p>Chưa có thông tin video mẫu</p>
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>Video Của Bạn</td>
+            <td>
+                <p><strong>Thời lượng:</strong> {{ student_video.duration_seconds }} giây</p>
+                <p><strong>Kích thước:</strong> {{ student_video.file_size_mb }} MB</p>
+                <p><strong>Ngày upload:</strong> {{ student_video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</p>
+            </td>
+        </tr>
+    </table>
+    
+    <hr>
+    <p>
+        <a href="{{ url_for('student_videos.view_result', video_id=student_video.video_id) }}">Xem Kết Quả</a> |
+        <a href="{{ url_for('student_videos.history') }}">Quay Lại</a>
+    </p>
+</body>
+</html>

@@ -2,6 +2,14 @@
 <html>
 <head>
     <title>Gán bài tập mới</title>
+    <style>
+        .datetime-input {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
     <script>
         function toggleFields() {
             var type = document.querySelector('input[name="assignment_type"]:checked').value;
@@ -40,7 +48,16 @@
             <p>{{ form.assigned_to_class.label }}<br>{{ form.assigned_to_class() }}</p>
         </div>
 
-        <p>{{ form.deadline.label }}<br>{{ form.deadline() }}<br><small>Để trống nếu không có deadline</small></p>
+        <p>
+            {{ form.deadline.label }}<br>
+            {{ form.deadline(type='datetime-local', class='datetime-input') }}
+            <br><small>Để trống nếu không có deadline</small>
+            {% if form.deadline.errors %}
+                {% for error in form.deadline.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
         <p>{{ form.priority.label }}<br>{{ form.priority() }}</p>
         <p><label>{{ form.is_mandatory() }} {{ form.is_mandatory.label }}</label></p>
         <p>{{ form.instructions.label }}<br>{{ form.instructions(rows=4, cols=60) }}</p>

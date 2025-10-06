@@ -18,24 +18,38 @@
 
     {% if assignments %}
         {% for a in assignments %}
-        <div>
+        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0; 
+             {% if a.is_expired %}background-color: #f8d7da;{% endif %}">
             <h3>
                 {{ a.routine.routine_name }}
-                <span>{{ 'Cá nhân' if a.assignment_type == 'individual' else 'Lớp học' }}</span>
+                {% if a.is_expired %}
+                    <span style="color: #dc3545; font-weight: bold;">🔒 ĐÃ HẾT HẠN</span>
+                {% elif a.deadline %}
+                    <span style="color: #28a745;">✅ ĐANG MỞ</span>
+                {% endif %}
             </h3>
             <p>
                 <strong>Gán cho:</strong>
                 {% if a.assignment_type == 'individual' %}
-                    {{ a.student.full_name }} ({{ a.student.username }})
+                    {{ a.student.full_name }}
                 {% else %}
                     Lớp {{ a.class_obj.class_name }}
                 {% endif %}<br>
-                <strong>Độ ưu tiên:</strong> {{ a.priority }}<br>
-                {% if a.deadline %}<strong>Deadline:</strong> {{ a.deadline.strftime('%d/%m/%Y %H:%M') }}<br>{% endif %}
+                
+                {% if a.deadline %}
+                <strong>Deadline:</strong> 
+                <span style="{% if a.is_expired %}color: #dc3545;{% endif %}">
+                    {{ a.deadline.strftime('%d/%m/%Y %H:%M') }}
+                    {% if a.is_expired %}(Đã hết hạn){% endif %}
+                </span><br>
+                {% endif %}
+                
                 <strong>Ngày gán:</strong> {{ a.created_at.strftime('%d/%m/%Y %H:%M') }}
             </p>
             <p>
-                <a href="{{ url_for('instructor.assignment_detail', assignment_id=a.assignment_id) }}">Xem chi tiết & trạng thái nộp bài</a>
+                <a href="{{ url_for('instructor.assignment_detail', assignment_id=a.assignment_id) }}">
+                    Xem chi tiết
+                </a>
             </p>
         </div>
         {% endfor %}

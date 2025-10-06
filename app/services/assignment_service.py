@@ -94,4 +94,49 @@ class AssignmentService:
         ).all() if class_ids else []
         return individual + class_assignments
 
+    @staticmethod
+    def can_submit(assignment_id: int, student_id: int):
+        """Check if student can submit assignment"""
+        assignment = Assignment.query.get(assignment_id)
+        
+        if not assignment:
+            return {'can_submit': False, 'message': 'Bài tập không tồn tại'}
+        
+        # Check deadline
+        if assignment.is_expired:
+            return {'can_submit': False, 'message': 'Bài tập đã quá hạn nộp'}
+        
+        return {'can_submit': True}
+    
+    @staticmethod
+    def get_active_assignments_for_student(student_id: int):
+        """Get active assignments that haven't expired"""
+        from datetime import datetime
+        
+        # Get individual assignments
+        individual = Assignment.query.filter_by(
+            assigned_to_student=student_id,
+            assignment_type='individual'
+        ).all()
+        
+        # Get class assignments
+        from app.models.class_enrollment import ClassEnrollment
+        enrollments = ClassEnrollment.query.filter_by(
+            student_id=student_id,
+            enrollment_status='active'
+        ).all()
+        class_ids = [e.class_id for e in enrollments]
+        
+        class_assignments = Assignment.query.filter(
+            Assignment.assigned_to_class.in_(class_ids),
+            Assignment.assignment_type == 'class'
+        ).all() if class_ids else []
+        
+        all_assignments = individual + class_assignments
+        
+        # Filter out expired assignments
+        active = [a for a in all_assignments if not a.is_expired]
+        
+        return active
+
 

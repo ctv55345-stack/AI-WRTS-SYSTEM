@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kết Quả Phân Tích AI</title>
+</head>
+<body>
+    <h1>KẾT QUẢ PHÂN TÍCH AI</h1>
+    
+    <h2>THÔNG TIN VIDEO</h2>
+    <table border="1">
+        <tr>
+            <td>Bài võ</td>
+            <td><strong>{{ video.routine.routine_name }}</strong></td>
+        </tr>
+        <tr>
+            <td>Ngày upload</td>
+            <td>{{ video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</td>
+        </tr>
+        <tr>
+            <td>Thời lượng</td>
+            <td>{{ video.duration_seconds }} giây</td>
+        </tr>
+        <tr>
+            <td>Kích thước</td>
+            <td>{{ video.file_size_mb }} MB</td>
+        </tr>
+    </table>
+    
+    <h2>VIDEO</h2>
+    <video controls width="640">
+        <source src="{{ url_for('static', filename=video.video_url.replace('static/', '')) }}" type="video/mp4">
+        Trình duyệt không hỗ trợ video
+    </video>
+    
+    {% if ai_analysis %}
+    <h2>ĐIỂM SỐ AI</h2>
+    <table border="1">
+        <tr>
+            <td>Binh khí nhận diện</td>
+            <td><strong>{{ ai_analysis.weapon_detected }}</strong> ({{ ai_analysis.weapon_confidence }}%)</td>
+        </tr>
+        <tr>
+            <td>Điểm tổng</td>
+            <td><strong>{{ ai_analysis.overall_score }}/100</strong></td>
+        </tr>
+        <tr>
+            <td>Điểm kỹ thuật</td>
+            <td>{{ ai_analysis.technique_score }}/100</td>
+        </tr>
+        <tr>
+            <td>Điểm tư thế</td>
+            <td>{{ ai_analysis.posture_score }}/100</td>
+        </tr>
+        <tr>
+            <td>Điểm nhịp điệu</td>
+            <td>{{ ai_analysis.timing_score }}/100</td>
+        </tr>
+    </table>
+    
+    <h2>PHẢN HỒI CHI TIẾT</h2>
+    {% if ai_analysis.detailed_feedback %}
+        {% set feedback = ai_analysis.detailed_feedback %}
+        
+        <h3>ĐIỂM MẠNH</h3>
+        <ul>
+            {% for strength in feedback.strengths %}
+                <li>{{ strength }}</li>
+            {% endfor %}
+        </ul>
+        
+        <h3>ĐIỂM YẾU</h3>
+        <ul>
+            {% for weakness in feedback.weaknesses %}
+                <li>{{ weakness }}</li>
+            {% endfor %}
+        </ul>
+        
+        <h3>GỢI Ý</h3>
+        <ul>
+            {% for suggestion in feedback.suggestions %}
+                <li>{{ suggestion }}</li>
+            {% endfor %}
+        </ul>
+        
+        <p><strong>{{ feedback.overall_comment }}</strong></p>
+    {% endif %}
+    
+    <h2>KEY FRAMES</h2>
+    {% if ai_analysis.key_frames %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Thời điểm</th>
+                    <th>Mô tả</th>
+                    <th>Điểm</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for frame in ai_analysis.key_frames %}
+                <tr>
+                    <td>{{ frame.timestamp }}s</td>
+                    <td>{{ frame.description }}</td>
+                    <td>{{ frame.score }}</td>
+                    <td>{{ frame.note }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+    
+    <h2>LỖI PHÁT HIỆN</h2>
+    {% if ai_analysis.errors_detected %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Loại</th>
+                    <th>Mô tả</th>
+                    <th>Mức độ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for error in ai_analysis.errors_detected %}
+                <tr>
+                    <td>{{ error.type }}</td>
+                    <td>{{ error.description }}</td>
+                    <td>{{ error.severity }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không phát hiện lỗi</p>
+    {% endif %}
+    {% else %}
+        <p>Video đang được xử lý...</p>
+    {% endif %}
+    
+    <hr>
+    <p>
+        <a href="{{ url_for('student_videos.compare', video_id=video.video_id) }}">So Sánh</a> |
+        <a href="{{ url_for('student_videos.history') }}">Quay Lại</a>
+    </p>
+</body>
+</html>

@@ -24,6 +24,7 @@ def create_app():
     # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.student import student_bp
+    from app.routes.student_videos import student_videos_bp
     from app.routes.instructor import instructor_bp
     from app.routes.admin import admin_bp
     from app.routes.manager import manager_bp
@@ -31,6 +32,7 @@ def create_app():
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(student_bp, url_prefix='/student')
+    app.register_blueprint(student_videos_bp)
     app.register_blueprint(instructor_bp, url_prefix='/instructor')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(manager_bp, url_prefix='/manager')

@@ -1,4 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, session
+from flask import Blueprint, render_template, redirect, url_for, flash, session, current_app
+import os
+from werkzeug.utils import secure_filename
+from datetime import datetime
 from app.services.class_service import ClassService
 from app.services.routine_service import RoutineService
 from app.services.assignment_service import AssignmentService
@@ -314,7 +317,32 @@ def create_routine():
     form = RoutineCreateForm()
     weapons = RoutineService.get_all_weapons()
     form.weapon_id.choices = [(0, '-- Chọn binh khí --')] + [(w.weapon_id, w.weapon_name_vi) for w in weapons]
+    
     if form.validate_on_submit():
+        video_url = None
+        
+        # ƯU TIÊN: Upload file nếu có
+        if form.reference_video_file.data:
+            video_file = form.reference_video_file.data
+            filename = secure_filename(video_file.filename)
+            
+            # Tạo tên unique
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"{timestamp}_{filename}"
+            
+            # Lưu file
+            upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'routines')
+            os.makedirs(upload_path, exist_ok=True)
+            
+            filepath = os.path.join(upload_path, filename)
+            video_file.save(filepath)
+            
+            video_url = f"/static/uploads/routines/{filename}"
+            
+        # PHƯƠNG ÁN 2: Dùng URL nếu không upload file
+        elif form.reference_video_url.data:
+            video_url = form.reference_video_url.data
+        
         data = {
             'routine_code': form.routine_code.data,
             'routine_name': form.routine_name.data,
@@ -325,14 +353,16 @@ def create_routine():
             'duration_seconds': form.duration_seconds.data,
             'total_moves': form.total_moves.data,
             'pass_threshold': form.pass_threshold.data,
-            'reference_video_url': form.reference_video_url.data,
+            'reference_video_url': video_url
         }
+        
         result = RoutineService.create_routine(data, session['user_id'])
         if result['success']:
-            flash('Tạo bài võ thành công! (Nháp)', 'success')
+            flash('Tạo bài võ thành công!', 'success')
             return redirect(url_for('instructor.routine_detail', routine_id=result['routine'].routine_id))
         else:
             flash(result['message'], 'error')
+    
     return render_template('instructor/routine_create.html', form=form)
 
 
@@ -360,7 +390,32 @@ def edit_routine(routine_id: int):
     form = RoutineCreateForm(obj=routine)
     weapons = RoutineService.get_all_weapons()
     form.weapon_id.choices = [(w.weapon_id, w.weapon_name_vi) for w in weapons]
+    
     if form.validate_on_submit():
+        video_url = routine.reference_video_url  # Giữ URL cũ nếu không có thay đổi
+        
+        # ƯU TIÊN: Upload file nếu có
+        if form.reference_video_file.data:
+            video_file = form.reference_video_file.data
+            filename = secure_filename(video_file.filename)
+            
+            # Tạo tên unique
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"{timestamp}_{filename}"
+            
+            # Lưu file
+            upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'routines')
+            os.makedirs(upload_path, exist_ok=True)
+            
+            filepath = os.path.join(upload_path, filename)
+            video_file.save(filepath)
+            
+            video_url = f"/static/uploads/routines/{filename}"
+            
+        # PHƯƠNG ÁN 2: Dùng URL nếu không upload file
+        elif form.reference_video_url.data:
+            video_url = form.reference_video_url.data
+        
         data = {
             'routine_name': form.routine_name.data,
             'description': form.description.data,
@@ -370,14 +425,16 @@ def edit_routine(routine_id: int):
             'duration_seconds': form.duration_seconds.data,
             'total_moves': form.total_moves.data,
             'pass_threshold': form.pass_threshold.data,
-            'reference_video_url': form.reference_video_url.data,
+            'reference_video_url': video_url
         }
+        
         result = RoutineService.update_routine(routine_id, data, session['user_id'])
         if result['success']:
             flash('Cập nhật bài võ thành công!', 'success')
             return redirect(url_for('instructor.routine_detail', routine_id=routine_id))
         else:
             flash(result['message'], 'error')
+    
     return render_template('instructor/routine_edit.html', form=form, routine=routine)
 
 

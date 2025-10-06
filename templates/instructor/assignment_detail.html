@@ -51,7 +51,7 @@
     <hr>
     <p>
         <form method="POST" action="{{ url_for('instructor.delete_assignment', assignment_id=assignment.assignment_id) }}">
-            {{ csrf_token() }}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" onclick="return confirm('Xác nhận xóa bài tập?')">Xóa bài tập</button>
         </form>
     </p>

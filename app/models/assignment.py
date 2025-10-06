@@ -20,6 +20,23 @@ class Assignment(db.Model):
     # Relationships
     videos = db.relationship('TrainingVideo', backref='assignment', lazy=True)
     
+    # Properties
+    @property
+    def is_expired(self):
+        """Check if assignment has passed deadline"""
+        if not self.deadline:
+            return False
+        return datetime.utcnow() > self.deadline
+    
+    @property
+    def status(self):
+        """Get assignment status based on deadline"""
+        if not self.deadline:
+            return 'active'
+        if datetime.utcnow() > self.deadline:
+            return 'expired'
+        return 'active'
+    
     # Constraints
     __table_args__ = (
         db.CheckConstraint(

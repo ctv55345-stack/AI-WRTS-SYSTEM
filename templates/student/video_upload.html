@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Video Bài Tập</title>
+</head>
+<body>
+    <h1>UPLOAD VIDEO BÀI TẬP</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div>
+                    <strong>[{{ category|upper }}]</strong> {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        
+        <p>
+            {{ form.routine_id.label }}<br>
+            {{ form.routine_id() }}
+            {% if form.routine_id.errors %}
+                {% for error in form.routine_id.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            {{ form.video_file.label }}<br>
+            {{ form.video_file() }}
+            <br><small>Định dạng: mp4, avi, mov, mkv | Tối đa: 500MB</small>
+            {% if form.video_file.errors %}
+                {% for error in form.video_file.errors %}
+                    <br><span style="color:red;">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </p>
+        
+        <p>
+            {{ form.notes.label }}<br>
+            {{ form.notes(rows=4, cols=50) }}
+            <br><small>VD: Tập ở nhà, chưa thuộc hết động tác...</small>
+        </p>
+        
+        <p>
+            <button type="submit">Upload và Phân Tích</button>
+            <a href="{{ url_for('student_videos.history') }}">Quay lại</a>
+        </p>
+    </form>
+</body>
+</html>
