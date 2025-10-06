@@ -1,78 +1,167 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Bài tập của tôi</title>
-</head>
-<body>
-    <h1>BÀI TẬP CỦA TÔI</h1>
+{% extends 'base/student_base.html' %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block title %}Bài Tập Của Tôi{% endblock %}
 
-    <h2>BÀI TẬP ĐANG CHỜ ({{ pending|length }})</h2>
-    {% if pending %}
-        {% for a in pending %}
-        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0; 
-             {% if a.is_expired %}background-color: #f8d7da;{% endif %}">
-            <h3>
-                {{ a.routine.routine_name }}
-                {% if a.is_expired %}
-                    <span style="color: #dc3545; font-weight: bold;">🔒 ĐÃ HẾT HẠN</span>
-                {% elif a.deadline %}
-                    <span style="color: #28a745;">✅ ĐANG MỞ</span>
-                {% endif %}
-            </h3>
-            <p>
-                <strong>Độ ưu tiên:</strong> {{ a.priority|upper }} |
-                <strong>Bắt buộc:</strong> {{ 'Có' if a.is_mandatory else 'Không' }}<br>
-                {% if a.deadline %}
-                <strong>Deadline:</strong> 
-                <span style="{% if a.is_expired %}color: #dc3545;{% endif %}">
-                    {{ a.deadline.strftime('%d/%m/%Y %H:%M') }}
-                    {% if a.is_expired %}(Đã hết hạn){% endif %}
-                </span><br>
-                {% endif %}
-                <strong>Ngày gán:</strong> {{ a.created_at.strftime('%d/%m/%Y') }}
-            </p>
-            {% if a.instructions %}
-            <p><em>Hướng dẫn: {{ a.instructions }}</em></p>
-            {% endif %}
-            <p>
-                <a href="{{ url_for('student.routine_detail', routine_id=a.routine_id) }}">Xem bài võ</a>
-                {% if not a.is_expired %}
-                    | <a href="{{ url_for('student.submit_assignment', assignment_id=a.assignment_id) }}" 
-                         style="color: #007bff;">Nộp bài</a>
-                {% endif %}
-            </p>
-        </div>
-        {% endfor %}
-    {% else %}
-        <p>Không có bài tập nào đang chờ</p>
-    {% endif %}
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/student.css') }}" rel="stylesheet">
+{% endblock %}
 
-    <hr>
-
-    <h2>BÀI TẬP ĐÃ NỘP ({{ completed|length }})</h2>
-    {% if completed %}
-        {% for item in completed %}
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3>{{ item.assignment.routine.routine_name }}</h3>
-            <p>
-                <strong>Đã nộp:</strong> {{ item.video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}
-            </p>
+            <h1 class="h3 mb-1">Bài Tập Của Tôi</h1>
+            <p class="text-muted mb-0">Quản lý bài tập và deadline</p>
         </div>
-        {% endfor %}
-    {% else %}
-        <p>Chưa có bài tập nào</p>
-    {% endif %}
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
+    </div>
+    
+    <!-- Pending Assignments -->
+    <div class="mb-5">
+        <div class="d-flex align-items-center mb-3">
+            <h4 class="mb-0">
+                <i class="fas fa-hourglass-half text-warning me-2"></i>
+                Bài tập đang chờ
+            </h4>
+            <span class="badge bg-warning text-dark ms-2">{{ pending|length }}</span>
+        </div>
+        
+        {% if pending %}
+            {% for a in pending %}
+            <div class="student-assignment-card pending">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="mb-2">{{ a.routine.routine_name }}</h5>
+                        <span class="student-priority-badge 
+                            {% if a.priority == 'urgent' %}student-priority-urgent
+                            {% elif a.priority == 'high' %}student-priority-high
+                            {% elif a.priority == 'medium' %}student-priority-medium
+                            {% else %}student-priority-low
+                            {% endif %}">
+                            {{ a.priority|upper }}
+                        </span>
+                        {% if a.is_mandatory %}
+                        <span class="badge bg-danger ms-2">Bắt buộc</span>
+                        {% endif %}
+                    </div>
+                    {% if a.is_expired %}
+                    <span class="badge bg-danger">
+                        <i class="fas fa-exclamation-circle me-1"></i>Đã hết hạn
+                    </span>
+                    {% else %}
+                    <span class="badge bg-success">
+                        <i class="fas fa-check-circle me-1"></i>Đang mở
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="student-info-grid mb-3">
+                    {% if a.deadline %}
+                    <div class="student-info-item">
+                        <i class="fas fa-calendar-times"></i>
+                        <div>
+                            <small class="text-muted d-block">Deadline</small>
+                            <strong class="{{ 'student-deadline-warning' if a.is_expired }}">
+                                {{ a.deadline.strftime('%d/%m/%Y %H:%M') }}
+                                {% if a.is_expired %}(Đã hết hạn){% endif %}
+                            </strong>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="student-info-item">
+                        <i class="fas fa-calendar-plus"></i>
+                        <div>
+                            <small class="text-muted d-block">Ngày gán</small>
+                            <strong>{{ a.created_at.strftime('%d/%m/%Y') }}</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if a.instructions %}
+                <div class="p-3 bg-light rounded mb-3">
+                    <small class="text-muted d-block mb-1">
+                        <i class="fas fa-info-circle me-1"></i>Hướng dẫn:
+                    </small>
+                    <p class="mb-0">{{ a.instructions }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('student.routine_detail', routine_id=a.routine_id) }}" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-book-open me-2"></i>Xem bài võ
+                    </a>
+                    {% if not a.is_expired %}
+                    <a href="{{ url_for('student.submit_assignment', assignment_id=a.assignment_id) }}" 
+                       class="btn btn-primary btn-sm">
+                        <i class="fas fa-upload me-2"></i>Nộp bài
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="student-empty-state" style="padding: 2rem;">
+                <i class="fas fa-check-double text-success"></i>
+                <p class="mb-0">Không có bài tập nào đang chờ</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Completed Assignments -->
+    <div>
+        <div class="d-flex align-items-center mb-3">
+            <h4 class="mb-0">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                Bài tập đã nộp
+            </h4>
+            <span class="badge bg-success ms-2">{{ completed|length }}</span>
+        </div>
+        
+        {% if completed %}
+            {% for item in completed %}
+            <div class="student-assignment-card completed">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h5 class="mb-2">{{ item.assignment.routine.routine_name }}</h5>
+                        <div class="student-info-grid">
+                            <div class="student-info-item">
+                                <i class="fas fa-calendar-check"></i>
+                                <div>
+                                    <small class="text-muted d-block">Đã nộp</small>
+                                    <strong>{{ item.video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</strong>
+                                </div>
+                            </div>
+                            {% if item.video.ai_score %}
+                            <div class="student-info-item">
+                                <i class="fas fa-chart-line"></i>
+                                <div>
+                                    <small class="text-muted d-block">Điểm AI</small>
+                                    <strong class="text-success">{{ item.video.ai_score }}%</strong>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span class="badge bg-success" style="font-size: 1rem;">
+                        <i class="fas fa-check me-1"></i>Đã nộp
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="student-empty-state" style="padding: 2rem;">
+                <i class="fas fa-inbox text-muted"></i>
+                <p class="mb-0">Chưa nộp bài tập nào</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
 
-    <hr>
-    <p><a href="{{ url_for('student.dashboard') }}">Về Dashboard</a></p>
-</body>
-</html>
-
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

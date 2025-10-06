@@ -1,132 +1,205 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Chi tiết lớp học</title>
-</head>
-<body>
-    <h1>CHI TIẾT LỚP HỌC</h1>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div>
-                    <strong>[{{ category|upper }}]</strong> {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
-    <h2>THÔNG TIN LỚP</h2>
-    <table>
-        <tr>
-            <td>Mã lớp</td>
-            <td><strong>{{ class_obj.class_code }}</strong></td>
-        </tr>
-        <tr>
-            <td>Tên lớp</td>
-            <td><strong>{{ class_obj.class_name }}</strong></td>
-        </tr>
-        <tr>
-            <td>Mô tả</td>
-            <td>{{ class_obj.description or 'Không có mô tả' }}</td>
-        </tr>
-        <tr>
-            <td>Giảng viên</td>
-            <td>
-                {{ class_obj.instructor.full_name }}<br>
-                <small>Email: {{ class_obj.instructor.email }}</small><br>
-                <small>SĐT: {{ class_obj.instructor.phone or 'Chưa cập nhật' }}</small>
-            </td>
-        </tr>
-        <tr>
-            <td>Cấp độ</td>
-            <td>
-                {% if class_obj.level == 'beginner' %}Sơ cấp
-                {% elif class_obj.level == 'intermediate' %}Trung cấp
-                {% elif class_obj.level == 'advanced' %}Nâng cao
-                {% endif %}
-            </td>
-        </tr>
-        <tr>
-            <td>Số học viên</td>
-            <td>{{ class_obj.current_students }}/{{ class_obj.max_students }} học viên</td>
-        </tr>
-        <tr>
-            <td>Thời gian</td>
-            <td>
-                <strong>Bắt đầu:</strong> {{ class_obj.start_date.strftime('%d/%m/%Y') }}<br>
-                <strong>Kết thúc:</strong> {{ class_obj.end_date.strftime('%d/%m/%Y') if class_obj.end_date else 'Chưa xác định' }}
-            </td>
-        </tr>
-        <tr>
-            <td>Trạng thái đăng ký</td>
-            <td>
-                <strong>
-                {% if enrollment.enrollment_status == 'active' %}Đang học
-                {% elif enrollment.enrollment_status == 'completed' %}Đã hoàn thành
-                {% elif enrollment.enrollment_status == 'suspended' %}Tạm dừng
-                {% elif enrollment.enrollment_status == 'dropped' %}Đã rời
-                {% endif %}
-                </strong><br>
-                <small>Ngày đăng ký: {{ enrollment.enrolled_at.strftime('%d/%m/%Y %H:%M') }}</small>
-                {% if enrollment.completed_at %}
-                <br><small>Ngày hoàn thành: {{ enrollment.completed_at.strftime('%d/%m/%Y %H:%M') }}</small>
-                {% endif %}
-            </td>
-        </tr>
-        {% if enrollment.notes %}
-        <tr>
-            <td>Ghi chú</td>
-            <td>{{ enrollment.notes }}</td>
-        </tr>
-        {% endif %}
-    </table>
-    
-    <hr>
-    
-    <h2>LỊCH HỌC ({{ schedules|length }})</h2>
-    {% if schedules %}
-        <div>
-            {% for s in schedules %}
-            <div>
-                <h4>{{ s.day_display }}</h4>
-                <p>
-                    <strong>{{ s.time_start.strftime('%H:%M') }} - {{ s.time_end.strftime('%H:%M') }}</strong><br>
-                    {% if s.location %}
-                    {{ s.location }}<br>
-                    {% endif %}
-                    {% if s.notes %}
-                    {{ s.notes }}
-                    {% endif %}
-                </p>
-            </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p>Chưa có lịch học cụ thể</p>
-    {% endif %}
-    
-    <hr>
-    
-    <h2>HỌC VIÊN CÙNG LỚP ({{ classmates|length }})</h2>
-    {% if classmates %}
-        {% for cm in classmates %}
-        <div>
-            <strong>{{ cm.student.full_name }}</strong>
-            {% if cm.student.phone %}-{% endif %}
-            <br>
-            <small>Đăng ký: {{ cm.enrolled_at.strftime('%d/%m/%Y') }}</small>
-        </div>
-        {% endfor %}
-    {% else %}
-        <p>Không có học viên khác trong lớp</p>
-    {% endif %}
-    
-    <hr>
-    <p>
-        <a href="{{ url_for('student.classes') }}">← Về danh sách lớp học</a> |
-        <a href="{{ url_for('student.dashboard') }}">🏠 Dashboard</a>
-    </p>
-</body>
-</html>
+{% extends 'base/student_base.html' %}
 
+{% block title %}Chi Tiết Lớp Học{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/student.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">{{ class_obj.class_name }}</h1>
+            <p class="text-muted mb-0">{{ class_obj.class_code }}</p>
+        </div>
+        <a href="{{ url_for('student.classes') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
+    </div>
+    
+    <!-- Class Information -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        Thông tin lớp học
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="student-info-item">
+                                <i class="fas fa-user-tie"></i>
+                                <div>
+                                    <small class="text-muted d-block">Giảng viên</small>
+                                    <strong>{{ class_obj.instructor.full_name }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="student-info-item">
+                                <i class="fas fa-layer-group"></i>
+                                <div>
+                                    <small class="text-muted d-block">Cấp độ</small>
+                                    <span class="student-level-badge 
+                                        {% if class_obj.level == 'beginner' %}student-level-beginner
+                                        {% elif class_obj.level == 'intermediate' %}student-level-intermediate
+                                        {% elif class_obj.level == 'advanced' %}student-level-advanced
+                                        {% endif %}">
+                                        {% if class_obj.level == 'beginner' %}Sơ cấp
+                                        {% elif class_obj.level == 'intermediate' %}Trung cấp
+                                        {% elif class_obj.level == 'advanced' %}Nâng cao
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="student-info-item">
+                                <i class="fas fa-users"></i>
+                                <div>
+                                    <small class="text-muted d-block">Học viên</small>
+                                    <strong>{{ class_obj.current_students }}/{{ class_obj.max_students }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="student-info-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <div>
+                                    <small class="text-muted d-block">Thời gian</small>
+                                    <strong>{{ class_obj.start_date.strftime('%d/%m/%Y') if class_obj.start_date else 'Chưa xác định' }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if class_obj.description %}
+                    <hr>
+                    <div>
+                        <small class="text-muted d-block mb-2">Mô tả</small>
+                        <p class="mb-0">{{ class_obj.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line text-success me-2"></i>
+                        Trạng thái
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <span class="student-status-badge 
+                            {% if enrollment.enrollment_status == 'active' %}student-status-active
+                            {% elif enrollment.enrollment_status == 'completed' %}student-status-completed
+                            {% elif enrollment.enrollment_status == 'suspended' %}student-status-suspended
+                            {% elif enrollment.enrollment_status == 'dropped' %}student-status-dropped
+                            {% endif %}" 
+                            style="font-size: 1rem; padding: 0.5rem 1.5rem;">
+                            {% if enrollment.enrollment_status == 'active' %}Đang học
+                            {% elif enrollment.enrollment_status == 'completed' %}Đã hoàn thành
+                            {% elif enrollment.enrollment_status == 'suspended' %}Tạm dừng
+                            {% elif enrollment.enrollment_status == 'dropped' %}Đã rời
+                            {% endif %}
+                        </span>
+                        <p class="text-muted mt-3 mb-0">
+                            <small>Đăng ký: {{ enrollment.enrolled_at.strftime('%d/%m/%Y') }}</small>
+                        </p>
+                        {% if enrollment.completed_at %}
+                        <p class="text-muted mb-0">
+                            <small>Hoàn thành: {{ enrollment.completed_at.strftime('%d/%m/%Y') }}</small>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Schedules -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-calendar-week text-warning me-2"></i>
+                Lịch học ({{ schedules|length }})
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if schedules %}
+                <div class="row g-3">
+                    {% for s in schedules %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="student-schedule-item">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-calendar-day text-primary me-2"></i>
+                                <strong>{{ s.day_display }}</strong>
+                            </div>
+                            <div class="student-schedule-time">
+                                {{ s.time_start.strftime('%H:%M') }} - {{ s.time_end.strftime('%H:%M') }}
+                            </div>
+                            {% if s.location %}
+                            <small class="text-muted">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ s.location }}
+                            </small>
+                            {% endif %}
+                            {% if s.notes %}
+                            <small class="d-block text-muted mt-1">{{ s.notes }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">Chưa có lịch học cụ thể</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Classmates -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-user-friends text-info me-2"></i>
+                Học viên cùng lớp ({{ classmates|length }})
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if classmates %}
+                <div class="row g-3">
+                    {% for cm in classmates %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="d-flex align-items-center p-3 bg-light rounded">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px; font-weight: 600;">
+                                    {{ cm.student.full_name[0]|upper }}
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <strong class="d-block">{{ cm.student.full_name }}</strong>
+                                <small class="text-muted">Đăng ký: {{ cm.enrolled_at.strftime('%d/%m/%Y') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">Không có học viên khác trong lớp</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

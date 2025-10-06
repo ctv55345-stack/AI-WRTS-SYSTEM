@@ -1,129 +1,153 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Mục tiêu của tôi</title>
-    <style>
-        .goal-card {
-            border: 1px solid #ddd;
-            padding: 20px;
-            margin: 15px 0;
-            border-radius: 8px;
-            background: white;
-        }
-        .goal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        .goal-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        }
-        .goal-deadline {
-            color: #666;
-            font-size: 14px;
-        }
-        .progress-container {
-            background: #f0f0f0;
-            height: 30px;
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #4CAF50, #8BC34A);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            transition: width 0.5s ease;
-        }
-        .progress-text {
-            margin: 5px 0;
-            font-size: 14px;
-            color: #666;
-        }
-        .completed-badge {
-            background: #4CAF50;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-        }
-    </style>
-</head>
-<body>
-    <h1>🎯 MỤC TIÊU CỦA TÔI</h1>
+{% extends 'base/student_base.html' %}
+
+{% block title %}Mục Tiêu Của Tôi{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/student.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-bullseye text-danger me-2"></i>
+                Mục Tiêu Của Tôi
+            </h1>
+            <p class="text-muted mb-0">Theo dõi và quản lý mục tiêu học tập</p>
+        </div>
+        <div>
+            <a href="{{ url_for('student.create_goal') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Tạo mục tiêu mới
+            </a>
+            <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Quay lại
+            </a>
+        </div>
+    </div>
     
-    <p><a href="{{ url_for('student.create_goal') }}">➕ Tạo mục tiêu mới</a></p>
-    
-    <h2>Mục tiêu đang hoạt động</h2>
-    {% if active_goals %}
-        {% for goal in active_goals %}
-        <div class="goal-card">
-            <div class="goal-header">
-                <div>
-                    <div class="goal-title">{{ goal.goal_title }}</div>
-                    {% if goal.goal_description %}
-                    <div style="color: #666; margin-top: 5px;">{{ goal.goal_description }}</div>
-                    {% endif %}
-                </div>
-                <div class="goal-deadline">
-                    ⏰ {{ goal.deadline.strftime('%d/%m/%Y') }}
-                </div>
-            </div>
-            
+    <!-- Active Goals -->
+    <div class="mb-5">
+        <div class="d-flex align-items-center mb-3">
+            <h4 class="mb-0">
+                <i class="fas fa-fire text-warning me-2"></i>
+                Đang hoạt động
+            </h4>
+            <span class="badge bg-warning text-dark ms-2">{{ active_goals|length }}</span>
+        </div>
+        
+        {% if active_goals %}
+            {% for goal in active_goals %}
             {% set progress_percent = ((goal.current_value / goal.target_value * 100)|round(1)) %}
-            
-            <div class="progress-container">
-                <div class="progress-bar" style="width: {{ progress_percent }}%">
-                    {{ progress_percent }}%
+            <div class="student-goal-card">
+                <div class="student-goal-header">
+                    <div class="flex-grow-1">
+                        <h5 class="student-goal-title">{{ goal.goal_title }}</h5>
+                        <span class="student-goal-type-badge">
+                            {% if goal.goal_type == 'score_improvement' %}
+                                <i class="fas fa-chart-line me-1"></i>Cải thiện điểm
+                            {% elif goal.goal_type == 'practice_frequency' %}
+                                <i class="fas fa-redo me-1"></i>Tần suất luyện tập
+                            {% elif goal.goal_type == 'routine_completion' %}
+                                <i class="fas fa-tasks me-1"></i>Hoàn thành bài võ
+                            {% else %}
+                                <i class="fas fa-star me-1"></i>Tùy chỉnh
+                            {% endif %}
+                        </span>
+                        {% if goal.goal_description %}
+                        <p class="student-goal-description">{{ goal.goal_description }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <div class="student-goal-deadline">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            {{ goal.deadline.strftime('%d/%m/%Y') }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="student-progress-container">
+                    <div class="student-progress-bar" style="width: {{ [progress_percent, 100]|min }}%">
+                        {{ progress_percent }}%
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="student-progress-text">
+                        <strong>{{ goal.current_value }}</strong> / {{ goal.target_value }} {{ goal.unit_of_measurement }}
+                    </div>
+                    <form method="POST" action="{{ url_for('student.delete_goal', goal_id=goal.goal_id) }}" class="d-inline">
+                        <button type="submit" 
+                                class="btn btn-outline-danger btn-sm" 
+                                onclick="return confirm('Bạn có chắc muốn xóa mục tiêu này?')"
+                                data-confirm="Xóa mục tiêu này?">
+                            <i class="fas fa-trash me-1"></i>Xóa
+                        </button>
+                    </form>
                 </div>
             </div>
-            
-            <div class="progress-text">
-                <strong>{{ goal.current_value }}</strong> / {{ goal.target_value }} {{ goal.unit_of_measurement }}
+            {% endfor %}
+        {% else %}
+            <div class="student-empty-state" style="padding: 2rem;">
+                <i class="fas fa-bullseye text-muted"></i>
+                <h5 class="student-empty-state-title">Chưa có mục tiêu nào</h5>
+                <p class="student-empty-state-text">
+                    Hãy tạo mục tiêu đầu tiên để theo dõi tiến độ học tập của bạn
+                </p>
+                <a href="{{ url_for('student.create_goal') }}" class="btn btn-primary mt-2">
+                    <i class="fas fa-plus me-2"></i>Tạo mục tiêu ngay
+                </a>
             </div>
-            
-            <form method="POST" action="{{ url_for('student.delete_goal', goal_id=goal.goal_id) }}" style="margin-top: 10px;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" onclick="return confirm('Xóa mục tiêu?')" 
-                        style="background: #f44336; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">
-                    🗑️ Xóa
-                </button>
-            </form>
-        </div>
-        {% endfor %}
-    {% else %}
-        <p>Chưa có mục tiêu nào đang hoạt động</p>
-    {% endif %}
+        {% endif %}
+    </div>
     
-    <h2>✅ Đã hoàn thành</h2>
-    {% if completed_goals %}
-        {% for goal in completed_goals %}
-        <div class="goal-card" style="background: #f0f9f0; border-color: #4CAF50;">
-            <div class="goal-header">
-                <div>
-                    <div class="goal-title">{{ goal.goal_title }}</div>
-                    <span class="completed-badge">Hoàn thành</span>
-                </div>
-                <div class="goal-deadline">
-                    🎉 {{ goal.completed_at.strftime('%d/%m/%Y') }}
-                </div>
-            </div>
-            <div class="progress-text">
-                {{ goal.target_value }} {{ goal.unit_of_measurement }}
-            </div>
+    <!-- Completed Goals -->
+    <div>
+        <div class="d-flex align-items-center mb-3">
+            <h4 class="mb-0">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                Đã hoàn thành
+            </h4>
+            <span class="badge bg-success ms-2">{{ completed_goals|length }}</span>
         </div>
-        {% endfor %}
-    {% else %}
-        <p>Chưa hoàn thành mục tiêu nào</p>
-    {% endif %}
-    
-    <p><a href="{{ url_for('student.dashboard') }}">← Về Dashboard</a></p>
-</body>
-</html>
+        
+        {% if completed_goals %}
+            {% for goal in completed_goals %}
+            <div class="student-goal-card completed">
+                <div class="student-goal-header">
+                    <div>
+                        <h5 class="student-goal-title">
+                            {{ goal.goal_title }}
+                            <span class="badge bg-success ms-2">
+                                <i class="fas fa-check me-1"></i>Hoàn thành
+                            </span>
+                        </h5>
+                        {% if goal.goal_description %}
+                        <p class="student-goal-description">{{ goal.goal_description }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted">
+                            <i class="fas fa-flag-checkered me-1"></i>
+                            {{ goal.completed_at.strftime('%d/%m/%Y') if goal.completed_at else 'N/A' }}
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="student-progress-text">
+                    <i class="fas fa-trophy text-warning me-1"></i>
+                    Đã đạt: <strong>{{ goal.target_value }} {{ goal.unit_of_measurement }}</strong>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted">Chưa hoàn thành mục tiêu nào</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

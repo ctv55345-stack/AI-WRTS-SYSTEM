@@ -1,21 +1,46 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Upload Video</title>
-</head>
-<body>
-    <h1>UPLOAD VIDEO</h1>
-    
+{% extends 'base/student_base.html' %}
+
+{% block title %}Upload Video{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/student.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-upload text-primary me-2"></i>
+                Upload Video
+            </h1>
+            <p class="text-muted mb-0">Bạn có thể chuyển đến trang nộp bài video</p>
+        </div>
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Về Dashboard
+        </a>
+    </div>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div>
-                    <strong>[{{ category|upper }}]</strong> {{ message }}
-                </div>
+            <div class="alert alert-{{ 'success' if category == 'success' else ('danger' if category == 'error' else category) }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
-    
-    <p><a href="{{ url_for('student.dashboard') }}">← Về Dashboard</a></p>
-</body>
-</html>
+
+    <div class="text-center py-5">
+        <p class="text-muted mb-3">Sử dụng trang bên dưới để nộp video bài tập của bạn</p>
+        <a href="{{ url_for('student_videos.upload') }}" class="btn btn-primary">
+            <i class="fas fa-file-video me-2"></i>Tới trang Upload Video
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

@@ -1,145 +1,224 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Kết Quả Phân Tích AI</title>
-</head>
-<body>
-    <h1>KẾT QUẢ PHÂN TÍCH AI</h1>
-    
-    <h2>THÔNG TIN VIDEO</h2>
-    <table border="1">
-        <tr>
-            <td>Bài võ</td>
-            <td><strong>{{ video.routine.routine_name }}</strong></td>
-        </tr>
-        <tr>
-            <td>Ngày upload</td>
-            <td>{{ video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</td>
-        </tr>
-        <tr>
-            <td>Thời lượng</td>
-            <td>{{ video.duration_seconds }} giây</td>
-        </tr>
-        <tr>
-            <td>Kích thước</td>
-            <td>{{ video.file_size_mb }} MB</td>
-        </tr>
-    </table>
-    
-    <h2>VIDEO</h2>
-    <video controls width="640">
-        <source src="{{ url_for('static', filename=video.video_url.replace('static/', '')) }}" type="video/mp4">
-        Trình duyệt không hỗ trợ video
-    </video>
-    
+{% extends 'base/student_base.html' %}
+
+{% block title %}Kết Quả Phân Tích AI{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/student.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-robot text-success me-2"></i>
+                Kết Quả Phân Tích AI
+            </h1>
+            <p class="text-muted mb-0">Đánh giá chi tiết từ hệ thống AI</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('student_videos.compare', video_id=video.video_id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-columns me-2"></i>So sánh
+            </a>
+            <a href="{{ url_for('student_videos.history') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-list me-2"></i>Lịch sử
+            </a>
+        </div>
+    </div>
+
+    <!-- Video + Info -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0"><i class="fas fa-play-circle text-primary me-2"></i>Video</h5>
+                </div>
+                <div class="card-body">
+                    <div class="ratio ratio-16x9">
+                        <video controls>
+                            <source src="{{ url_for('static', filename=video.video_url.replace('static/', '')) }}" type="video/mp4">
+                        </video>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0"><i class="fas fa-info-circle text-info me-2"></i>Thông tin video</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2"><strong>Bài võ:</strong> {{ video.routine.routine_name }}</div>
+                    <div class="mb-2"><strong>Ngày upload:</strong> {{ video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                    <div class="mb-2"><strong>Thời lượng:</strong> {{ video.duration_seconds }} giây</div>
+                    <div class="mb-2"><strong>Kích thước:</strong> {{ video.file_size_mb }} MB</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {% if ai_analysis %}
-    <h2>ĐIỂM SỐ AI</h2>
-    <table border="1">
-        <tr>
-            <td>Binh khí nhận diện</td>
-            <td><strong>{{ ai_analysis.weapon_detected }}</strong> ({{ ai_analysis.weapon_confidence }}%)</td>
-        </tr>
-        <tr>
-            <td>Điểm tổng</td>
-            <td><strong>{{ ai_analysis.overall_score }}/100</strong></td>
-        </tr>
-        <tr>
-            <td>Điểm kỹ thuật</td>
-            <td>{{ ai_analysis.technique_score }}/100</td>
-        </tr>
-        <tr>
-            <td>Điểm tư thế</td>
-            <td>{{ ai_analysis.posture_score }}/100</td>
-        </tr>
-        <tr>
-            <td>Điểm nhịp điệu</td>
-            <td>{{ ai_analysis.timing_score }}/100</td>
-        </tr>
-    </table>
-    
-    <h2>PHẢN HỒI CHI TIẾT</h2>
+    <!-- Scores Overview -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="student-analytics-card">
+                <div class="student-analytics-stat">
+                    <i class="fas fa-star text-warning mb-2" style="font-size: 2rem;"></i>
+                    <div class="student-analytics-value">{{ ai_analysis.overall_score }}/100</div>
+                    <div class="student-analytics-label">Điểm tổng</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="student-analytics-card">
+                <div class="student-analytics-stat">
+                    <i class="fas fa-wrench text-primary mb-2" style="font-size: 2rem;"></i>
+                    <div class="student-analytics-value">{{ ai_analysis.technique_score }}/100</div>
+                    <div class="student-analytics-label">Kỹ thuật</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="student-analytics-card">
+                <div class="student-analytics-stat">
+                    <i class="fas fa-user-friends text-success mb-2" style="font-size: 2rem;"></i>
+                    <div class="student-analytics-value">{{ ai_analysis.posture_score }}/100</div>
+                    <div class="student-analytics-label">Tư thế</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="student-analytics-card">
+                <div class="student-analytics-stat">
+                    <i class="fas fa-drum text-danger mb-2" style="font-size: 2rem;"></i>
+                    <div class="student-analytics-value">{{ ai_analysis.timing_score }}/100</div>
+                    <div class="student-analytics-label">Nhịp điệu</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Feedback -->
     {% if ai_analysis.detailed_feedback %}
-        {% set feedback = ai_analysis.detailed_feedback %}
-        
-        <h3>ĐIỂM MẠNH</h3>
-        <ul>
-            {% for strength in feedback.strengths %}
-                <li>{{ strength }}</li>
-            {% endfor %}
-        </ul>
-        
-        <h3>ĐIỂM YẾU</h3>
-        <ul>
-            {% for weakness in feedback.weaknesses %}
-                <li>{{ weakness }}</li>
-            {% endfor %}
-        </ul>
-        
-        <h3>GỢI Ý</h3>
-        <ul>
-            {% for suggestion in feedback.suggestions %}
-                <li>{{ suggestion }}</li>
-            {% endfor %}
-        </ul>
-        
-        <p><strong>{{ feedback.overall_comment }}</strong></p>
+    {% set feedback = ai_analysis.detailed_feedback %}
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0"><i class="fas fa-thumbs-up text-success me-2"></i>Điểm mạnh</h5>
+                </div>
+                <div class="card-body">
+                    {% if feedback.strengths %}
+                        <ul class="mb-0">
+                            {% for item in feedback.strengths %}<li>{{ item }}</li>{% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted mb-0">Không có dữ liệu</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Điểm yếu</h5>
+                </div>
+                <div class="card-body">
+                    {% if feedback.weaknesses %}
+                        <ul class="mb-0">
+                            {% for item in feedback.weaknesses %}<li>{{ item }}</li>{% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted mb-0">Không có dữ liệu</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0"><i class="fas fa-lightbulb text-warning me-2"></i>Gợi ý</h5>
+        </div>
+        <div class="card-body">
+            {% if feedback.suggestions %}
+                <ul class="mb-0">
+                    {% for item in feedback.suggestions %}<li>{{ item }}</li>{% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted mb-0">Không có dữ liệu</p>
+            {% endif %}
+        </div>
+    </div>
     {% endif %}
-    
-    <h2>KEY FRAMES</h2>
+
+    <!-- Key Frames -->
     {% if ai_analysis.key_frames %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Thời điểm</th>
-                    <th>Mô tả</th>
-                    <th>Điểm</th>
-                    <th>Ghi chú</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for frame in ai_analysis.key_frames %}
-                <tr>
-                    <td>{{ frame.timestamp }}s</td>
-                    <td>{{ frame.description }}</td>
-                    <td>{{ frame.score }}</td>
-                    <td>{{ frame.note }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0"><i class="fas fa-images text-primary me-2"></i>Key Frames</h5>
+        </div>
+        <div class="card-body table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Thời điểm</th>
+                        <th>Mô tả</th>
+                        <th>Điểm</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for frame in ai_analysis.key_frames %}
+                    <tr>
+                        <td>{{ frame.timestamp }}s</td>
+                        <td>{{ frame.description }}</td>
+                        <td>{{ frame.score }}</td>
+                        <td>{{ frame.note }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
     {% endif %}
-    
-    <h2>LỖI PHÁT HIỆN</h2>
-    {% if ai_analysis.errors_detected %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Loại</th>
-                    <th>Mô tả</th>
-                    <th>Mức độ</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for error in ai_analysis.errors_detected %}
-                <tr>
-                    <td>{{ error.type }}</td>
-                    <td>{{ error.description }}</td>
-                    <td>{{ error.severity }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+    <!-- Errors -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0"><i class="fas fa-bug text-danger me-2"></i>Lỗi phát hiện</h5>
+        </div>
+        <div class="card-body table-responsive">
+            {% if ai_analysis.errors_detected %}
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Loại</th>
+                            <th>Mô tả</th>
+                            <th>Mức độ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for error in ai_analysis.errors_detected %}
+                        <tr>
+                            <td>{{ error.type }}</td>
+                            <td>{{ error.description }}</td>
+                            <td>{{ error.severity }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-muted mb-0">Không phát hiện lỗi</p>
+            {% endif %}
+        </div>
+    </div>
     {% else %}
-        <p>Không phát hiện lỗi</p>
+        <div class="alert alert-info">Video đang được xử lý...</div>
     {% endif %}
-    {% else %}
-        <p>Video đang được xử lý...</p>
-    {% endif %}
-    
-    <hr>
-    <p>
-        <a href="{{ url_for('student_videos.compare', video_id=video.video_id) }}">So Sánh</a> |
-        <a href="{{ url_for('student_videos.history') }}">Quay Lại</a>
-    </p>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

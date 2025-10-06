@@ -1,23 +1,181 @@
-<!DOCTYPE html>
-<html>
-<head><title>Tạo mục tiêu</title></head>
-<body>
-    <h1>TẠO MỤC TIÊU MỚI</h1>
+{% extends 'base/student_base.html' %}
+
+{% block title %}Tạo Mục Tiêu Mới{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/student.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-plus-circle text-primary me-2"></i>
+                Tạo Mục Tiêu Mới
+            </h1>
+            <p class="text-muted mb-0">Đặt mục tiêu cụ thể để theo dõi tiến độ</p>
+        </div>
+        <a href="{{ url_for('student.goals') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
+    </div>
     
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        
-        <p>{{ form.goal_type.label }}<br>{{ form.goal_type() }}</p>
-        <p>{{ form.goal_title.label }}<br>{{ form.goal_title(size=60) }}</p>
-        <p>{{ form.goal_description.label }}<br>{{ form.goal_description(rows=4, cols=60) }}</p>
-        <p>{{ form.target_value.label }}<br>{{ form.target_value() }}</p>
-        <p>{{ form.unit_of_measurement.label }}<br>{{ form.unit_of_measurement() }}<br><small>VD: điểm, lần, bài võ</small></p>
-        <p>{{ form.start_date.label }}<br>{{ form.start_date() }}</p>
-        <p>{{ form.deadline.label }}<br>{{ form.deadline() }}</p>
-        
-        <p>{{ form.submit() }}</p>
-    </form>
-    
-    <p><a href="{{ url_for('student.goals') }}">Quay lại</a></p>
-</body>
-</html>
+    <!-- Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form method="POST" data-loading>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Goal Type -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-tag text-primary me-2"></i>
+                                {{ form.goal_type.label.text }}
+                            </label>
+                            {{ form.goal_type(class="form-select") }}
+                            {% if form.goal_type.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.goal_type.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Goal Title -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-heading text-primary me-2"></i>
+                                {{ form.goal_title.label.text }}
+                            </label>
+                            {{ form.goal_title(class="form-control", placeholder="VD: Đạt điểm 80+ trong bài võ Kiếm pháp") }}
+                            {% if form.goal_title.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.goal_title.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Goal Description -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-align-left text-primary me-2"></i>
+                                {{ form.goal_description.label.text }}
+                            </label>
+                            {{ form.goal_description(class="form-control", rows=4, placeholder="Mô tả chi tiết về mục tiêu của bạn...") }}
+                            {% if form.goal_description.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.goal_description.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Target Value & Unit -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-bullseye text-primary me-2"></i>
+                                    {{ form.target_value.label.text }}
+                                </label>
+                                {{ form.target_value(class="form-control", placeholder="VD: 80") }}
+                                {% if form.target_value.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.target_value.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-ruler text-primary me-2"></i>
+                                    {{ form.unit_of_measurement.label.text }}
+                                </label>
+                                {{ form.unit_of_measurement(class="form-control", placeholder="VD: điểm, lần, bài võ") }}
+                                <small class="text-muted">VD: điểm, lần, bài võ, phút...</small>
+                                {% if form.unit_of_measurement.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.unit_of_measurement.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Dates -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-calendar-plus text-primary me-2"></i>
+                                    {{ form.start_date.label.text }}
+                                </label>
+                                {{ form.start_date(class="form-control", type="date") }}
+                                {% if form.start_date.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.start_date.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-calendar-times text-primary me-2"></i>
+                                    {{ form.deadline.label.text }}
+                                </label>
+                                {{ form.deadline(class="form-control", type="date") }}
+                                {% if form.deadline.errors %}
+                                    <div class="text-danger mt-1">
+                                        {% for error in form.deadline.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-primary px-4") }}
+                            <a href="{{ url_for('student.goals') }}" class="btn btn-outline-secondary px-4">
+                                Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Tips -->
+            <div class="card border-0 bg-light mt-3">
+                <div class="card-body">
+                    <h6 class="mb-2">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>
+                        Mẹo đặt mục tiêu hiệu quả
+                    </h6>
+                    <ul class="mb-0 small text-muted">
+                        <li>Đặt mục tiêu cụ thể và có thể đo lường được</li>
+                        <li>Chia mục tiêu lớn thành nhiều mục tiêu nhỏ</li>
+                        <li>Đặt deadline thực tế để tạo động lực</li>
+                        <li>Theo dõi tiến độ thường xuyên</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

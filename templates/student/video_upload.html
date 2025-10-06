@@ -1,55 +1,84 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Upload Video Bài Tập</title>
-</head>
-<body>
-    <h1>UPLOAD VIDEO BÀI TẬP</h1>
-    
+{% extends 'base/student_base.html' %}
+
+{% block title %}Upload Video Bài Tập{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/student.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-upload text-primary me-2"></i>
+                Upload Video Bài Tập
+            </h1>
+            <p class="text-muted mb-0">Tải lên video để hệ thống chấm điểm AI</p>
+        </div>
+        <a href="{{ url_for('student_videos.history') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Lịch sử video
+        </a>
+    </div>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div>
-                    <strong>[{{ category|upper }}]</strong> {{ message }}
-                </div>
+            <div class="alert alert-{{ 'success' if category == 'success' else ('danger' if category == 'error' else category) }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
-    
-    <form method="POST" enctype="multipart/form-data">
-        {{ form.hidden_tag() }}
-        
-        <p>
-            {{ form.routine_id.label }}<br>
-            {{ form.routine_id() }}
-            {% if form.routine_id.errors %}
-                {% for error in form.routine_id.errors %}
-                    <br><span style="color:red;">{{ error }}</span>
-                {% endfor %}
-            {% endif %}
-        </p>
-        
-        <p>
-            {{ form.video_file.label }}<br>
-            {{ form.video_file() }}
-            <br><small>Định dạng: mp4, avi, mov, mkv | Tối đa: 500MB</small>
-            {% if form.video_file.errors %}
-                {% for error in form.video_file.errors %}
-                    <br><span style="color:red;">{{ error }}</span>
-                {% endfor %}
-            {% endif %}
-        </p>
-        
-        <p>
-            {{ form.notes.label }}<br>
-            {{ form.notes(rows=4, cols=50) }}
-            <br><small>VD: Tập ở nhà, chưa thuộc hết động tác...</small>
-        </p>
-        
-        <p>
-            <button type="submit">Upload và Phân Tích</button>
-            <a href="{{ url_for('student_videos.history') }}">Quay lại</a>
-        </p>
-    </form>
-</body>
-</html>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0"><i class="fas fa-file-video text-info me-2"></i>Thông tin nộp bài</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+
+                <div class="mb-3">
+                    <label class="form-label">{{ form.routine_id.label.text }}</label>
+                    {{ form.routine_id(class='form-select') }}
+                    {% if form.routine_id.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.routine_id.errors %}{{ error }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ form.video_file.label.text }}</label>
+                    {{ form.video_file(class='form-control') }}
+                    <div class="form-text">Định dạng: mp4, avi, mov, mkv | Tối đa: 500MB</div>
+                    {% if form.video_file.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.video_file.errors %}{{ error }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ form.notes.label.text }}</label>
+                    {{ form.notes(class='form-control', rows='4') }}
+                    <div class="form-text">VD: Tập ở nhà, chưa thuộc hết động tác...</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-cloud-upload-alt me-2"></i>Upload và Phân Tích
+                    </button>
+                    <a href="{{ url_for('student.dashboard') }}" class="btn btn-light">Về Dashboard</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

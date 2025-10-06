@@ -1,64 +1,93 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Nộp Bài Tập - {{ assignment.routine.routine_name }}</title>
-    <style>
-        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
-        .info-box { background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        .form-group { margin: 20px 0; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="file"] { width: 100%; padding: 10px; }
-        textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background: #4CAF50; color: white; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background: #45a049; }
-        .back-link { color: #666; text-decoration: none; margin-left: 15px; }
-        .deadline { color: #f44336; font-weight: bold; }
-        .flash-message { margin: 15px 0; padding: 10px 15px; border-radius: 4px; }
-        .flash-error { background: #ffebee; color: #c62828; border: 1px solid #c62828; }
-        .flash-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
-        .flash-info { background: #e3f2fd; color: #1565c0; border: 1px solid #1565c0; }
-    </style>
-</head>
-<body>
-    <h1>📤 Nộp Bài Tập</h1>
+{% extends 'base/student_base.html' %}
+
+{% block title %}Nộp Bài Tập - {{ assignment.routine.routine_name }}{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/student.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-paper-plane text-primary me-2"></i>
+                Nộp Bài Tập
+            </h1>
+            <p class="text-muted mb-0">Tải lên video để nộp bài cho bài tập</p>
+        </div>
+        <a href="{{ url_for('student.my_assignments') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
+    </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="flash-message 
-            {% if category == 'error' %}flash-error{% elif category == 'success' %}flash-success{% else %}flash-info{% endif %}">
-            <strong>[{{ category|upper }}]</strong> {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else ('danger' if category == 'error' else category) }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
     {% endwith %}
 
-    <div class="info-box">
-        <h3>{{ assignment.routine.routine_name }}</h3>
-        <p><strong>Mã bài:</strong> {{ assignment.routine.routine_code }}</p>
-        <p><strong>Hạn nộp:</strong> <span class="deadline">{{ assignment.deadline.strftime('%d/%m/%Y %H:%M') }}</span></p>
-        {% if assignment.instructions %}
-        <p><strong>Hướng dẫn:</strong> {{ assignment.instructions }}</p>
-        {% endif %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0"><i class="fas fa-info-circle text-info me-2"></i>Thông tin bài tập</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div><strong>Bài võ:</strong> {{ assignment.routine.routine_name }}</div>
+                    <div><strong>Mã bài:</strong> {{ assignment.routine.routine_code }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div><strong>Hạn nộp:</strong> <span class="text-danger fw-semibold">{{ assignment.deadline.strftime('%d/%m/%Y %H:%M') }}</span></div>
+                </div>
+                {% if assignment.instructions %}
+                <div class="col-12">
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Hướng dẫn:</strong> {{ assignment.instructions }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
-    
-    <form method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="form-group">
-            <label for="video_file">📹 Chọn file video *</label>
-            <input type="file" id="video_file" name="video_file" accept="video/mp4,video/avi,video/mov,video/x-matroska" required>
-            <small>Định dạng: mp4, avi, mov, mkv | Tối đa: 500MB</small>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0"><i class="fas fa-file-video text-primary me-2"></i>Biểu mẫu nộp bài</h5>
         </div>
-        
-        <div class="form-group">
-            <label for="notes">📝 Ghi chú (tùy chọn)</label>
-            <textarea id="notes" name="notes" rows="4" placeholder="VD: Tập ở nhà, chưa thuộc hết động tác..."></textarea>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                    <label for="video_file" class="form-label">📹 Chọn file video *</label>
+                    <input type="file" id="video_file" name="video_file" accept="video/mp4,video/avi,video/mov,video/x-matroska" class="form-control" required>
+                    <div class="form-text">Định dạng: mp4, avi, mov, mkv | Tối đa: 500MB</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="notes" class="form-label">📝 Ghi chú (tùy chọn)</label>
+                    <textarea id="notes" name="notes" rows="4" class="form-control" placeholder="VD: Tập ở nhà, chưa thuộc hết động tác..."></textarea>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check me-2"></i>Nộp Bài
+                    </button>
+                    <a href="{{ url_for('student.my_assignments') }}" class="btn btn-light">Hủy</a>
+                </div>
+            </form>
         </div>
-        
-        <div class="form-group">
-            <button type="submit">✅ Nộp Bài</button>
-            <a href="{{ url_for('student.my_assignments') }}" class="back-link">← Quay lại</a>
-        </div>
-    </form>
-</body>
-</html>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

@@ -1,229 +1,247 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Phân tích học tập</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        .stat-box { 
-            display: inline-block; 
-            border: 1px solid #ddd; 
-            padding: 20px; 
-            margin: 10px; 
-            width: 200px;
-            text-align: center;
-            border-radius: 8px;
-            background: #f9f9f9;
-        }
-        .stat-box h3 { margin: 0 0 10px 0; color: #333; font-size: 14px; }
-        .stat-box p { margin: 0; font-size: 28px; font-weight: bold; color: #4CAF50; }
-        .chart-container { 
-            margin: 20px 0; 
-            padding: 20px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        .chart-wrapper { 
-            position: relative; 
-            height: 400px; 
-            margin: 20px auto;
-        }
-        .progress-bar-container {
-            background: #eee;
-            height: 30px;
-            width: 100%;
-            border-radius: 15px;
-            overflow: hidden;
-        }
-        .progress-bar-fill {
-            background: linear-gradient(90deg, #4CAF50, #8BC34A);
-            height: 100%;
-            transition: width 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <h1>📊 PHÂN TÍCH HỌC TẬP</h1>
-    
-    <h2>Tổng quan</h2>
-    <div class="stat-box">
-        <h3>Tổng video</h3>
-        <p>{{ overview.total_videos }}</p>
-    </div>
-    <div class="stat-box">
-        <h3>Điểm TB (AI)</h3>
-        <p>{{ overview.avg_ai_score }}</p>
-    </div>
-    <div class="stat-box">
-        <h3>Điểm TB (GV)</h3>
-        <p>{{ overview.avg_manual_score }}</p>
-    </div>
-    <div class="stat-box">
-        <h3>Tỷ lệ đạt</h3>
-        <p>{{ overview.pass_rate }}%</p>
-    </div>
-    
-    <!-- LINE CHART: Score Progression -->
-    <div class="chart-container">
-        <h2>📈 Tiến độ điểm số (30 ngày gần nhất)</h2>
-        <div class="chart-wrapper">
-            <canvas id="scoreProgressionChart"></canvas>
+{% extends 'base/student_base.html' %}
+
+{% block title %}Phân Tích Học Tập{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/student.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-chart-line text-success me-2"></i>
+                Phân Tích Học Tập
+            </h1>
+            <p class="text-muted mb-0">Theo dõi tiến độ và hiệu suất của bạn</p>
         </div>
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
     </div>
     
-    <!-- DOUGHNUT CHART: Completion Rate -->
-    <div class="chart-container">
-        <h2>🎯 Hoàn thành bài võ</h2>
-        <p>Đã hoàn thành: <strong>{{ completion.completed }}/{{ completion.total_routines }}</strong> ({{ completion.completion_rate }}%)</p>
-        <div class="chart-wrapper" style="height: 300px;">
-            <canvas id="completionChart"></canvas>
+    <!-- Overview Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="student-analytics-card">
+                <div class="student-analytics-stat">
+                    <i class="fas fa-video text-primary mb-2" style="font-size: 2rem;"></i>
+                    <div class="student-analytics-value">{{ overview.total_videos|default(0) }}</div>
+                    <div class="student-analytics-label">Video đã nộp</div>
+                </div>
+            </div>
         </div>
-    </div>
-    
-    <!-- RADAR CHART: Strengths & Weaknesses -->
-    <div class="chart-container">
-        <h2>⚔️ Điểm mạnh/yếu</h2>
-        <div class="chart-wrapper">
-            <canvas id="radarChart"></canvas>
-        </div>
-    </div>
-    
-    <p><a href="{{ url_for('student.dashboard') }}">← Về Dashboard</a></p>
-    
-    <script>
-        // 1. LINE CHART - Score Progression
-        const scoreData = {{ score_data | tojson }};
         
-        const dates = scoreData.map(item => item.date);
-        const aiScores = scoreData.map(item => item.ai_score);
-        const manualScores = scoreData.map(item => item.manual_score);
+        <div class="col-md-3">
+            <div class="student-analytics-card">
+                <div class="student-analytics-stat">
+                    <i class="fas fa-chart-line text-success mb-2" style="font-size: 2rem;"></i>
+                    <div class="student-analytics-value">{{ (overview.avg_score|default(0))|round(1) }}%</div>
+                    <div class="student-analytics-label">Điểm trung bình</div>
+                </div>
+            </div>
+        </div>
         
-        const ctxLine = document.getElementById('scoreProgressionChart').getContext('2d');
-        new Chart(ctxLine, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [
-                    {
-                        label: 'Điểm AI',
-                        data: aiScores,
-                        borderColor: 'rgb(75, 192, 192)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.3,
+        <div class="col-md-3">
+            <div class="student-analytics-card">
+                <div class="student-analytics-stat">
+                    <i class="fas fa-book-open text-info mb-2" style="font-size: 2rem;"></i>
+                    <div class="student-analytics-value">{{ overview.routines_practiced|default(0) }}</div>
+                    <div class="student-analytics-label">Bài võ đã học</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="student-analytics-card">
+                <div class="student-analytics-stat">
+                    <i class="fas fa-fire text-warning mb-2" style="font-size: 2rem;"></i>
+                    <div class="student-analytics-value">{{ overview.practice_days|default(0) }}</div>
+                    <div class="student-analytics-label">Ngày luyện tập</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Score Progression Chart -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-chart-area text-primary me-2"></i>
+                Tiến độ điểm số (30 ngày gần nhất)
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if score_data and score_data.dates and score_data.dates|length > 0 %}
+                <div class="student-chart-container">
+                    <canvas id="scoreProgressChart"></canvas>
+                </div>
+            {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-chart-line fa-3x mb-3"></i>
+                    <p class="mb-0">Chưa có dữ liệu điểm số</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Routine Completion -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-tasks text-info me-2"></i>
+                Tỷ lệ hoàn thành bài võ
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if completion and completion|length > 0 %}
+                <div class="row g-3">
+                    {% for item in completion %}
+                    <div class="col-md-6">
+                        <div class="mb-2">
+                            <strong>{{ item.routine_name|default('N/A') }}</strong>
+                            <span class="float-end">{{ (item.completion_rate|default(0))|round(1) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar" 
+                                 role="progressbar" 
+                                 style="width: {{ item.completion_rate|default(0) }}%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);"
+                                 aria-valuenow="{{ item.completion_rate|default(0) }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ item.completed|default(0) }}/{{ item.total|default(0) }} bài tập</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-tasks fa-2x mb-2"></i>
+                    <p class="mb-0">Chưa có dữ liệu hoàn thành</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Strengths & Weaknesses -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-star text-warning me-2"></i>
+                        Điểm mạnh
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if strengths and strengths.strengths and strengths.strengths|length > 0 %}
+                        {% for item in strengths.strengths %}
+                        <div class="student-strength-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ item.criteria_name|default('N/A') }}</strong>
+                                    <small class="d-block text-muted">{{ item.routine_name|default('N/A') }}</small>
+                                </div>
+                                <div class="text-success fw-bold">{{ (item.avg_score|default(0))|round(1) }}%</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted mb-0">Chưa có dữ liệu đánh giá</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line text-danger me-2"></i>
+                        Cần cải thiện
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if strengths and strengths.weaknesses and strengths.weaknesses|length > 0 %}
+                        {% for item in strengths.weaknesses %}
+                        <div class="student-weakness-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ item.criteria_name|default('N/A') }}</strong>
+                                    <small class="d-block text-muted">{{ item.routine_name|default('N/A') }}</small>
+                                </div>
+                                <div class="text-danger fw-bold">{{ (item.avg_score|default(0))|round(1) }}%</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted mb-0">Chưa có dữ liệu đánh giá</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+<script>
+    // Score Progress Chart
+    {% if score_data and score_data.dates and score_data.dates|length > 0 %}
+    const ctx = document.getElementById('scoreProgressChart');
+    if (ctx) {
+        const dates = {{ score_data.dates|tojson|safe }};
+        const scores = {{ score_data.scores|tojson|safe }};
+        
+        if (dates && scores && dates.length > 0) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Điểm số',
+                        data: scores,
+                        borderColor: 'rgb(102, 126, 234)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
                         fill: true
-                    },
-                    {
-                        label: 'Điểm Giảng viên',
-                        data: manualScores,
-                        borderColor: 'rgb(255, 99, 132)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        tension: 0.3,
-                        fill: true
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    title: {
-                        display: false
-                    }
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
-                        title: {
-                            display: true,
-                            text: 'Điểm số'
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Điểm: ' + context.parsed.y + '%';
+                                }
+                            }
                         }
                     },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Ngày'
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
                         }
                     }
                 }
-            }
-        });
-        
-        // 2. DOUGHNUT CHART - Completion Rate
-        const ctxDoughnut = document.getElementById('completionChart').getContext('2d');
-        new Chart(ctxDoughnut, {
-            type: 'doughnut',
-            data: {
-                labels: ['Đã hoàn thành', 'Chưa hoàn thành'],
-                datasets: [{
-                    data: [{{ completion.completed }}, {{ completion.total_routines - completion.completed }}],
-                    backgroundColor: [
-                        'rgb(76, 175, 80)',
-                        'rgb(220, 220, 220)'
-                    ],
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
-        
-        // 3. RADAR CHART - Strengths & Weaknesses
-        const ctxRadar = document.getElementById('radarChart').getContext('2d');
-        new Chart(ctxRadar, {
-            type: 'radar',
-            data: {
-                labels: ['Kỹ thuật', 'Tư thế', 'Nhịp điệu'],
-                datasets: [{
-                    label: 'Điểm số của bạn',
-                    data: [
-                        {{ strengths.technique }},
-                        {{ strengths.posture }},
-                        {{ strengths.timing }}
-                    ],
-                    fill: true,
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgb(54, 162, 235)',
-                    pointBackgroundColor: 'rgb(54, 162, 235)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgb(54, 162, 235)'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            stepSize: 20
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-    </script>
-</body>
-</html>
+            });
+        }
+    }
+    {% endif %}
+</script>
+{% endblock %}

@@ -1,61 +1,176 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Chi tiết bài võ</title>
-</head>
-<body>
-    <h1>CHI TIẾT BÀI VÕ</h1>
+{% extends 'base/student_base.html' %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block title %}Chi Tiết Bài Võ{% endblock %}
 
-    <table>
-        <tr><td>Tên bài võ</td><td><strong>{{ routine.routine_name }}</strong></td></tr>
-        <tr><td>Mã bài võ</td><td>{{ routine.routine_code }}</td></tr>
-        <tr><td>Mô tả</td><td>{{ routine.description or 'Không có' }}</td></tr>
-        <tr><td>Binh khí</td><td>{{ routine.weapon.weapon_name_vi }} ({{ routine.weapon.weapon_name_en }})</td></tr>
-        <tr>
-            <td>Cấp độ</td>
-            <td>{% if routine.level == 'beginner' %}Sơ cấp{% elif routine.level == 'intermediate' %}Trung cấp{% elif routine.level == 'advanced' %}Nâng cao{% endif %}</td>
-        </tr>
-        <tr><td>Độ khó</td><td>{{ routine.difficulty_score }}/10</td></tr>
-        <tr><td>Thời lượng</td><td>{{ (routine.duration_seconds / 60)|round(1) }} phút ({{ routine.duration_seconds }} giây)</td></tr>
-        <tr><td>Số động tác</td><td>{{ routine.total_moves }}</td></tr>
-        <tr><td>Ngưỡng đạt</td><td>{{ routine.pass_threshold }}%</td></tr>
-        <tr><td>Giảng viên</td><td>{{ routine.creator.full_name }}</td></tr>
-    </table>
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/student.css') }}" rel="stylesheet">
+{% endblock %}
 
-    {% if routine.reference_video_url %}
-    <div>
-        <h3>VIDEO MẪU CHUẨN</h3>
-        <p><a href="{{ routine.reference_video_url }}" target="_blank">Xem video mẫu</a></p>
-        <p><small>Lưu ý: Xem kỹ video mẫu trước khi tập luyện và quay video của bạn</small></p>
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">{{ routine.routine_name }}</h1>
+            <p class="text-muted mb-0">{{ routine.routine_code }}</p>
+        </div>
+        <a href="{{ url_for('student.routines') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
     </div>
-    {% else %}
-    <p>Bài võ này chưa có video mẫu chuẩn</p>
-    {% endif %}
-
-    {% if criteria %}
-    <h2>TIÊU CHÍ ĐÁNH GIÁ</h2>
-    <p>Bài của bạn sẽ được đánh giá theo các tiêu chí sau:</p>
-    {% for c in criteria %}
-    <div>
-        <strong>{{ c.criteria_name }}</strong> - <strong>{{ c.weight_percentage }}%</strong>
-        {% if c.description %}<br><small>{{ c.description }}</small>{% endif %}
+    
+    <!-- Routine Information -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        Thông tin bài võ
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <span class="student-level-badge 
+                            {% if routine.level == 'beginner' %}student-level-beginner
+                            {% elif routine.level == 'intermediate' %}student-level-intermediate
+                            {% elif routine.level == 'advanced' %}student-level-advanced
+                            {% endif %} me-2" style="font-size: 0.95rem;">
+                            {% if routine.level == 'beginner' %}Sơ cấp
+                            {% elif routine.level == 'intermediate' %}Trung cấp
+                            {% elif routine.level == 'advanced' %}Nâng cao
+                            {% endif %}
+                        </span>
+                        {% if routine.weapon %}
+                        <span class="student-weapon-badge" style="font-size: 0.95rem;">
+                            <i class="fas fa-shield-alt me-1"></i>{{ routine.weapon.weapon_name }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if routine.description %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Mô tả</h6>
+                        <p class="mb-0">{{ routine.description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="student-info-item">
+                                <i class="fas fa-clock"></i>
+                                <div>
+                                    <small class="text-muted d-block">Thời lượng</small>
+                                    <strong>{{ (routine.duration_seconds / 60)|round(1) }} phút</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="student-info-item">
+                                <i class="fas fa-user-tie"></i>
+                                <div>
+                                    <small class="text-muted d-block">Giảng viên</small>
+                                    <strong>{{ routine.creator.full_name }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="student-info-item">
+                                <i class="fas fa-calendar-plus"></i>
+                                <div>
+                                    <small class="text-muted d-block">Ngày tạo</small>
+                                    <strong>{{ routine.created_at.strftime('%d/%m/%Y %H:%M') }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="student-info-item">
+                                <i class="fas fa-calendar-check"></i>
+                                <div>
+                                    <small class="text-muted d-block">Cập nhật</small>
+                                    <strong>{{ routine.updated_at.strftime('%d/%m/%Y %H:%M') }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if routine.reference_video_url %}
+                    <hr>
+                    <div>
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-video me-2"></i>Video hướng dẫn
+                        </h6>
+                        <a href="{{ routine.reference_video_url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-play me-2"></i>Xem video
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-check text-success me-2"></i>
+                        Trạng thái
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <span class="badge bg-success" style="font-size: 1rem; padding: 0.5rem 1.5rem;">
+                        Đã xuất bản
+                    </span>
+                    <p class="text-muted mt-3 mb-0">
+                        <small>Sẵn sàng để học tập</small>
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
-    {% endfor %}
-    {% endif %}
+    
+    <!-- Evaluation Criteria -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-clipboard-check text-warning me-2"></i>
+                Tiêu chí đánh giá ({{ criteria|length }})
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if criteria %}
+                <ul class="student-criteria-list">
+                    {% for c in criteria %}
+                    <li class="student-criteria-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ c.criteria_name }}</strong>
+                                <span class="badge bg-secondary ms-2" style="font-size: 0.75rem;">{{ c.criteria_code }}</span>
+                                {% if c.description %}
+                                <p class="text-muted mb-0 mt-1" style="font-size: 0.9rem;">{{ c.description }}</p>
+                                {% endif %}
+                                {% if c.evaluation_method %}
+                                <small class="text-muted">
+                                    <i class="fas fa-cog me-1"></i>Phương pháp: {{ c.evaluation_method }}
+                                </small>
+                                {% endif %}
+                            </div>
+                            <span class="student-criteria-weight">{{ c.weight_percentage }}%</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted mb-0">Chưa có tiêu chí đánh giá</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-    <hr>
-    <p>
-        <a href="{{ url_for('student.routines') }}">Quay lại</a>
-        <a href="{{ url_for('student.dashboard') }}">Dashboard</a>
-    </p>
-</body>
-</html>
-
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}

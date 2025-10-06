@@ -1,84 +1,157 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard Học Viên</title>
-</head>
-<body>
-    <h1>DASHBOARD HỌC VIÊN</h1>
+{% extends 'base/student_base.html' %}
+
+{% block title %}Dashboard Học Viên{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/student.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Welcome Header -->
+    <div class="mb-4">
+        <h1 class="h3 mb-1">Xin chào, <strong>{{ session.full_name }}</strong></h1>
+        <p class="text-muted">Chào mừng bạn quay trở lại hệ thống</p>
+    </div>
     
-    <p>Xin chào, <strong>{{ session.full_name }}</strong> ({{ session.role_code }})</p>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div>
-                    <strong>[{{ category|upper }}]</strong> {{ message }}
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="student-stat-card">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-book-reader student-stat-icon me-3"></i>
+                    <div>
+                        <h3 class="student-stat-value">{{ active_classes }}</h3>
+                        <p class="student-stat-label mb-0">Lớp đang học</p>
+                    </div>
                 </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
-    <h2>THỐNG KÊ NHANH</h2>
-    <table>
-        <tr>
-            <td>Lớp đang học:</td>
-            <td><strong>{{ active_classes }}</strong></td>
-        </tr>
-        <tr>
-            <td>Lớp đã hoàn thành:</td>
-            <td><strong>{{ completed_classes }}</strong></td>
-        </tr>
-    </table>
-    
-    <h2>LỊCH HỌC HÔM NAY</h2>
-    {% if today_schedules %}
-        {% for schedule in today_schedules %}
-        <div>
-            <h4>{{ schedule.class_obj.class_name }}</h4>
-            <p>
-                <strong>{{ schedule.time_start.strftime('%H:%M') }} - {{ schedule.time_end.strftime('%H:%M') }}</strong><br>
-                {% if schedule.location %}
-                {{ schedule.location }}<br>
-                {% endif %}
-                <small>Giảng viên: {{ schedule.class_obj.instructor.full_name }}</small>
-            </p>
-            <p><a href="{{ url_for('student.class_detail', class_id=schedule.class_id) }}">Chi tiết</a></p>
-            <hr>
+            </div>
         </div>
-        {% endfor %}
-    {% else %}
-        <p>Không có lịch học hôm nay</p>
-    {% endif %}
+        
+        <div class="col-md-6">
+            <div class="student-stat-card variant-pink">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-graduation-cap student-stat-icon me-3"></i>
+                    <div>
+                        <h3 class="student-stat-value">{{ completed_classes }}</h3>
+                        <p class="student-stat-label mb-0">Lớp đã hoàn thành</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
-    <h2>MENU CHỨC NĂNG</h2>
-    <ul>
-        <li><a href="{{ url_for('student.classes') }}">Lớp học của tôi</a></li>
-        <li><a href="{{ url_for('student.all_schedules') }}">Lịch học tuần</a></li>
-        <li><a href="{{ url_for('student.routines') }}">Bài võ</a></li>
-        <li><a href="{{ url_for('student.my_assignments') }}">Bài tập của tôi</a></li>
-        <li><a href="{{ url_for('student.my_exams') }}">Bài kiểm tra của tôi</a></li>
-        <li><a href="{{ url_for('student_videos.upload') }}">Upload Video Bài Tập</a></li>
-        <li><a href="{{ url_for('student_videos.history') }}">Lịch Sử Video</a></li>
-    </ul>
+    <!-- Today's Schedule -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-calendar-day text-primary me-2"></i>
+                Lịch học hôm nay
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if today_schedules %}
+                {% for schedule in today_schedules %}
+                <div class="student-schedule-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-2">{{ schedule.class_obj.class_name }}</h6>
+                            <div class="student-schedule-time">
+                                <i class="fas fa-clock me-2"></i>
+                                {{ schedule.time_start.strftime('%H:%M') }} - {{ schedule.time_end.strftime('%H:%M') }}
+                            </div>
+                            {% if schedule.location %}
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-map-marker-alt me-2"></i>{{ schedule.location }}
+                            </p>
+                            {% endif %}
+                            <small class="text-muted">
+                                <i class="fas fa-chalkboard-teacher me-2"></i>
+                                GV: {{ schedule.class_obj.instructor.full_name }}
+                            </small>
+                        </div>
+                        <a href="{{ url_for('student.class_detail', class_id=schedule.class_id) }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="student-empty-state">
+                    <i class="fas fa-calendar-times"></i>
+                    <p class="mb-0">Không có lịch học hôm nay</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
     
-    <h2>PHÂN TÍCH & MỤC TIÊU</h2>
-    <ul>
-        <li><a href="{{ url_for('student.analytics') }}">📊 Phân tích học tập</a></li>
-        <li><a href="{{ url_for('student.goals') }}">🎯 Mục tiêu của tôi</a></li>
-        <li><a href="{{ url_for('student.create_goal') }}">➕ Tạo mục tiêu mới</a></li>
-    </ul>
-    
-    <h2>HỖ TRỢ & PHẢN HỒI</h2>
-    <ul>
-        <li><a href="{{ url_for('shared.submit_feedback') }}">Gửi phản hồi</a></li>
-        <li><a href="{{ url_for('shared.my_feedback') }}">Phản hồi của tôi</a></li>
-    </ul>
-    
-    <h2>TÀI KHOẢN</h2>
-    <ul>
-        <li><a href="{{ url_for('auth.profile') }}">Thông tin cá nhân</a></li>
-        <li><a href="{{ url_for('auth.change_password') }}">Đổi mật khẩu</a></li>
-        <li><a href="{{ url_for('auth.logout') }}">Đăng xuất</a></li>
-    </ul>
-</body>
-</html>
+    <!-- Quick Actions -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-bolt text-warning me-2"></i>
+                Truy cập nhanh
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <a href="{{ url_for('student.classes') }}" class="student-quick-action">
+                        <i class="fas fa-users text-primary"></i>
+                        <small>Lớp học</small>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="{{ url_for('student.all_schedules') }}" class="student-quick-action">
+                        <i class="fas fa-calendar-week text-success"></i>
+                        <small>Lịch tuần</small>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="{{ url_for('student.routines') }}" class="student-quick-action">
+                        <i class="fas fa-book-open text-info"></i>
+                        <small>Bài võ</small>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="{{ url_for('student.my_assignments') }}" class="student-quick-action">
+                        <i class="fas fa-tasks text-warning"></i>
+                        <small>Bài tập</small>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="{{ url_for('student.my_exams') }}" class="student-quick-action">
+                        <i class="fas fa-file-alt text-danger"></i>
+                        <small>Kiểm tra</small>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="{{ url_for('student_videos.history') }}" class="student-quick-action">
+                        <i class="fas fa-history text-secondary"></i>
+                        <small>Lịch sử Video</small>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a class="student-quick-action {% if request.endpoint == 'student.analytics' %}active{% endif %}" 
+                        href="{{ url_for('student.analytics') }}">
+                        <i class="fas fa-chart-line text-success"></i>
+                        <small>Phân tích</small>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="{{ url_for('student.goals') }}" class="student-quick-action">
+                        <i class="fas fa-bullseye text-danger"></i>
+                        <small>Mục tiêu</small>
+                    </a>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student.js') }}"></script>
+{% endblock %}
