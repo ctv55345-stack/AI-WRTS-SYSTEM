@@ -54,7 +54,7 @@
     
     <div class="class-stat-item">
         <i class="fas fa-chart-line text-success mb-2" style="font-size: 1.5rem;"></i>
-        <div class="class-stat-value">--</div>
+        <div class="class-stat-value">{{ "%.1f"|format(class_overview.avg_score) if class_overview.avg_score > 0 else "--" }}</div>
         <div class="class-stat-label">Điểm TB lớp</div>
     </div>
 </div>
@@ -119,7 +119,9 @@
                 </h5>
             </div>
             <div class="card-body">
-                <canvas id="studentProgressChart" height="250"></canvas>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="studentProgressChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -169,7 +171,12 @@
                             <td>{{ enrollment.student.email }}</td>
                             <td>{{ enrollment.enrolled_at.strftime('%d/%m/%Y') }}</td>
                             <td>
-                                <span class="badge bg-primary">--</span>
+                                {% set avg_score = student_scores.get(enrollment.student_id, 0) %}
+                                {% if avg_score > 0 %}
+                                    <span class="badge bg-primary">{{ "%.1f"|format(avg_score) }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">--</span>
+                                {% endif %}
                             </td>
                             <td>
                                 {% if enrollment.enrollment_status == 'active' %}
@@ -202,6 +209,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Student Progress Chart
@@ -239,7 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-<!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
 
 
 <style>
@@ -254,6 +261,12 @@ document.addEventListener('DOMContentLoaded', function() {
     justify-content: center;
     font-weight: bold;
     font-size: 0.9rem;
+}
+
+/* Chart container styles */
+#studentProgressChart {
+    max-width: 100%;
+    max-height: 100%;
 }
 </style>
 {% endblock %}

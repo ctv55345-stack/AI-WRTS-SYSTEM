@@ -35,9 +35,19 @@
             <i class="fas fa-edit me-2"></i>Chỉnh sửa
         </a>
         {% if not routine.is_published %}
-        <button class="btn btn-success" onclick="publishRoutine()">
-            <i class="fas fa-paper-plane me-2"></i>Xuất bản
-        </button>
+        <form method="POST" action="{{ url_for('instructor.publish_routine', routine_id=routine.routine_id) }}" style="display:inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-success" type="submit" onclick="return confirm('Bạn có chắc muốn xuất bản bài võ này?')">
+                <i class="fas fa-paper-plane me-2"></i>Xuất bản
+            </button>
+        </form>
+        {% else %}
+        <form method="POST" action="{{ url_for('instructor.unpublish_routine', routine_id=routine.routine_id) }}" style="display:inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-warning" type="submit" onclick="return confirm('Gỡ xuất bản bài võ này?')">
+                <i class="fas fa-eye-slash me-2"></i>Gỡ xuất bản
+            </button>
+        </form>
         {% endif %}
     </div>
 </div>
@@ -280,12 +290,6 @@
 </style>
 
 <script>
-function publishRoutine() {
-    if (confirm('Bạn có chắc muốn xuất bản bài võ này?')) {
-        alert('Chức năng đang phát triển');
-    }
-}
-
 function duplicateRoutine() {
     alert('Chức năng đang phát triển');
 }

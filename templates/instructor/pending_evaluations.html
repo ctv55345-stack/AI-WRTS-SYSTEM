@@ -160,10 +160,9 @@
                             </span>
                         </td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-primary" 
-                                    onclick="openEvaluationModal({{ video.video_id }}, '{{ video.student.full_name }}', '{{ video.routine.routine_name }}', '{{ video.video_url }}', '{{ video.routine.demo_video_url or '' }}')">
+                            <a class="btn btn-sm btn-primary" href="{{ url_for('instructor.evaluate_video', video_id=video.video_id) }}">
                                 <i class="fas fa-star me-1"></i>Chấm điểm
-                            </button>
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -384,70 +383,22 @@
 </style>
 
 <script>
-let currentVideoId = null;
-
-function openEvaluationModal(videoId, studentName, routineName, studentVideoUrl, demoVideoUrl) {
-    currentVideoId = videoId;
-    document.getElementById('studentName').textContent = studentName;
-    document.getElementById('routineName').textContent = routineName;
-    document.getElementById('videoIdInput').value = videoId;
-    
-    // Set video sources
-    document.getElementById('studentVideoSource').src = studentVideoUrl;
-    document.getElementById('studentVideo').load();
-    
-    if (demoVideoUrl) {
-        document.getElementById('demoVideoSource').src = demoVideoUrl;
-        document.getElementById('demoVideo').load();
-    }
-    
-    const modal = new bootstrap.Modal(document.getElementById('evaluationModal'));
-    modal.show();
-}
-
 function syncVideos() {
     const demo = document.getElementById('demoVideo');
     const student = document.getElementById('studentVideo');
-    
+    if (!demo || !student) return;
     student.currentTime = demo.currentTime;
-    
     if (demo.paused) {
         student.pause();
     } else {
         student.play();
     }
-    
-    alert('Video đã được đồng bộ!');
 }
 
 function slowMotion() {
     const student = document.getElementById('studentVideo');
+    if (!student) return;
     student.playbackRate = student.playbackRate === 0.5 ? 1.0 : 0.5;
-}
-
-function submitEvaluation() {
-    if (!currentVideoId) return;
-    
-    const formData = new FormData(document.getElementById('evaluationForm'));
-    
-    if (confirm('Xác nhận lưu đánh giá?')) {
-        fetch(`/instructor/videos/${currentVideoId}/evaluate`, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Đánh giá đã được lưu thành công!');
-                location.reload();
-            } else {
-                alert('Lỗi: ' + data.message);
-            }
-        })
-        .catch(error => {
-            alert('Có lỗi xảy ra: ' + error);
-        });
-    }
 }
 </script>
 {% endblock %}

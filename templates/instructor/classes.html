@@ -87,10 +87,10 @@
                             <span class="text-muted">
                                 <i class="fas fa-users me-1"></i>Học viên
                             </span>
-                            <strong>{{ class.current_students }}/{{ class.max_students }}</strong>
+                            <strong>{{ class.actual_students_count }}/{{ class.max_students }}</strong>
                         </div>
                         <div class="progress" style="height: 8px;">
-                            {% set percent = (class.current_students / class.max_students * 100) if class.max_students > 0 else 0 %}
+                            {% set percent = (class.actual_students_count / class.max_students * 100) if class.max_students > 0 else 0 %}
                             <div class="progress-bar" style="width: {{ percent }}%"></div>
                         </div>
                     </div>

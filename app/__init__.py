@@ -3,6 +3,7 @@ from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from app.models import db
 from app.config import Config
+from datetime import datetime
 
 
 migrate = Migrate()
@@ -20,6 +21,13 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     csrf.init_app(app)
+    
+    # Jinja global: now()
+    @app.context_processor
+    def inject_now():
+        return {
+            'now': lambda: datetime.utcnow()
+        }
     
     # Register blueprints
     from app.routes.auth import auth_bp

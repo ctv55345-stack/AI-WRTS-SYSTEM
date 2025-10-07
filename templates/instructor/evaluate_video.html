@@ -1,63 +1,156 @@
-<!DOCTYPE html>
-<html>
-<head><title>Chấm điểm video</title></head>
-<body>
-    <h1>CHẤM ĐIỂM VIDEO</h1>
-    
-    <h2>Thông tin</h2>
-    <p><strong>Học viên:</strong> {{ video.student.full_name }}</p>
-    <p><strong>Bài võ:</strong> {{ video.routine.routine_name }}</p>
-    <p><strong>Ngày nộp:</strong> {{ video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</p>
-    
-    <h2>So sánh video</h2>
-    <div style="display: flex; gap: 20px;">
-        <div>
-            <h3>Video học viên</h3>
-            <video controls width="400">
-                <source src="{{ url_for('static', filename=video.video_url.replace('static/', '')) }}" type="video/mp4">
-            </video>
-        </div>
-        
-        <div>
-            <h3>Video mẫu chuẩn</h3>
-            {% if video.routine.reference_video_url %}
-                <video controls width="400">
-                    <source src="{{ video.routine.reference_video_url }}" type="video/mp4">
-                </video>
-            {% else %}
-                <p>Chưa có video mẫu</p>
-            {% endif %}
+{% extends "base/instructor_base.html" %}
+
+{% block title %}Chấm điểm video - {{ video.routine.routine_name }}{% endblock %}
+
+{% block instructor_content %}
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ url_for('instructor.pending_evaluations') }}">Chấm điểm</a></li>
+                <li class="breadcrumb-item active">{{ video.student.full_name }}</li>
+            </ol>
+        </nav>
+        <h1 class="page-title">
+            <i class="fas fa-star text-warning me-2"></i>
+            Chấm điểm: {{ video.routine.routine_name }}
+        </h1>
+        <div class="mt-2">
+            <span class="badge bg-info me-1">Học viên: {{ video.student.full_name }}</span>
+            <span class="badge bg-secondary me-1">Nộp: {{ video.uploaded_at.strftime('%d/%m/%Y %H:%M') }}</span>
         </div>
     </div>
-    
-    {% if ai_analysis %}
-    <h2>Kết quả AI (Tham khảo)</h2>
-    <table border="1">
-        <tr><td>Điểm tổng AI</td><td><strong>{{ ai_analysis.overall_score }}/100</strong></td></tr>
-        <tr><td>Kỹ thuật</td><td>{{ ai_analysis.technique_score }}/100</td></tr>
-        <tr><td>Tư thế</td><td>{{ ai_analysis.posture_score }}/100</td></tr>
-        <tr><td>Nhịp điệu</td><td>{{ ai_analysis.timing_score }}/100</td></tr>
-    </table>
-    {% endif %}
-    
-    <h2>Chấm điểm thủ công</h2>
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        
-        <p>{{ form.overall_score.label }}<br>{{ form.overall_score() }}</p>
-        <p>{{ form.technique_score.label }}<br>{{ form.technique_score() }}</p>
-        <p>{{ form.posture_score.label }}<br>{{ form.posture_score() }}</p>
-        <p>{{ form.spirit_score.label }}<br>{{ form.spirit_score() }}</p>
-        
-        <p>{{ form.strengths.label }}<br>{{ form.strengths(rows=4, cols=60) }}</p>
-        <p>{{ form.improvements_needed.label }}<br>{{ form.improvements_needed(rows=4, cols=60) }}</p>
-        <p>{{ form.comments.label }}<br>{{ form.comments(rows=4, cols=60) }}</p>
-        
-        <p>{{ form.is_passed() }} {{ form.is_passed.label }}</p>
-        
-        <p>{{ form.submit() }}</p>
-    </form>
-    
-    <p><a href="{{ url_for('instructor.pending_evaluations') }}">Quay lại</a></p>
-</body>
-</html>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0"><i class="fas fa-user text-primary me-2"></i>Video học viên</h5>
+            </div>
+            <div class="card-body">
+                <div class="ratio ratio-16x9 bg-black rounded">
+                    <video controls class="w-100 h-100">
+                        <source src="{{ url_for('static', filename=video.video_url.replace('static/', '')) }}" type="video/mp4">
+                    </video>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-graduation-cap text-success me-2"></i>Video mẫu</h5>
+            </div>
+            <div class="card-body">
+                {% if video.routine.reference_video_url %}
+                <div class="ratio ratio-16x9 bg-black rounded">
+                    <video controls class="w-100 h-100">
+                        <source src="{{ video.routine.reference_video_url }}" type="video/mp4">
+                    </video>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-video-slash fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">Chưa có video mẫu</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if ai_analysis %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0"><i class="fas fa-robot text-info me-2"></i>Kết quả AI (tham khảo)</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="p-3 rounded bg-light">
+                            <div class="text-muted small">Điểm tổng</div>
+                            <div class="fs-5 fw-semibold">{{ ai_analysis.overall_score }}/100</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded bg-light">
+                            <div class="text-muted small">Kỹ thuật</div>
+                            <div class="fs-5 fw-semibold">{{ ai_analysis.technique_score }}/100</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded bg-light">
+                            <div class="text-muted small">Tư thế</div>
+                            <div class="fs-5 fw-semibold">{{ ai_analysis.posture_score }}/100</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded bg-light">
+                            <div class="text-muted small">Nhịp điệu</div>
+                            <div class="fs-5 fw-semibold">{{ ai_analysis.timing_score }}/100</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-clipboard-check text-primary me-2"></i>Chấm điểm thủ công</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.overall_score.label }}</label>
+                    {{ form.overall_score(class="form-control", placeholder="0-100") }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.technique_score.label }}</label>
+                    {{ form.technique_score(class="form-control", placeholder="0-100") }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.posture_score.label }}</label>
+                    {{ form.posture_score(class="form-control", placeholder="0-100") }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.spirit_score.label }}</label>
+                    {{ form.spirit_score(class="form-control", placeholder="0-100") }}
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <label class="form-label fw-semibold">{{ form.strengths.label }}</label>
+                {{ form.strengths(class="form-control", rows=3, placeholder="Những điểm học viên làm tốt...") }}
+            </div>
+
+            <div class="mt-3">
+                <label class="form-label fw-semibold">{{ form.improvements_needed.label }}</label>
+                {{ form.improvements_needed(class="form-control", rows=3, placeholder="Những điểm cần luyện tập thêm...") }}
+            </div>
+
+            <div class="mt-3">
+                <label class="form-label fw-semibold">{{ form.comments.label }}</label>
+                {{ form.comments(class="form-control", rows=3, placeholder="Nhận xét tổng quan...") }}
+            </div>
+
+            <div class="form-check mt-3">
+                {{ form.is_passed(class="form-check-input", id="isPassed") }}
+                <label class="form-check-label fw-semibold" for="isPassed">{{ form.is_passed.label }}</label>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <a href="{{ url_for('instructor.pending_evaluations') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Quay lại
+                </a>
+                {{ form.submit(class="btn btn-success") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

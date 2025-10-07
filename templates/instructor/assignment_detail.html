@@ -40,9 +40,12 @@
         </div>
     </div>
     <div>
-        <button class="btn btn-outline-danger" onclick="deleteAssignment()">
-            <i class="fas fa-trash me-2"></i>Xóa bài tập
-        </button>
+        <form method="POST" action="{{ url_for('instructor.delete_assignment', assignment_id=assignment.assignment_id) }}" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa bài tập này? Hành động này không thể hoàn tác.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="fas fa-trash me-2"></i>Xóa bài tập
+            </button>
+        </form>
     </div>
 </div>
 
@@ -317,11 +320,6 @@ function viewSubmission(studentId) {
     alert('Xem bài nộp của học viên #' + studentId);
 }
 
-function deleteAssignment() {
-    if (confirm('Bạn có chắc muốn xóa bài tập này?')) {
-        // Submit delete form
-        alert('Chức năng đang phát triển');
-    }
-}
+// Delete assignment function is now handled by HTML form
 </script>
 {% endblock %}

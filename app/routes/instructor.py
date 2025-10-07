@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, session, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, session, current_app, request
 import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
@@ -63,7 +63,22 @@ def class_detail(class_id: int):
         return redirect(url_for('instructor.classes'))
 
     enrollments = ClassService.get_enrolled_students(class_id)
-    return render_template('instructor/class_detail.html', class_obj=class_obj, enrollments=enrollments, ClassService=ClassService)
+    
+    # Lấy thống kê lớp học
+    class_overview = AnalyticsService.get_class_overview(class_id)
+    
+    # Lấy điểm trung bình từng học viên
+    student_scores = {}
+    for enrollment in enrollments:
+        student_overview = AnalyticsService.get_student_overview(enrollment.student_id)
+        student_scores[enrollment.student_id] = student_overview['avg_manual_score']
+    
+    return render_template('instructor/class_detail.html', 
+                         class_obj=class_obj, 
+                         enrollments=enrollments, 
+                         class_overview=class_overview,
+                         student_scores=student_scores,
+                         ClassService=ClassService)
 
 
 @instructor_bp.route('/proposals')
@@ -313,7 +328,6 @@ def routines():
     weapons = RoutineService.get_all_weapons()
     return render_template('instructor/routines.html', routines=routines, weapons=weapons)
 
-
 @instructor_bp.route('/routines/create', methods=['GET', 'POST'])
 @login_required
 @role_required('INSTRUCTOR')
@@ -321,6 +335,18 @@ def create_routine():
     form = RoutineCreateForm()
     weapons = RoutineService.get_all_weapons()
     form.weapon_id.choices = [(0, '-- Chọn binh khí --')] + [(w.weapon_id, w.weapon_name_vi) for w in weapons]
+    
+    # DEBUG REQUEST
+    if request.method == 'POST':
+        print("=" * 50)
+        print("REQUEST FILES:")
+        print(request.files)
+        print(f"Keys: {list(request.files.keys())}")
+        print("FORM DATA:")
+        print(f"reference_video_url: {form.reference_video_url.data}")
+        print(f"reference_video_file.data: {form.reference_video_file.data}")
+        print(f"reference_video_file.raw_data: {form.reference_video_file.raw_data}")
+        print("=" * 50)
     
     if form.validate_on_submit():
         video_url = None
