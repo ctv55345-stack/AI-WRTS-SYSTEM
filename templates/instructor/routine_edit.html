@@ -1,85 +1,172 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Sửa bài võ</title>
-</head>
-<body>
-    <h1>SỬA BÀI VÕ</h1>
+{% extends "base/instructor_base.html" %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block title %}Chỉnh sửa bài võ - {{ routine.routine_name }}{% endblock %}
 
-    <p><strong>Mã:</strong> {{ routine.routine_code }} (không thể đổi)</p>
+{% block instructor_content %}
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ url_for('instructor.routines') }}">Bài võ</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('instructor.routine_detail', routine_id=routine.routine_id) }}">{{ routine.routine_name }}</a></li>
+                <li class="breadcrumb-item active">Chỉnh sửa</li>
+            </ol>
+        </nav>
+        <h1 class="page-title">
+            <i class="fas fa-edit me-2"></i>
+            Chỉnh sửa bài võ
+        </h1>
+    </div>
+</div>
 
-    <form method="POST" enctype="multipart/form-data">
-        {{ form.hidden_tag() }}
-
-        <p>{{ form.routine_name.label }}<br>{{ form.routine_name(size=50) }}</p>
-        <p>{{ form.description.label }}<br>{{ form.description(rows=4, cols=50) }}</p>
-        <p>{{ form.weapon_id.label }}<br>{{ form.weapon_id() }}</p>
-        <p>{{ form.level.label }}<br>{{ form.level() }}</p>
-        <p>{{ form.difficulty_score.label }}<br>{{ form.difficulty_score() }}</p>
-        <p>{{ form.duration_seconds.label }}<br>{{ form.duration_seconds() }}</p>
-        <p>{{ form.total_moves.label }}<br>{{ form.total_moves() }}</p>
-        <p>{{ form.pass_threshold.label }}<br>{{ form.pass_threshold() }}</p>
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-info-circle text-primary me-2"></i>Thông tin cơ bản</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Mã bài võ</label>
+                            {{ form.routine_code(class="form-control", readonly=true) }}
+                            <small class="form-text text-muted">Không thể thay đổi</small>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label required">Tên bài võ</label>
+                            {{ form.routine_name(class="form-control") }}
+                            {% if form.routine_name.errors %}
+                            <div class="invalid-feedback d-block">{{ form.routine_name.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label required">Cấp độ</label>
+                            {{ form.level(class="form-select") }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label required">Vũ khí</label>
+                            {{ form.weapon_id(class="form-select") }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label required">Thời lượng (giây)</label>
+                            {{ form.duration_seconds(class="form-control", type="number") }}
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label">Mô tả</label>
+                            {{ form.description(class="form-control", rows="5") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-video text-danger me-2"></i>Video demo</h5>
+                </div>
+                <div class="card-body">
+                    {% if routine.reference_video_url %}
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Video hiện tại: <a href="{{ routine.reference_video_url }}" target="_blank">Xem video</a>
+                    </div>
+                    {% endif %}
+                    
+                    <label class="form-label">Video URL mới</label>
+                    {{ form.reference_video_url(class="form-control", placeholder="Để trống nếu không thay đổi") }}
+                </div>
+            </div>
+        </div>
         
-        <fieldset style="border: 1px solid #ddd; padding: 15px; margin: 10px 0;">
-            <legend><strong>Video mẫu chuẩn</strong></legend>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-cog text-success me-2"></i>Cài đặt</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Số động tác</label>
+                        {{ form.total_moves(class="form-control", type="number", min="1") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Điểm đạt (0-100)</label>
+                        {{ form.pass_threshold(class="form-control", type="number", step="0.01") }}
+                    </div>
+                    
+                    <div class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" id="is_published" name="is_published" {% if routine.is_published %}checked{% endif %}>
+                        <label class="form-check-label" for="is_published">
+                            Xuất bản (học viên có thể xem)
+                        </label>
+                    </div>
+                </div>
+            </div>
             
-            {% if routine.reference_video_url %}
-            <p><strong>Video hiện tại:</strong> 
-                {% if routine.reference_video_url.startswith('/static') %}
-                    <video width="320" height="180" controls>
-                        <source src="{{ routine.reference_video_url }}" type="video/mp4">
-                        Trình duyệt không hỗ trợ video
-                    </video>
-                {% else %}
-                    <a href="{{ routine.reference_video_url }}" target="_blank">Xem video hiện tại</a>
-                {% endif %}
-            </p>
-            {% endif %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar text-info me-2"></i>Thống kê</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small">Số tiêu chí đánh giá</label>
+                        <div class="h4 mb-0">{{ routine.evaluation_criteria|length }}</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="text-muted small">Ngày tạo</label>
+                        <div>{{ routine.created_at.strftime('%d/%m/%Y') }}</div>
+                    </div>
+                    
+                    <div>
+                        <label class="text-muted small">Cập nhật lần cuối</label>
+                        <div>{{ routine.updated_at.strftime('%d/%m/%Y %H:%M') if routine.updated_at else 'N/A' }}</div>
+                    </div>
+                </div>
+            </div>
             
-            <p>
-                {{ form.reference_video_url.label }}<br>
-                {{ form.reference_video_url(size=60, placeholder="https://youtube.com/...") }}
-                <br><small>Nhập URL từ YouTube, Vimeo hoặc link trực tiếp</small>
-                {% if form.reference_video_url.errors %}
-                    {% for error in form.reference_video_url.errors %}
-                        <br><span style="color:red;">{{ error }}</span>
-                    {% endfor %}
-                {% endif %}
-            </p>
-            
-            <p style="text-align:center; margin: 10px 0;">
-                <strong>--- HOẶC ---</strong>
-            </p>
-            
-            <p>
-                {{ form.reference_video_file.label }}<br>
-                {{ form.reference_video_file() }}
-                <br><small>Chọn file video (mp4, avi, mov, mkv) - Tối đa 500MB</small>
-                {% if form.reference_video_file.errors %}
-                    {% for error in form.reference_video_file.errors %}
-                        <br><span style="color:red;">{{ error }}</span>
-                    {% endfor %}
-                {% endif %}
-            </p>
-            
-            <p style="color:#666; font-size:0.9em;">
-                <strong>Lưu ý:</strong> Nếu upload file, hệ thống sẽ ưu tiên dùng file thay vì URL
-            </p>
-        </fieldset>
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <h6 class="mb-3">
+                        <i class="fas fa-link text-primary me-2"></i>
+                        Liên kết
+                    </h6>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('instructor.routine_detail', routine_id=routine.routine_id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>Xem chi tiết
+                        </a>
+                        <a href="{{ url_for('instructor.add_criteria', routine_id=routine.routine_id) }}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-plus me-1"></i>Thêm tiêu chí
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body d-flex justify-content-between">
+            <a href="{{ url_for('instructor.routine_detail', routine_id=routine.routine_id) }}" class="btn btn-secondary">
+                <i class="fas fa-times me-2"></i>Hủy
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save me-2"></i>Lưu thay đổi
+            </button>
+        </div>
+    </div>
+</form>
 
-        <p><button type="submit">Lưu thay đổi</button></p>
-    </form>
-
-    <hr>
-    <p><a href="{{ url_for('instructor.routine_detail', routine_id=routine.routine_id) }}">Về chi tiết bài võ</a></p>
-</body>
-</html>
-
+<style>
+.form-label.required::after {
+    content: " *";
+    color: #dc2626;
+}
+</style>
+{% endblock %}

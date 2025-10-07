@@ -1,74 +1,259 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Quản lý bài võ</title>
-</head>
-<body>
-    <h1>QUẢN LÝ BÀI VÕ</h1>
+{% extends "base/instructor_base.html" %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block title %}Quản lý bài võ{% endblock %}
 
-    <p><a href="{{ url_for('instructor.create_routine') }}">+ Tạo bài võ mới</a></p>
+{% block instructor_content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">
+            <i class="fas fa-dumbbell me-2"></i>
+            Quản lý bài võ
+        </h1>
+        <p class="text-muted mb-0">Danh sách bài võ đã tạo</p>
+    </div>
+    <div>
+        <a href="{{ url_for('instructor.create_routine') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Tạo bài võ mới
+        </a>
+    </div>
+</div>
 
-    <form method="GET">
-        <label>Cấp độ:</label>
-        <select name="level" onchange="this.form.submit()">
-            <option value="">Tất cả</option>
-            <option value="beginner" {{ 'selected' if request.args.get('level') == 'beginner' }}>Sơ cấp</option>
-            <option value="intermediate" {{ 'selected' if request.args.get('level') == 'intermediate' }}>Trung cấp</option>
-            <option value="advanced" {{ 'selected' if request.args.get('level') == 'advanced' }}>Nâng cao</option>
-        </select>
+<!-- Filter & Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary bg-opacity-10">
+                <i class="fas fa-dumbbell text-primary"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ routines|length }}</div>
+                <div class="stat-label">Tổng bài võ</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-success bg-opacity-10">
+                <i class="fas fa-check-circle text-success"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">
+                    {{ routines|selectattr('is_published', 'equalto', true)|list|length }}
+                </div>
+                <div class="stat-label">Đã xuất bản</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-warning bg-opacity-10">
+                <i class="fas fa-clock text-warning"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">
+                    {{ routines|selectattr('is_published', 'equalto', false)|list|length }}
+                </div>
+                <div class="stat-label">Bản nháp</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-info bg-opacity-10">
+                <i class="fas fa-tasks text-info"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Đang được giao</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <label>Binh khí:</label>
-        <select name="weapon_id" onchange="this.form.submit()">
-            <option value="">Tất cả</option>
-            {% for w in weapons %}
-            <option value="{{ w.weapon_id }}" {{ 'selected' if request.args.get('weapon_id')|int == w.weapon_id }}>{{ w.weapon_name_vi }}</option>
-            {% endfor %}
-        </select>
+<!-- Filter Section -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Cấp độ</label>
+                <select class="form-select">
+                    <option value="">Tất cả</option>
+                    <option value="beginner">Sơ cấp</option>
+                    <option value="intermediate">Trung cấp</option>
+                    <option value="advanced">Cao cấp</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Vũ khí</label>
+                <select class="form-select">
+                    <option value="">Tất cả</option>
+                    <option value="sword">Kiếm</option>
+                    <option value="staff">Côn</option>
+                    <option value="spear">Thương</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Trạng thái</label>
+                <select class="form-select">
+                    <option value="">Tất cả</option>
+                    <option value="published">Đã xuất bản</option>
+                    <option value="draft">Bản nháp</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Tìm kiếm</label>
+                <input type="text" class="form-control" placeholder="Tìm theo tên...">
+            </div>
+        </div>
+    </div>
+</div>
 
-        <label>Trạng thái:</label>
-        <select name="status" onchange="this.form.submit()">
-            <option value="">Tất cả</option>
-            <option value="draft" {{ 'selected' if request.args.get('status') == 'draft' }}>Nháp</option>
-            <option value="published" {{ 'selected' if request.args.get('status') == 'published' }}>Đã xuất bản</option>
-        </select>
-    </form>
-
+<!-- Routines Grid -->
+<div class="row g-4">
     {% if routines %}
-        {% for r in routines %}
-        <div>
-            <h3>
-                {{ r.routine_name }}
-                <span>{{ 'Đã xuất bản' if r.is_published else 'Nháp' }}</span>
-            </h3>
-            <p>
-                <strong>Mã:</strong> {{ r.routine_code }} |
-                <strong>Binh khí:</strong> {{ r.weapon.weapon_name_vi }} |
-                <strong>Cấp độ:</strong> {{ r.level }} |
-                <strong>Thời lượng:</strong> {{ r.duration_seconds }}s |
-                <strong>Độ khó:</strong> {{ r.difficulty_score }}/10<br>
-                <strong>Ngưỡng đạt:</strong> {{ r.pass_threshold }}% |
-                <strong>Số động tác:</strong> {{ r.total_moves }}
-            </p>
-            <p>
-                <a href="{{ url_for('instructor.routine_detail', routine_id=r.routine_id) }}">Chi tiết</a> |
-                <a href="{{ url_for('instructor.edit_routine', routine_id=r.routine_id) }}">Sửa</a>
-            </p>
+        {% for routine in routines %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card routine-card border-0 shadow-sm h-100">
+                <div class="routine-video-preview">
+                    {% if routine.demo_video_url %}
+                    <img src="/static/img/video-placeholder.png" alt="Video" class="w-100">
+                    <div class="video-play-overlay">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    {% else %}
+                    <div class="no-video-placeholder">
+                        <i class="fas fa-video-slash"></i>
+                        <span>Chưa có video</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">{{ routine.routine_name }}</h5>
+                        {% if routine.is_published %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-check me-1"></i>Published
+                        </span>
+                        {% else %}
+                        <span class="badge bg-warning">
+                            <i class="fas fa-edit me-1"></i>Draft
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="routine-meta mb-3">
+                        <span class="badge bg-primary me-1">{{ routine.level }}</span>
+                        <span class="badge bg-info">{{ routine.weapon.weapon_name if routine.weapon else 'N/A' }}</span>
+                    </div>
+                    
+                    {% if routine.description %}
+                    <p class="text-muted small mb-3">{{ routine.description[:80] }}...</p>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ routine.duration_seconds // 60 }}:{{ '%02d' % (routine.duration_seconds % 60) }}
+                        </small>
+                        <small class="text-muted">
+                            <i class="fas fa-list me-1"></i>
+                            0 tiêu chí
+                        </small>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('instructor.routine_detail', routine_id=routine.routine_id) }}" 
+                           class="btn btn-sm btn-primary flex-grow-1">
+                            <i class="fas fa-eye me-1"></i>Chi tiết
+                        </a>
+                        <a href="{{ url_for('instructor.edit_routine', routine_id=routine.routine_id) }}" 
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
         {% endfor %}
     {% else %}
-        <p>Chưa có bài võ nào. <a href="{{ url_for('instructor.create_routine') }}">Tạo bài võ đầu tiên</a></p>
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-dumbbell fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Chưa có bài võ nào</h5>
+                <p class="text-muted mb-4">Bắt đầu tạo bài võ đầu tiên của bạn</p>
+                <a href="{{ url_for('instructor.create_routine') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Tạo bài võ mới
+                </a>
+            </div>
+        </div>
+    </div>
     {% endif %}
+</div>
 
-    <hr>
-    <p><a href="{{ url_for('instructor.dashboard') }}">Về Dashboard</a></p>
-</body>
-</html>
+<style>
+.routine-card {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
 
+.routine-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(245, 87, 108, 0.15) !important;
+}
+
+.routine-video-preview {
+    position: relative;
+    height: 180px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow: hidden;
+}
+
+.routine-video-preview img {
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    color: white;
+    opacity: 0.9;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.video-play-overlay:hover {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.no-video-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+}
+
+.no-video-placeholder i {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.routine-meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+</style>
+{% endblock %}

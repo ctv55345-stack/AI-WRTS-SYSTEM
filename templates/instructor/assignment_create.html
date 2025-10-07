@@ -1,72 +1,210 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Gán bài tập mới</title>
-    <style>
-        .datetime-input {
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-    </style>
-    <script>
-        function toggleFields() {
-            var type = document.querySelector('input[name="assignment_type"]:checked').value;
-            document.getElementById('student_field').style.display = (type === 'individual') ? 'block' : 'none';
-            document.getElementById('class_field').style.display = (type === 'class') ? 'block' : 'none';
-        }
-    </script>
-    </head>
-<body>
-    <h1>GÁN BÀI TẬP MỚI</h1>
+{% extends "base/instructor_base.html" %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block title %}Giao bài tập mới{% endblock %}
 
-    <form method="POST">
-        {{ form.hidden_tag() }}
+{% block instructor_content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">
+            <i class="fas fa-tasks me-2"></i>
+            Giao bài tập mới
+        </h1>
+        <p class="text-muted mb-0">Tạo bài tập cho học viên hoặc lớp học</p>
+    </div>
+</div>
 
-        <p>{{ form.routine_id.label }}<br>{{ form.routine_id() }}</p>
-
-        <p>
-            {{ form.assignment_type.label }}<br>
-            {% for choice in form.assignment_type %}
-                <label>{{ choice(onclick="toggleFields()") }} {{ choice.label.text }}</label>
-            {% endfor %}
-        </p>
-
-        <div id="student_field" style="display:block;">
-            <p>{{ form.assigned_to_student.label }}<br>{{ form.assigned_to_student() }}</p>
+<form method="POST" id="assignmentForm">
+    {{ form.hidden_tag() }}
+    
+    <div class="row g-4">
+        <!-- Main Form -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-dumbbell text-primary me-2"></i>
+                        Chọn bài võ
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <label class="form-label required">Bài võ</label>
+                    {{ form.routine_id(class="form-select form-select-lg") }}
+                    {% if form.routine_id.errors %}
+                    <div class="invalid-feedback d-block">{{ form.routine_id.errors[0] }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">Chọn bài võ bạn muốn giao</small>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users text-info me-2"></i>
+                        Đối tượng
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label required">Loại bài tập</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="assignment_type" id="typeIndividual" value="individual" checked>
+                            <label class="btn btn-outline-primary" for="typeIndividual">
+                                <i class="fas fa-user me-2"></i>Cá nhân
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="assignment_type" id="typeClass" value="class">
+                            <label class="btn btn-outline-primary" for="typeClass">
+                                <i class="fas fa-users me-2"></i>Lớp học
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="individualSelect">
+                        <label class="form-label required">Học viên</label>
+                        {{ form.assigned_to_student(class="form-select") }}
+                        {% if form.assigned_to_student.errors %}
+                        <div class="invalid-feedback d-block">{{ form.assigned_to_student.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div id="classSelect" style="display:none;">
+                        <label class="form-label required">Lớp học</label>
+                        {{ form.assigned_to_class(class="form-select") }}
+                        {% if form.assigned_to_class.errors %}
+                        <div class="invalid-feedback d-block">{{ form.assigned_to_class.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-align-left text-success me-2"></i>
+                        Hướng dẫn
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <label class="form-label">Hướng dẫn thực hiện</label>
+                    {{ form.instructions(class="form-control rich-editor", rows="6", placeholder="Nhập hướng dẫn chi tiết cho học viên...") }}
+                    <small class="form-text text-muted">
+                        Ghi chú những điểm cần chú ý khi thực hiện bài tập
+                    </small>
+                </div>
+            </div>
         </div>
-        <div id="class_field" style="display:none;">
-            <p>{{ form.assigned_to_class.label }}<br>{{ form.assigned_to_class() }}</p>
+        
+        <!-- Sidebar Settings -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog text-secondary me-2"></i>
+                        Cài đặt
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label required">Deadline</label>
+                        <div class="input-group">
+                            {{ form.deadline(class="form-control datepicker", placeholder="DD/MM/YYYY HH:MM") }}
+                            <span class="input-group-text">
+                                <i class="fas fa-calendar-alt"></i>
+                            </span>
+                        </div>
+                        {% if form.deadline.errors %}
+                        <div class="invalid-feedback d-block">{{ form.deadline.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Độ ưu tiên</label>
+                        {{ form.priority(class="form-select") }}
+                        <small class="form-text text-muted">Mức độ quan trọng của bài tập</small>
+                    </div>
+                    
+                    <div class="form-check form-switch">
+                        {{ form.is_mandatory(class="form-check-input", checked=true) }}
+                        <label class="form-check-label" for="is_mandatory">
+                            Bắt buộc hoàn thành
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <h6 class="mb-3">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>
+                        Gợi ý
+                    </h6>
+                    <ul class="small mb-0 ps-3">
+                        <li class="mb-2">Deadline nên cách ngày giao 3-7 ngày</li>
+                        <li class="mb-2">Ghi rõ yêu cầu trong hướng dẫn</li>
+                        <li>Kiểm tra bài võ đã có video mẫu</li>
+                    </ul>
+                </div>
+            </div>
         </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-body d-flex justify-content-between">
+            <a href="{{ url_for('instructor.assignments') }}" class="btn btn-secondary">
+                <i class="fas fa-times me-2"></i>Hủy
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-paper-plane me-2"></i>Giao bài tập
+            </button>
+        </div>
+    </div>
+</form>
 
-        <p>
-            {{ form.deadline.label }}<br>
-            {{ form.deadline(type='datetime-local', class='datetime-input') }}
-            <br><small>Để trống nếu không có deadline</small>
-            {% if form.deadline.errors %}
-                {% for error in form.deadline.errors %}
-                    <br><span style="color:red;">{{ error }}</span>
-                {% endfor %}
-            {% endif %}
-        </p>
-        <p>{{ form.priority.label }}<br>{{ form.priority() }}</p>
-        <p><label>{{ form.is_mandatory() }} {{ form.is_mandatory.label }}</label></p>
-        <p>{{ form.instructions.label }}<br>{{ form.instructions(rows=4, cols=60) }}</p>
+<style>
+.form-label.required::after {
+    content: " *";
+    color: #dc2626;
+}
 
-        <p><button type="submit">Gán bài tập</button></p>
-    </form>
+.btn-check:checked + .btn-outline-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+}
+</style>
 
-    <hr>
-    <p><a href="{{ url_for('instructor.assignments') }}">Quay lại</a></p>
-</body>
-</html>
+<script>
+// Toggle assignment type
+document.querySelectorAll('input[name="assignment_type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.value === 'individual') {
+            document.getElementById('individualSelect').style.display = 'block';
+            document.getElementById('classSelect').style.display = 'none';
+        } else {
+            document.getElementById('individualSelect').style.display = 'none';
+            document.getElementById('classSelect').style.display = 'block';
+        }
+    });
+});
 
+// Date picker initialization - FIXED
+document.addEventListener('DOMContentLoaded', function() {
+    const deadlineInput = document.querySelector('input[name="deadline"]');
+    
+    if (deadlineInput) {
+        if (typeof flatpickr === 'undefined') {
+            console.error('Flatpickr not loaded! Check CDN in base template.');
+            // Fallback: use native datetime-local
+            deadlineInput.type = 'datetime-local';
+        } else {
+            flatpickr(deadlineInput, {
+                enableTime: true,
+                dateFormat: "d/m/Y H:i",
+                time_24hr: true,
+                minDate: "today",
+                locale: "vn"
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,106 +1,303 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Chi tiết bài võ</title>
-</head>
-<body>
-    <h1>CHI TIẾT BÀI VÕ</h1>
+{% extends "base/instructor_base.html" %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div><strong>[{{ category|upper }}]</strong> {{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block title %}Chi tiết bài võ - {{ routine.routine_name }}{% endblock %}
 
-    <table>
-        <tr><td>Trạng thái</td><td><strong>{{ 'Đã xuất bản' if routine.is_published else 'Nháp' }}</strong></td></tr>
-        <tr><td>Mã bài võ</td><td><strong>{{ routine.routine_code }}</strong></td></tr>
-        <tr><td>Tên bài võ</td><td><strong>{{ routine.routine_name }}</strong></td></tr>
-        <tr><td>Mô tả</td><td>{{ routine.description or 'Không có' }}</td></tr>
-        <tr><td>Binh khí</td><td>{{ routine.weapon.weapon_name_vi }} ({{ routine.weapon.weapon_name_en }})</td></tr>
-        <tr><td>Cấp độ</td><td>{{ routine.level }}</td></tr>
-        <tr><td>Độ khó</td><td>{{ routine.difficulty_score }}/10</td></tr>
-        <tr><td>Thời lượng</td><td>{{ routine.duration_seconds }} giây ({{ (routine.duration_seconds / 60)|round(1) }} phút)</td></tr>
-        <tr><td>Số động tác</td><td>{{ routine.total_moves }}</td></tr>
-        <tr><td>Ngưỡng đạt</td><td>{{ routine.pass_threshold }}%</td></tr>
-        <tr><td>Video mẫu</td><td>{% if routine.reference_video_url %}<a href="{{ routine.reference_video_url }}" target="_blank">Xem video</a>{% else %}Chưa có{% endif %}</td></tr>
-        <tr><td>Ngày tạo</td><td>{{ routine.created_at.strftime('%d/%m/%Y %H:%M') }}</td></tr>
-        <tr><td>Cập nhật lần cuối</td><td>{{ routine.updated_at.strftime('%d/%m/%Y %H:%M') }}</td></tr>
-    </table>
-
-    {% if routine.reference_video_url %}
-    <div class="video-container">
-        <h2>🎥 VIDEO MẪU CHUẨN</h2>
-        
-        {% if routine.reference_video_url.startswith('/static') %}
-            <!-- Video upload lên server -->
-            <video width="640" height="360" controls>
-                <source src="{{ routine.reference_video_url }}" type="video/mp4">
-                Trình duyệt không hỗ trợ video
-            </video>
-        {% else %}
-            <!-- Video từ URL bên ngoài -->
-            <p>
-                <a href="{{ routine.reference_video_url }}" target="_blank" 
-                   style="padding:10px 20px; background:#dc3545; color:white; 
-                          text-decoration:none; border-radius:4px;">
-                    ▶️ Xem video mẫu
-                </a>
-            </p>
+{% block instructor_content %}
+<div class="page-header">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{{ url_for('instructor.routines') }}">Bài võ</a></li>
+                <li class="breadcrumb-item active">{{ routine.routine_name }}</li>
+            </ol>
+        </nav>
+        <h1 class="page-title">
+            <i class="fas fa-dumbbell text-primary me-2"></i>
+            {{ routine.routine_name }}
+        </h1>
+        <div class="mt-2">
+            <span class="badge bg-primary me-1">{{ routine.level }}</span>
+            <span class="badge bg-info me-1">{{ routine.weapon.weapon_name if routine.weapon else 'N/A' }}</span>
+            {% if routine.is_published %}
+            <span class="badge bg-success">
+                <i class="fas fa-check-circle me-1"></i>Đã xuất bản
+            </span>
+            {% else %}
+            <span class="badge bg-warning">
+                <i class="fas fa-edit me-1"></i>Bản nháp
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    <div>
+        <a href="{{ url_for('instructor.edit_routine', routine_id=routine.routine_id) }}" 
+           class="btn btn-outline-primary">
+            <i class="fas fa-edit me-2"></i>Chỉnh sửa
+        </a>
+        {% if not routine.is_published %}
+        <button class="btn btn-success" onclick="publishRoutine()">
+            <i class="fas fa-paper-plane me-2"></i>Xuất bản
+        </button>
         {% endif %}
     </div>
-    {% endif %}
+</div>
 
-    <h2>TIÊU CHÍ ĐÁNH GIÁ (Tổng: {{ total_weight }}%)</h2>
-    <p><a href="{{ url_for('instructor.add_criteria', routine_id=routine.routine_id) }}">+ Thêm tiêu chí</a></p>
-
-    {% if criteria %}
-        {% for c in criteria %}
-        <div>
-            <strong>{{ c.criteria_name }}</strong> ({{ c.criteria_code }}) - <strong>{{ c.weight_percentage }}%</strong>
-            {% if c.description %}<br><small>{{ c.description }}</small>{% endif %}
-            {% if c.evaluation_method %}<br><small>Phương pháp: {{ c.evaluation_method }}</small>{% endif %}
-            <form method="POST" action="{{ url_for('instructor.delete_criteria', criteria_id=c.criteria_id) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" onclick="return confirm('Xác nhận xóa?')">Xóa</button>
-            </form>
+<!-- Routine Stats -->
+<div class="stats-grid mb-4">
+    <div class="stat-card">
+        <div class="stat-icon bg-primary bg-opacity-10">
+            <i class="fas fa-clock text-primary"></i>
         </div>
-        {% endfor %}
-        {% if total_weight < 100 %}
-        <p>Tổng trọng số chưa đủ 100% (còn {{ 100 - total_weight }}%)</p>
-        {% elif total_weight > 100 %}
-        <p>Tổng trọng số vượt quá 100%!</p>
-        {% else %}
-        <p>Tổng trọng số hợp lệ (100%)</p>
-        {% endif %}
-    {% else %}
-        <p>Chưa có tiêu chí đánh giá nào</p>
-    {% endif %}
+        <div class="stat-content">
+            <div class="stat-value">
+                {{ routine.duration_seconds // 60 }}:{{ '%02d' % (routine.duration_seconds % 60) }}
+            </div>
+            <div class="stat-label">Thời lượng</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon bg-info bg-opacity-10">
+            <i class="fas fa-list text-info"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ criteria|length }}</div>
+            <div class="stat-label">Tiêu chí đánh giá</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon bg-success bg-opacity-10">
+            <i class="fas fa-users text-success"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ routine.videos|length if routine.videos else 0 }}</div>
+            <div class="stat-label">Video đã nộp</div>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon bg-warning bg-opacity-10">
+            <i class="fas fa-tasks text-warning"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ routine.assignments|length if routine.assignments else 0 }}</div>
+            <div class="stat-label">Bài tập đã giao</div>
+        </div>
+    </div>
+</div>
 
-    <h2>THAO TÁC</h2>
-    <p>
-        <a href="{{ url_for('instructor.edit_routine', routine_id=routine.routine_id) }}">Sửa bài võ</a>
-        {% if routine.is_published %}
-            <form method="POST" action="{{ url_for('instructor.unpublish_routine', routine_id=routine.routine_id) }}" style="display:inline;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit">Gỡ xuất bản</button>
-            </form>
-        {% else %}
-            <form method="POST" action="{{ url_for('instructor.publish_routine', routine_id=routine.routine_id) }}" style="display:inline;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit">Xuất bản</button>
-            </form>
-        {% endif %}
-        <form method="POST" action="{{ url_for('instructor.delete_routine', routine_id=routine.routine_id) }}" style="display:inline;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" onclick="return confirm('Xác nhận xóa bài võ?')">Xóa</button>
-        </form>
-    </p>
+<!-- Main Content -->
+<div class="row g-4">
+    <!-- Video & Info -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-video text-danger me-2"></i>
+                    Video demo
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if routine.reference_video_url %}
+                <div class="video-container">
+                    <video controls class="w-100">
+                        <source src="{{ routine.reference_video_url }}" type="video/mp4">
+                        Trình duyệt không hỗ trợ video
+                    </video>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-video-slash fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-3">Chưa có video demo</p>
+                    <a href="{{ url_for('instructor.edit_routine', routine_id=routine.routine_id) }}" 
+                       class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Tải video lên
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-align-left text-primary me-2"></i>
+                    Mô tả bài võ
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if routine.description %}
+                <p class="mb-0">{{ routine.description }}</p>
+                {% else %}
+                <p class="text-muted mb-0">Chưa có mô tả</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Evaluation Criteria -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-check text-success me-2"></i>
+                        Tiêu chí đánh giá ({{ criteria|length }})
+                    </h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addCriteriaModal">
+                        <i class="fas fa-plus me-1"></i>Thêm tiêu chí
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if criteria %}
+                <div class="criteria-list">
+                    {% for criterion in criteria %}
+                    <div class="criteria-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ criterion.criteria_name }}</h6>
+                                <p class="text-muted small mb-2">{{ criterion.description }}</p>
+                                <div class="d-flex gap-3 small text-muted">
+                                    <span>
+                                        <i class="fas fa-weight-hanging me-1"></i>
+                                        Trọng số: {{ criterion.weight }}%
+                                    </span>
+                                    <span>
+                                        <i class="fas fa-star me-1"></i>
+                                        Điểm tối đa: {{ criterion.max_score }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editCriterion({{ criterion.criteria_id }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCriterion({{ criterion.criteria_id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-clipboard-list fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-3">Chưa có tiêu chí đánh giá nào</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCriteriaModal">
+                        <i class="fas fa-plus me-2"></i>Thêm tiêu chí đầu tiên
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt text-warning me-2"></i>
+                    Thao tác nhanh
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('instructor.create_assignment') }}?routine_id={{ routine.routine_id }}" 
+                       class="btn btn-outline-primary">
+                        <i class="fas fa-tasks me-2"></i>Giao bài tập
+                    </a>
+                    <a href="{{ url_for('instructor.create_exam') }}?routine_id={{ routine.routine_id }}" 
+                       class="btn btn-outline-info">
+                        <i class="fas fa-file-alt me-2"></i>Tạo bài kiểm tra
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="duplicateRoutine()">
+                        <i class="fas fa-copy me-2"></i>Nhân bản
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Routine Info -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    Thông tin
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="info-item mb-3">
+                    <label class="text-muted small mb-1">Người tạo</label>
+                    <div class="fw-semibold">{{ routine.creator.full_name }}</div>
+                </div>
+                
+                <div class="info-item mb-3">
+                    <label class="text-muted small mb-1">Ngày tạo</label>
+                    <div>{{ routine.created_at.strftime('%d/%m/%Y') }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <label class="text-muted small mb-1">Cập nhật lần cuối</label>
+                    <div>{{ routine.updated_at.strftime('%d/%m/%Y %H:%M') if routine.updated_at else 'N/A' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <hr>
-    <p><a href="{{ url_for('instructor.routines') }}">Về danh sách</a></p>
-</body>
-</html>
+<style>
+.criteria-item {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #f5576c;
+    transition: all 0.3s ease;
+}
 
+.criteria-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(245, 87, 108, 0.1);
+}
+
+.video-container {
+    position: relative;
+    background: #000;
+}
+
+.video-container video {
+    display: block;
+    max-height: 500px;
+}
+
+.info-item label {
+    font-weight: 500;
+}
+</style>
+
+<script>
+function publishRoutine() {
+    if (confirm('Bạn có chắc muốn xuất bản bài võ này?')) {
+        alert('Chức năng đang phát triển');
+    }
+}
+
+function duplicateRoutine() {
+    alert('Chức năng đang phát triển');
+}
+
+function editCriterion(id) {
+    alert('Chỉnh sửa tiêu chí #' + id);
+}
+
+function deleteCriterion(id) {
+    if (confirm('Bạn có chắc muốn xóa tiêu chí này?')) {
+        alert('Chức năng đang phát triển');
+    }
+}
+</script>
+{% endblock %}
