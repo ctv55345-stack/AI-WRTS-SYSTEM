@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from datetime import datetime
 from flask_wtf.file import FileField, FileAllowed  # THÊM import
 from wtforms import StringField, TextAreaField, SelectField, DateTimeField, IntegerField, DecimalField, RadioField  # THÊM RadioField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError
@@ -51,24 +52,21 @@ class ExamCreateForm(FlaskForm):
     end_time = DateTimeField('Thời gian kết thúc', format='%Y-%m-%dT%H:%M', validators=[
         DataRequired(message='Vui lòng chọn thời gian kết thúc'),
     ])
-    duration_minutes = IntegerField('Thời gian làm bài (phút)', validators=[
-        DataRequired(message='Vui lòng nhập thời gian làm bài'),
-        NumberRange(min=1, message='Thời gian tối thiểu 1 phút'),
-    ])
     pass_score = DecimalField('Điểm đạt (%)', validators=[
         Optional(),
         NumberRange(min=0, max=100, message='Điểm từ 0-100%'),
     ], default=70.00)
-    max_attempts = IntegerField('Số lần thi tối đa', validators=[
-        Optional(),
-        NumberRange(min=1, message='Tối thiểu 1 lần'),
-    ], default=1)
 
     # THÊM MỚI: Custom validation
     def validate(self, extra_validators=None):
         if not super().validate(extra_validators=extra_validators):
             return False
         
+        # Không cho phép tạo bài thi trong quá khứ
+        if self.start_time.data and self.start_time.data < datetime.now():
+            self.start_time.errors.append('Thời gian bắt đầu không được ở quá khứ')
+            return False
+
         # Nếu chọn routine thì phải có routine_id
         if self.video_source.data == 'routine':
             if not self.routine_id.data or self.routine_id.data == 0:

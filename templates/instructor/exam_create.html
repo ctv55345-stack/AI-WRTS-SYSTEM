@@ -116,25 +116,18 @@
             
             <!-- Thời gian -->
             <div class="row mb-3">
-                <div class="col-md-4">
+                <div class="col-md-6">
                     {{ form.start_time.label(class="form-label required") }}
                     {{ form.start_time(class="form-control", type="datetime-local") }}
                     {% if form.start_time.errors %}
                         <div class="text-danger small">{{ form.start_time.errors[0] }}</div>
                     {% endif %}
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     {{ form.end_time.label(class="form-label required") }}
                     {{ form.end_time(class="form-control", type="datetime-local") }}
                     {% if form.end_time.errors %}
                         <div class="text-danger small">{{ form.end_time.errors[0] }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-4">
-                    {{ form.duration_minutes.label(class="form-label required") }}
-                    {{ form.duration_minutes(class="form-control") }}
-                    {% if form.duration_minutes.errors %}
-                        <div class="text-danger small">{{ form.duration_minutes.errors[0] }}</div>
                     {% endif %}
                 </div>
             </div>
@@ -146,8 +139,11 @@
                     {{ form.pass_score(class="form-control") }}
                 </div>
                 <div class="col-md-6">
-                    {{ form.max_attempts.label(class="form-label") }}
-                    {{ form.max_attempts(class="form-control") }}
+                    <label class="form-label">Thông tin thi</label>
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Lưu ý:</strong> Học viên chỉ được thi 1 lần duy nhất, không giới hạn thời gian làm bài.
+                    </div>
                 </div>
             </div>
             

@@ -9,6 +9,8 @@ import os
 from werkzeug.utils import secure_filename
 import cv2
 from flask import current_app
+from sqlalchemy import or_
+from datetime import datetime as dt
 
 
 class ExamService:
@@ -98,6 +100,10 @@ class ExamService:
         if Exam.query.filter_by(exam_code=data['exam_code']).first():
             return {'success': False, 'message': 'Mã bài kiểm tra đã tồn tại'}
         
+        # Validate không cho tạo exam trong quá khứ (server-side safety)
+        if data['start_time'] < dt.now():
+            return {'success': False, 'message': 'Thời gian bắt đầu không được ở quá khứ'}
+
         # Tạo exam object
         exam = Exam(
             exam_code=data['exam_code'],
@@ -108,9 +114,9 @@ class ExamService:
             exam_type=data['exam_type'],
             start_time=data['start_time'],
             end_time=data['end_time'],
-            duration_minutes=data['duration_minutes'],
+            duration_minutes=1,  # Đặt 1 để thỏa DB constraint; UI không giới hạn thời gian
             pass_score=data.get('pass_score', 70.00),
-            max_attempts=data.get('max_attempts', 1),
+            max_attempts=1,  # Chỉ cho phép thi 1 lần
             is_published=False,
             video_upload_method=data.get('video_source', 'routine')
         )
@@ -214,13 +220,14 @@ class ExamService:
         ).all()
         class_ids = [e.class_id for e in enrollments]
         
-        if not class_ids:
-            return []
+        query = Exam.query.filter(Exam.is_published == True)
+        if class_ids:
+            query = query.filter(or_(Exam.class_id.in_(class_ids), Exam.class_id.is_(None)))
+        else:
+            # Nếu học viên không thuộc lớp nào, chỉ lấy các bài thi chung (không gán lớp)
+            query = query.filter(Exam.class_id.is_(None))
         
-        return Exam.query.filter(
-            Exam.class_id.in_(class_ids),
-            Exam.is_published == True
-        ).order_by(Exam.start_time.desc()).all()
+        return query.order_by(Exam.start_time.asc()).all()
 
     @staticmethod
     def get_student_exam_result(exam_id: int, student_id: int):
@@ -264,14 +271,14 @@ class ExamService:
             if not enrollment:
                 return False, "Bạn không thuộc lớp học này"
         
-        # Kiểm tra số lần thi
+        # Kiểm tra số lần thi (chỉ cho phép 1 lần)
         results = ExamResult.query.filter_by(
             exam_id=exam_id,
             student_id=student_id
         ).all()
         
-        if len(results) >= exam.max_attempts:
-            return False, f"Đã hết lượt thi ({exam.max_attempts} lần)"
+        if len(results) >= 1:
+            return False, "Bạn đã thi bài này rồi"
         
         return True, "OK"
     

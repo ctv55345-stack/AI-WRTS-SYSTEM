@@ -60,10 +60,51 @@ def dashboard():
         ClassSchedule.is_active == True
     ).order_by(ClassSchedule.time_start).limit(5).all()
 
+    # Exams stats
+    exams = ExamService.get_exams_for_student(student_id)
+    now = get_vietnam_time_naive()
+    exams_upcoming = 0
+    exams_available = 0  # trong thời gian thi và chưa thi
+    exams_completed = 0
+    for exam in exams:
+        results = ExamService.get_student_exam_result(exam.exam_id, student_id)
+        attempts_used = len(results)
+        if attempts_used >= 1:
+            exams_completed += 1
+        elif now < exam.start_time:
+            exams_upcoming += 1
+        elif now <= exam.end_time:
+            exams_available += 1
+
+    # Assignments stats
+    assignments = AssignmentService.get_active_assignments_for_student(student_id)
+    try:
+        from app.models.training_video import TrainingVideo
+    except Exception:
+        TrainingVideo = None
+    assignments_pending = 0
+    assignments_completed = 0
+    for a in assignments:
+        submitted = None
+        if TrainingVideo is not None:
+            submitted = TrainingVideo.query.filter_by(
+                student_id=student_id,
+                assignment_id=a.assignment_id,
+            ).first()
+        if submitted:
+            assignments_completed += 1
+        else:
+            assignments_pending += 1
+
     return render_template('student/dashboard.html',
                          active_classes=active_classes,
                          completed_classes=completed_classes,
-                         today_schedules=today_schedules)
+                         today_schedules=today_schedules,
+                         exams_upcoming=exams_upcoming,
+                         exams_available=exams_available,
+                         exams_completed=exams_completed,
+                         assignments_pending=assignments_pending,
+                         assignments_completed=assignments_completed)
 
 
 @student_bp.route('/classes')

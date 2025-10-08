@@ -689,9 +689,7 @@ def create_exam():
             'exam_type': form.exam_type.data,
             'start_time': form.start_time.data,
             'end_time': form.end_time.data,
-            'duration_minutes': form.duration_minutes.data,
             'pass_score': form.pass_score.data,
-            'max_attempts': form.max_attempts.data,
             'video_source': form.video_source.data,  # THÊM
         }
         

@@ -16,8 +16,8 @@
     
     <!-- Statistics Cards -->
     <div class="row g-4 mb-4">
-        <div class="col-md-6">
-            <div class="student-stat-card">
+        <div class="col-md-3">
+            <a href="{{ url_for('student.classes') }}" class="student-stat-card d-block">
                 <div class="d-flex align-items-center">
                     <i class="fas fa-book-reader student-stat-icon me-3"></i>
                     <div>
@@ -25,11 +25,11 @@
                         <p class="student-stat-label mb-0">Lớp đang học</p>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         
-        <div class="col-md-6">
-            <div class="student-stat-card variant-pink">
+        <div class="col-md-3">
+            <a href="{{ url_for('student.classes') }}" class="student-stat-card variant-pink d-block">
                 <div class="d-flex align-items-center">
                     <i class="fas fa-graduation-cap student-stat-icon me-3"></i>
                     <div>
@@ -37,7 +37,31 @@
                         <p class="student-stat-label mb-0">Lớp đã hoàn thành</p>
                     </div>
                 </div>
-            </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{{ url_for('student.my_exams') }}" class="student-stat-card variant-green d-block">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-file-alt student-stat-icon me-3"></i>
+                    <div>
+                        <h3 class="student-stat-value">{{ exams_upcoming + exams_available }}</h3>
+                        <p class="student-stat-label mb-0">Bài kiểm tra sắp/đang mở</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{{ url_for('student.my_assignments') }}" class="student-stat-card variant-orange d-block">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-tasks student-stat-icon me-3"></i>
+                    <div>
+                        <h3 class="student-stat-value">{{ assignments_pending }}</h3>
+                        <p class="student-stat-label mb-0">Bài tập cần nộp</p>
+                    </div>
+                </div>
+            </a>
         </div>
     </div>
     

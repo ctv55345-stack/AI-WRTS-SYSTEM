@@ -210,7 +210,7 @@
         <div class="header">
             <h1>🎯 {{ exam.exam_name }}</h1>
             <p style="color: #666; margin-top: 10px;">
-                Lần thi thứ {{ attempt_number }} / {{ exam.max_attempts }}
+                <i class="fas fa-info-circle"></i> Thi 1 lần duy nhất - Không giới hạn thời gian
             </p>
         </div>
 
@@ -224,9 +224,9 @@
             {% endif %}
         {% endwith %}
 
-        <!-- Timer -->
+        <!-- Info -->
         <div class="timer" id="timer">
-            <i class="fas fa-clock"></i> Thời gian còn lại: <span id="time-display">{{ exam.duration_minutes }}:00</span>
+            <i class="fas fa-clock"></i> Thời gian làm bài: <span id="time-display">Không giới hạn</span>
         </div>
 
         <!-- Exam Info -->
@@ -242,7 +242,7 @@
                 <i class="fas fa-clock"></i>
                 <div>
                     <span>Thời gian làm bài</span>
-                    <strong>{{ exam.duration_minutes }} phút</strong>
+                    <strong>Không giới hạn</strong>
                 </div>
             </div>
             <div class="info-item">
@@ -267,7 +267,7 @@
             <ul>
                 <li>Xem video mẫu bên dưới để hiểu rõ bài võ cần thực hiện</li>
                 <li>Ghi video của bạn thực hiện bài võ (định dạng: MP4, AVI, MOV, WEBM)</li>
-                <li>Thời gian làm bài: <strong>{{ exam.duration_minutes }} phút</strong> (kể từ khi vào trang này)</li>
+                <li>Thời gian làm bài: <strong>Không giới hạn</strong> - Làm bài thoải mái</li>
                 <li>Sau khi nộp bài, hệ thống AI sẽ tự động chấm điểm</li>
                 <li><strong style="color: #dc3545;">Lưu ý:</strong> Không thể làm lại sau khi nộp!</li>
             </ul>
@@ -345,38 +345,7 @@
     </div>
 
     <script>
-        // Timer countdown
-        const durationMinutes = {{ exam.duration_minutes }};
-        let timeLeft = durationMinutes * 60; // seconds
-        const timerElement = document.getElementById('timer');
-        const timeDisplay = document.getElementById('time-display');
-        const submitBtn = document.getElementById('submit-btn');
-
-        function updateTimer() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            
-            timeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            
-            // Warning khi còn 5 phút
-            if (timeLeft <= 300 && timeLeft > 0) {
-                timerElement.classList.add('warning');
-            }
-            
-            // Hết giờ
-            if (timeLeft <= 0) {
-                timeDisplay.textContent = "HẾT GIỜ!";
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.5';
-                submitBtn.style.cursor = 'not-allowed';
-                alert('Hết thời gian làm bài! Vui lòng nộp bài ngay.');
-            }
-            
-            timeLeft--;
-        }
-
-        // Start timer
-        setInterval(updateTimer, 1000);
+        // No timer needed - unlimited time
 
         // Confirm before submit
         document.getElementById('submit-form').addEventListener('submit', function(e) {

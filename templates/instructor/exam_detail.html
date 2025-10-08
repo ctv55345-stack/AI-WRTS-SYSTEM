@@ -115,16 +115,15 @@
                         <div>{{ exam.start_time.strftime('%d/%m/%Y %H:%M') }} - {{ exam.end_time.strftime('%d/%m/%Y %H:%M') }}</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="text-muted small">Thời lượng</label>
-                        <div>{{ exam.duration_minutes }} phút</div>
-                    </div>
-                    <div class="col-md-6">
                         <label class="text-muted small">Điểm đạt</label>
                         <div>{{ exam.pass_score }}%</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="text-muted small">Số lần thi</label>
-                        <div>{{ exam.max_attempts }}</div>
+                        <label class="text-muted small">Quy định thi</label>
+                        <div class="text-success">
+                            <i class="fas fa-check-circle me-1"></i>
+                            1 lần duy nhất, không giới hạn thời gian
+                        </div>
                     </div>
                     {% if exam.class_id %}
                     <div class="col-md-6">
