@@ -1,8 +1,13 @@
 from flask_wtf import FlaskForm
-from wtforms import DecimalField, TextAreaField, BooleanField, SubmitField
+from wtforms import DecimalField, TextAreaField, BooleanField, SubmitField, RadioField
 from wtforms.validators import DataRequired, NumberRange, Optional
 
 class ManualEvaluationForm(FlaskForm):
+    evaluation_method = RadioField('Phương thức chấm điểm', 
+        choices=[('manual', 'Chấm thủ công'), ('ai', 'Sử dụng kết quả AI')],
+        default='manual',
+        validators=[DataRequired()]
+    )
     overall_score = DecimalField('Điểm tổng (*)', validators=[
         DataRequired(message='Vui lòng nhập điểm tổng'),
         NumberRange(min=0, max=100, message='Điểm phải từ 0-100')

@@ -15,6 +15,9 @@ class ManualEvaluation(db.Model):
     strengths = db.Column(db.Text)
     improvements_needed = db.Column(db.Text)
     is_passed = db.Column(db.Boolean)
+    evaluation_method = db.Column(db.String(20), nullable=False, default='manual')  # 'manual' or 'ai'
+    ai_analysis_id = db.Column(db.Integer, db.ForeignKey('ai_analysis_results.analysis_id', ondelete='SET NULL'), nullable=True)
+    ai_confidence = db.Column(db.Numeric(5, 2))  # AI confidence score if using AI
     evaluated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     # Constraints

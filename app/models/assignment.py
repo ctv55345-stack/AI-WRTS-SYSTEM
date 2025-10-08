@@ -17,6 +17,9 @@ class Assignment(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Video demo của giảng viên - BẮT BUỘC
+    instructor_video_url = db.Column(db.String(500), nullable=False, comment='Video demo của giảng viên - BẮT BUỘC')
+    
     # Relationships
     videos = db.relationship('TrainingVideo', backref='assignment', lazy=True)
     

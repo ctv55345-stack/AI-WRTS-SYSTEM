@@ -29,6 +29,17 @@ def create_app():
             'now': lambda: datetime.utcnow()
         }
     
+    # Error handlers
+    @app.errorhandler(413)
+    def too_large(e):
+        from flask import flash, redirect, url_for, request
+        max_size_mb = app.config.get('MAX_VIDEO_SIZE', 100 * 1024 * 1024) // (1024 * 1024)
+        flash(f'File quá lớn! Vui lòng chọn file nhỏ hơn {max_size_mb}MB.', 'error')
+        # Redirect về trang trước đó hoặc trang chính
+        if request.referrer:
+            return redirect(request.referrer)
+        return redirect(url_for('instructor.assignments'))
+    
     # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.student import student_bp

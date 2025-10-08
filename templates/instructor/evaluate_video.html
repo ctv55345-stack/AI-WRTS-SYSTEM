@@ -42,19 +42,22 @@
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-graduation-cap text-success me-2"></i>Video mẫu</h5>
+                <h5 class="mb-0"><i class="fas fa-graduation-cap text-success me-2"></i>Video demo chuẩn</h5>
             </div>
             <div class="card-body">
-                {% if video.routine.reference_video_url %}
+                {% if reference_video_url %}
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i>{{ video_source }}
+                </div>
                 <div class="ratio ratio-16x9 bg-black rounded">
                     <video controls class="w-100 h-100">
-                        <source src="{{ video.routine.reference_video_url }}" type="video/mp4">
+                        <source src="{{ reference_video_url }}" type="video/mp4">
                     </video>
                 </div>
                 {% else %}
                 <div class="text-center py-4">
                     <i class="fas fa-video-slash fa-2x text-muted mb-2"></i>
-                    <p class="text-muted mb-0">Chưa có video mẫu</p>
+                    <p class="text-muted mb-0">Chưa có video demo</p>
                 </div>
                 {% endif %}
             </div>
@@ -100,12 +103,59 @@
 
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-clipboard-check text-primary me-2"></i>Chấm điểm thủ công</h5>
+        <h5 class="mb-0"><i class="fas fa-clipboard-check text-primary me-2"></i>Chấm điểm</h5>
     </div>
     <div class="card-body">
         <form method="POST">
             {{ form.hidden_tag() }}
-            <div class="row g-3">
+            
+            <!-- Hiển thị form errors -->
+            {% if form.errors %}
+            <div class="alert alert-danger mb-3">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Có lỗi trong form:</strong>
+                <ul class="mb-0 mt-2">
+                    {% for field, errors in form.errors.items() %}
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <!-- Phương thức chấm điểm -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Phương thức chấm điểm</label>
+                <div class="row g-3">
+                    {% for subfield in form.evaluation_method %}
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            {{ subfield(class="form-check-input", id=subfield.id) }}
+                            <label class="form-check-label" for="{{ subfield.id }}">
+                                {% if subfield.data == 'manual' %}
+                                    <i class="fas fa-user-edit text-primary me-2"></i>
+                                    <strong>Chấm thủ công</strong>
+                                    <small class="d-block text-muted">Tự đánh giá và nhập điểm</small>
+                                {% else %}
+                                    <i class="fas fa-robot text-info me-2"></i>
+                                    <strong>Sử dụng kết quả AI</strong>
+                                    <small class="d-block text-muted">Áp dụng điểm từ phân tích AI</small>
+                                {% endif %}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if not ai_analysis %}
+                <div class="alert alert-warning mt-2">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Không có kết quả AI để sử dụng. Vui lòng chọn chấm thủ công.
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="row g-3" id="score-inputs">
                 <div class="col-md-3">
                     <label class="form-label">{{ form.overall_score.label }}</label>
                     {{ form.overall_score(class="form-control", placeholder="0-100") }}
@@ -153,5 +203,80 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const manualRadio = document.querySelector('input[name="evaluation_method"][value="manual"]');
+    const aiRadio = document.querySelector('input[name="evaluation_method"][value="ai"]');
+    const scoreInputs = document.getElementById('score-inputs');
+    
+    // AI scores data (if available)
+    const aiScores = {
+        overall_score: {{ ai_analysis.overall_score if ai_analysis else 0 }},
+        technique_score: {{ ai_analysis.technique_score if ai_analysis else 0 }},
+        posture_score: {{ ai_analysis.posture_score if ai_analysis else 0 }},
+        spirit_score: {{ ai_analysis.timing_score if ai_analysis else 0 }} // Using timing_score as spirit_score
+    };
+    
+    function toggleScoreInputs() {
+        if (aiRadio.checked) {
+            // Fill with AI scores and make readonly
+            scoreInputs.querySelectorAll('input[type="number"]').forEach(input => {
+                input.readOnly = true;
+                input.style.backgroundColor = '#f8f9fa';
+                input.style.cursor = 'not-allowed';
+            });
+            
+            // Fill with AI scores
+            document.querySelector('input[name="overall_score"]').value = aiScores.overall_score;
+            document.querySelector('input[name="technique_score"]').value = aiScores.technique_score;
+            document.querySelector('input[name="posture_score"]').value = aiScores.posture_score;
+            document.querySelector('input[name="spirit_score"]').value = aiScores.spirit_score;
+            
+            // Show AI info
+            showAIInfo();
+        } else {
+            // Enable manual input
+            scoreInputs.querySelectorAll('input[type="number"]').forEach(input => {
+                input.readOnly = false;
+                input.style.backgroundColor = '';
+                input.style.cursor = '';
+            });
+            
+            // Clear AI info
+            hideAIInfo();
+        }
+    }
+    
+    function showAIInfo() {
+        let aiInfo = document.getElementById('ai-info');
+        if (!aiInfo) {
+            aiInfo = document.createElement('div');
+            aiInfo.id = 'ai-info';
+            aiInfo.className = 'alert alert-info mt-3';
+            aiInfo.innerHTML = `
+                <i class="fas fa-robot me-2"></i>
+                <strong>Đang sử dụng kết quả AI:</strong> 
+                Điểm số đã được tự động điền từ phân tích AI. Bạn vẫn có thể chỉnh sửa nhận xét và đánh giá.
+            `;
+            scoreInputs.parentNode.insertBefore(aiInfo, scoreInputs.nextSibling);
+        }
+    }
+    
+    function hideAIInfo() {
+        const aiInfo = document.getElementById('ai-info');
+        if (aiInfo) {
+            aiInfo.remove();
+        }
+    }
+    
+    // Event listeners
+    manualRadio.addEventListener('change', toggleScoreInputs);
+    aiRadio.addEventListener('change', toggleScoreInputs);
+    
+    // Initial state
+    toggleScoreInputs();
+});
+</script>
 
 {% endblock %}

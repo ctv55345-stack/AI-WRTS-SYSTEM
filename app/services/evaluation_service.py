@@ -101,6 +101,9 @@ class EvaluationService:
             strengths=data.get('strengths'),
             improvements_needed=data.get('improvements_needed'),
             is_passed=data.get('is_passed', False),
+            evaluation_method=data.get('evaluation_method', 'manual'),
+            ai_analysis_id=data.get('ai_analysis_id'),
+            ai_confidence=data.get('ai_confidence'),
             evaluated_at=datetime.utcnow()
         )
         

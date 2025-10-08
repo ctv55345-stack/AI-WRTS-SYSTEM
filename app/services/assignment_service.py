@@ -10,31 +10,77 @@ from app.models.class_model import Class
 class AssignmentService:
     @staticmethod
     def create_assignment(data: dict, assigned_by: int):
-        # Validate that the class is approved if assignment is for a class
-        if data.get('assigned_to_class'):
-            class_obj = Class.query.get(data['assigned_to_class'])
-            if not class_obj:
-                return {'success': False, 'message': 'Không tìm thấy lớp học'}
-            if class_obj.approval_status != 'approved':
-                return {'success': False, 'message': 'Chỉ có thể tạo bài tập cho lớp đã được duyệt'}
-            if class_obj.instructor_id != assigned_by:
-                return {'success': False, 'message': 'Bạn không có quyền tạo bài tập cho lớp này'}
+        """Tạo assignment mới - BẮT BUỘC có video"""
+        try:
+            # VALIDATE: Bắt buộc phải có video
+            if not data.get('instructor_video_url'):
+                return {'success': False, 'message': 'Vui lòng upload video demo cho bài tập này'}
+            
+            # Validate that the class is approved if assignment is for a class
+            if data.get('assigned_to_class'):
+                class_obj = Class.query.get(data['assigned_to_class'])
+                if not class_obj:
+                    return {'success': False, 'message': 'Không tìm thấy lớp học'}
+                if class_obj.approval_status != 'approved':
+                    return {'success': False, 'message': 'Chỉ có thể tạo bài tập cho lớp đã được duyệt'}
+                if class_obj.instructor_id != assigned_by:
+                    return {'success': False, 'message': 'Bạn không có quyền tạo bài tập cho lớp này'}
 
-        assignment = Assignment(
-            routine_id=data['routine_id'],
-            assigned_by=assigned_by,
-            assignment_type=data['assignment_type'],
-            assigned_to_student=data.get('assigned_to_student'),
-            assigned_to_class=data.get('assigned_to_class'),
-            deadline=data.get('deadline'),
-            instructions=data.get('instructions'),
-            priority=data.get('priority', 'normal'),
-            is_mandatory=data.get('is_mandatory', True),
-        )
+            assignment = Assignment(
+                routine_id=data['routine_id'],
+                assigned_by=assigned_by,
+                assignment_type=data['assignment_type'],
+                assigned_to_student=data.get('assigned_to_student'),
+                assigned_to_class=data.get('assigned_to_class'),
+                deadline=data.get('deadline'),
+                instructions=data.get('instructions'),
+                priority=data.get('priority', 'normal'),
+                is_mandatory=data.get('is_mandatory', True),
+                instructor_video_url=data['instructor_video_url']  # BẮT BUỘC
+            )
 
-        db.session.add(assignment)
-        db.session.commit()
-        return {'success': True, 'assignment': assignment}
+            db.session.add(assignment)
+            db.session.flush()
+            
+            # Gửi thông báo
+            from app.models.notification import Notification
+            if data['assignment_type'] == 'individual':
+                notification = Notification(
+                    recipient_id=data['assigned_to_student'],
+                    sender_id=assigned_by,
+                    notification_type='assignment',
+                    title='Bài tập mới',
+                    content=f'Bạn có bài tập mới với video hướng dẫn',
+                    related_entity_id=assignment.assignment_id,
+                    related_entity_type='assignment'
+                )
+                db.session.add(notification)
+            
+            elif data['assignment_type'] == 'class':
+                from app.models.class_enrollment import ClassEnrollment
+                enrollments = ClassEnrollment.query.filter_by(
+                    class_id=data['assigned_to_class'],
+                    enrollment_status='active'
+                ).all()
+                
+                for enrollment in enrollments:
+                    notification = Notification(
+                        recipient_id=enrollment.student_id,
+                        sender_id=assigned_by,
+                        notification_type='assignment',
+                        title='Bài tập mới cho lớp',
+                        content=f'Lớp có bài tập mới với video hướng dẫn',
+                        related_entity_id=assignment.assignment_id,
+                        related_entity_type='assignment'
+                    )
+                    db.session.add(notification)
+            
+            db.session.commit()
+            return {'success': True, 'assignment': assignment}
+            
+        except Exception as e:
+            db.session.rollback()
+            return {'success': False, 'message': str(e)}
 
     @staticmethod
     def get_assignments_by_instructor(instructor_id: int):
@@ -68,11 +114,32 @@ class AssignmentService:
                 student_id=student.user_id,
                 assignment_id=assignment_id,
             ).order_by(TrainingVideo.uploaded_at.desc()).all()
+            
+            latest_video = videos[0] if videos else None
+            submitted = len(videos) > 0
+            
+            # Determine status
+            if submitted and latest_video.manual_evaluations:
+                status = 'graded'
+                score = latest_video.manual_evaluations[0].overall_score
+                submitted_at = latest_video.uploaded_at
+            elif submitted:
+                status = 'submitted'
+                score = None
+                submitted_at = latest_video.uploaded_at
+            else:
+                status = 'pending'
+                score = None
+                submitted_at = None
+            
             status_list.append({
                 'student': student,
-                'submitted': len(videos) > 0,
+                'status': status,
+                'submitted': submitted,
                 'video_count': len(videos),
-                'latest_video': videos[0] if videos else None,
+                'latest_video': latest_video,
+                'submitted_at': submitted_at,
+                'score': score,
             })
         return status_list
 

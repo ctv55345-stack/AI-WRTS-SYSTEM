@@ -20,7 +20,7 @@
             <i class="fas fa-hourglass-half text-warning"></i>
         </div>
         <div class="stat-content">
-            <div class="stat-value">{{ videos|length }}</div>
+            <div class="stat-value">{{ stats.pending_count }}</div>
             <div class="stat-label">Chờ chấm</div>
         </div>
     </div>
@@ -30,7 +30,7 @@
             <i class="fas fa-check-circle text-success"></i>
         </div>
         <div class="stat-content">
-            <div class="stat-value">0</div>
+            <div class="stat-value">{{ stats.evaluated_today }}</div>
             <div class="stat-label">Đã chấm hôm nay</div>
         </div>
     </div>
@@ -40,7 +40,7 @@
             <i class="fas fa-calendar-week text-info"></i>
         </div>
         <div class="stat-content">
-            <div class="stat-value">0</div>
+            <div class="stat-value">{{ stats.evaluated_this_week }}</div>
             <div class="stat-label">Đã chấm tuần này</div>
         </div>
     </div>
@@ -50,7 +50,13 @@
             <i class="fas fa-chart-line text-primary"></i>
         </div>
         <div class="stat-content">
-            <div class="stat-value">--</div>
+            <div class="stat-value">
+                {% if stats.average_score %}
+                    {{ stats.average_score }}
+                {% else %}
+                    --
+                {% endif %}
+            </div>
             <div class="stat-label">Điểm TB</div>
         </div>
     </div>
@@ -127,7 +133,7 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <i class="fas fa-dumbbell text-primary me-2"></i>
+                                <i class="fas fa-fist-raised text-primary me-2"></i>
                                 <div>
                                     <strong>{{ video.routine.routine_name }}</strong>
                                     <br>
@@ -178,7 +184,7 @@
                         </td>
                         <td>
                             <span class="badge bg-secondary">
-                                <i class="fas fa-clock me-1"></i>
+                                <i class="fas fa-stopwatch me-1"></i>
                                 {{ video.duration // 60 if video.duration else 0 }}:{{ '%02d' % ((video.duration % 60) if video.duration else 0) }}
                             </span>
                         </td>

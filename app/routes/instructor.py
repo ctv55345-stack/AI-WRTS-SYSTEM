@@ -568,6 +568,55 @@ def create_assignment():
     form.assigned_to_student.choices = [(0, '-- Chọn học viên --')] + [(s.user_id, s.full_name) for s in students]
     form.assigned_to_class.choices = [(0, '-- Chọn lớp --')] + [(c.class_id, c.class_name) for c in instructor_classes]
     if form.validate_on_submit():
+        # XỬ LÝ VIDEO - BẮT BUỘC
+        instructor_video_url = None
+        
+        # Ưu tiên 1: Upload file
+        if form.instructor_video_file.data:
+            from werkzeug.utils import secure_filename
+            import os
+            from datetime import datetime
+            from flask import current_app
+            
+            try:
+                video_file = form.instructor_video_file.data
+                filename = secure_filename(video_file.filename)
+                
+                # Kiểm tra kích thước file từ config
+                file_size = len(video_file.read())
+                video_file.seek(0)  # Reset file pointer
+                
+                max_size = current_app.config.get('MAX_VIDEO_SIZE', 100 * 1024 * 1024)
+                if file_size > max_size:
+                    max_size_mb = max_size // (1024 * 1024)
+                    flash(f'File video quá lớn! Vui lòng chọn file nhỏ hơn {max_size_mb}MB.', 'error')
+                    return render_template('instructor/assignment_create.html', form=form)
+                
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"assignment_{session['user_id']}_{timestamp}_{filename}"
+                
+                upload_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'static/uploads'), 'assignments')
+                os.makedirs(upload_path, exist_ok=True)
+                
+                filepath = os.path.join(upload_path, filename)
+                video_file.save(filepath)
+                
+                instructor_video_url = f"/static/uploads/assignments/{filename}"
+                
+            except Exception as e:
+                flash(f'Lỗi khi upload video: {str(e)}', 'error')
+                return render_template('instructor/assignment_create.html', form=form)
+            
+        # Ưu tiên 2: Dùng URL
+        elif form.instructor_video_url.data:
+            instructor_video_url = form.instructor_video_url.data
+        
+        # KIỂM TRA BẮT BUỘC
+        if not instructor_video_url:
+            flash('Vui lòng upload video demo hoặc nhập link video!', 'error')
+            return render_template('instructor/assignment_create.html', form=form)
+        
+        # Tạo assignment
         data = {
             'routine_id': form.routine_id.data,
             'assignment_type': form.assignment_type.data,
@@ -577,7 +626,9 @@ def create_assignment():
             'instructions': form.instructions.data,
             'priority': form.priority.data,
             'is_mandatory': form.is_mandatory.data,
+            'instructor_video_url': instructor_video_url  # BẮT BUỘC
         }
+        
         result = AssignmentService.create_assignment(data, session['user_id'])
         if result['success']:
             flash('Gán bài tập thành công!', 'success')
@@ -692,6 +743,7 @@ def delete_exam(exam_id: int):
 def pending_evaluations():
     """Danh sách video chờ chấm điểm"""
     from flask import request
+    from datetime import datetime, timedelta
     
     # Get filter parameter
     show_all = request.args.get('show_all', 'false').lower() == 'true'
@@ -703,7 +755,43 @@ def pending_evaluations():
         # Show only pending videos
         videos = EvaluationService.get_pending_submissions(session['user_id'])
     
-    return render_template('instructor/pending_evaluations.html', videos=videos, show_all=show_all)
+    # Calculate statistics
+    all_videos = EvaluationService.get_all_submissions(session['user_id'])
+    
+    # Count pending videos
+    pending_count = len([v for v in all_videos if not v.manual_evaluations])
+    
+    # Count evaluated today
+    today = datetime.now().date()
+    evaluated_today = len([v for v in all_videos 
+                          if v.manual_evaluations and 
+                          v.manual_evaluations[0].evaluated_at.date() == today])
+    
+    # Count evaluated this week
+    week_start = today - timedelta(days=today.weekday())
+    evaluated_this_week = len([v for v in all_videos 
+                              if v.manual_evaluations and 
+                              v.manual_evaluations[0].evaluated_at.date() >= week_start])
+    
+    # Calculate average score
+    evaluated_videos = [v for v in all_videos if v.manual_evaluations]
+    if evaluated_videos:
+        avg_score = sum(v.manual_evaluations[0].overall_score for v in evaluated_videos) / len(evaluated_videos)
+        avg_score = round(avg_score, 1)
+    else:
+        avg_score = None
+    
+    stats = {
+        'pending_count': pending_count,
+        'evaluated_today': evaluated_today,
+        'evaluated_this_week': evaluated_this_week,
+        'average_score': avg_score
+    }
+    
+    return render_template('instructor/pending_evaluations.html', 
+                         videos=videos, 
+                         show_all=show_all,
+                         stats=stats)
 
 @instructor_bp.route('/videos/<int:video_id>/evaluate', methods=['GET', 'POST'])
 @login_required
@@ -733,9 +821,36 @@ def evaluate_video(video_id):
         flash('Bạn không có quyền chấm điểm video này', 'error')
         return redirect(url_for('instructor.pending_evaluations'))
     
+    # CHỈ LẤY VIDEO TỪ ASSIGNMENT - BẮT BUỘC
+    if not video.assignment_id or not video.assignment:
+        flash('Video này không thuộc assignment nào!', 'error')
+        return redirect(url_for('instructor.pending_evaluations'))
+    
+    if not video.assignment.instructor_video_url:
+        flash('Assignment này chưa có video demo!', 'error')
+        return redirect(url_for('instructor.pending_evaluations'))
+    
+    reference_video_url = video.assignment.instructor_video_url
+    video_source = f"Video demo Assignment #{video.assignment.assignment_id}"
+    
     form = ManualEvaluationForm()
     
+    # Set default value for evaluation_method
+    if request.method == 'GET':
+        form.evaluation_method.data = 'manual'
+    
+    # Debug: Print form validation errors
+    if request.method == 'POST':
+        print("POST data:", request.form)
+        print("Form data:", form.data)
+        if not form.validate():
+            print("Form validation errors:", form.errors)
+            flash('Có lỗi trong form. Vui lòng kiểm tra lại.', 'error')
+    
     if form.validate_on_submit():
+        # Xác định phương thức chấm điểm
+        evaluation_method = form.evaluation_method.data
+        
         data = {
             'overall_score': form.overall_score.data,
             'technique_score': form.technique_score.data,
@@ -744,8 +859,14 @@ def evaluate_video(video_id):
             'strengths': form.strengths.data,
             'improvements_needed': form.improvements_needed.data,
             'comments': form.comments.data,
-            'is_passed': form.is_passed.data
+            'is_passed': form.is_passed.data,
+            'evaluation_method': evaluation_method
         }
+        
+        # Nếu sử dụng AI, thêm thông tin AI analysis
+        if evaluation_method == 'ai' and ai_analysis:
+            data['ai_analysis_id'] = ai_analysis.analysis_id
+            data['ai_confidence'] = getattr(ai_analysis, 'confidence', None)
         
         result = EvaluationService.create_evaluation(
             video_id, 
@@ -754,7 +875,8 @@ def evaluate_video(video_id):
         )
         
         if result['success']:
-            flash('Chấm điểm thành công! Đã gửi thông báo cho học viên.', 'success')
+            method_text = "AI" if evaluation_method == 'ai' else "thủ công"
+            flash(f'Chấm điểm thành công bằng phương thức {method_text}! Đã gửi thông báo cho học viên.', 'success')
             return redirect(url_for('instructor.pending_evaluations'))
         else:
             flash(result['message'], 'error')
@@ -762,7 +884,9 @@ def evaluate_video(video_id):
     return render_template('instructor/evaluate_video.html',
                          video=video,
                          ai_analysis=ai_analysis,
-                         form=form)
+                         form=form,
+                         reference_video_url=reference_video_url,
+                         video_source=video_source)
 
 
 # ============ ANALYTICS ============
