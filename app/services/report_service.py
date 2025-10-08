@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils.helpers import get_vietnam_time
 
 class ReportService:
     
@@ -16,7 +17,7 @@ class ReportService:
         rankings = AnalyticsService.get_student_ranking(class_id)
         
         report = {
-            'generated_at': datetime.utcnow().isoformat(),
+            'generated_at': get_vietnam_time().isoformat(),
             'class_info': {
                 'name': class_obj.class_name,
                 'code': class_obj.class_code,
@@ -46,7 +47,7 @@ class ReportService:
         instructor_perf = AnalyticsService.get_instructor_performance()
         
         report = {
-            'generated_at': datetime.utcnow().isoformat(),
+            'generated_at': get_vietnam_time().isoformat(),
             'system_overview': overview,
             'instructor_performance': [
                 {

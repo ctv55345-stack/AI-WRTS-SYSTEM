@@ -81,16 +81,27 @@
                 
                 <div class="d-flex gap-2 align-items-center">
                     {% if item.can_attempt %}
+                        <a href="{{ url_for('student.take_exam', exam_id=item.exam.exam_id) }}" 
+                           class="btn btn-success btn-sm">
+                            <i class="fas fa-play-circle"></i> Vào thi
+                        </a>
                         <span class="badge bg-success">
-                            <i class="fas fa-check-circle me-1"></i>Có thể thi
+                            <i class="fas fa-check-circle"></i> Có thể thi
                         </span>
-                        <button class="btn btn-primary btn-sm" disabled>
-                            <i class="fas fa-play me-2"></i>Bắt đầu thi
+                    {% elif now < item.exam.start_time %}
+                        <button class="btn btn-secondary btn-sm" disabled>
+                            <i class="fas fa-clock"></i> Chưa đến giờ
                         </button>
-                        <small class="text-muted">(Tính năng đang phát triển)</small>
+                        <span class="badge bg-warning">
+                            <i class="fas fa-hourglass-half"></i> 
+                            Bắt đầu: {{ item.exam.start_time.strftime('%H:%M %d/%m') }}
+                        </span>
                     {% else %}
-                        <span class="badge bg-warning text-dark">
-                            <i class="fas fa-clock me-1"></i>Chưa đến giờ hoặc đã hết lượt
+                        <button class="btn btn-secondary btn-sm" disabled>
+                            <i class="fas fa-ban"></i> Hết lượt
+                        </button>
+                        <span class="badge bg-danger">
+                            <i class="fas fa-times-circle"></i> Không thể thi
                         </span>
                     {% endif %}
                 </div>
@@ -100,6 +111,94 @@
             <div class="student-empty-state" style="padding: 2rem;">
                 <i class="fas fa-calendar-check text-muted"></i>
                 <p class="mb-0">Không có bài kiểm tra sắp tới</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Active Exams -->
+    <div class="mb-5">
+        <div class="d-flex align-items-center mb-3">
+            <h4 class="mb-0">
+                <i class="fas fa-play-circle text-success me-2"></i>
+                Bài kiểm tra đang diễn ra
+            </h4>
+            <span class="badge bg-success ms-2">{{ active|length }}</span>
+        </div>
+        
+        {% if active %}
+            {% for item in active %}
+            <div class="student-exam-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="mb-2">{{ item.exam.exam_name }}</h5>
+                        <span class="student-exam-type-badge">{{ item.exam.exam_type }}</span>
+                        <span class="badge bg-secondary ms-2">{{ item.exam.exam_code }}</span>
+                    </div>
+                </div>
+                
+                <div class="student-info-grid mb-3">
+                    <div class="student-info-item">
+                        <i class="fas fa-book-open"></i>
+                        <div>
+                            <small class="text-muted d-block">Bài võ</small>
+                            <strong>{{ item.exam.routine.routine_name if item.exam.routine else 'Tự do' }}</strong>
+                        </div>
+                    </div>
+                    <div class="student-info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div>
+                            <small class="text-muted d-block">Thời gian thi</small>
+                            <strong>{{ item.exam.start_time.strftime('%d/%m/%Y %H:%M') }}</strong>
+                            <small class="d-block text-muted">đến {{ item.exam.end_time.strftime('%d/%m/%Y %H:%M') }}</small>
+                        </div>
+                    </div>
+                    <div class="student-info-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <small class="text-muted d-block">Thời lượng</small>
+                            <strong>{{ item.exam.duration_minutes }} phút</strong>
+                        </div>
+                    </div>
+                    <div class="student-info-item">
+                        <i class="fas fa-percentage"></i>
+                        <div>
+                            <small class="text-muted d-block">Điểm đạt</small>
+                            <strong>{{ item.exam.pass_score }}%</strong>
+                        </div>
+                    </div>
+                    <div class="student-info-item">
+                        <i class="fas fa-redo"></i>
+                        <div>
+                            <small class="text-muted d-block">Số lần thi</small>
+                            <strong>{{ item.attempts_used }}/{{ item.exam.max_attempts }}</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-2 align-items-center">
+                    {% if item.can_attempt %}
+                        <a href="{{ url_for('student.take_exam', exam_id=item.exam.exam_id) }}" 
+                           class="btn btn-success btn-sm">
+                            <i class="fas fa-play-circle"></i> Vào thi ngay
+                        </a>
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle"></i> Có thể thi
+                        </span>
+                    {% else %}
+                        <button class="btn btn-secondary btn-sm" disabled>
+                            <i class="fas fa-ban"></i> Hết lượt
+                        </button>
+                        <span class="badge bg-danger">
+                            <i class="fas fa-times-circle"></i> Không thể thi
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="student-empty-state" style="padding: 2rem;">
+                <i class="fas fa-play-circle text-muted"></i>
+                <p class="mb-0">Không có bài kiểm tra đang diễn ra</p>
             </div>
         {% endif %}
     </div>

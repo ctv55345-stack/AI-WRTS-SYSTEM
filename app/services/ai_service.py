@@ -1,6 +1,7 @@
 from app.models.ai_analysis import AIAnalysisResult
 from app.models.training_video import TrainingVideo
 from app import db
+from app.utils.helpers import get_vietnam_time
 from datetime import datetime
 import random
 import time
@@ -41,14 +42,14 @@ class AIService:
                 errors_detected=AIService.generate_mock_errors(),
                 ai_model_version="v1.0.0-mock",
                 processing_time_seconds=round(random.uniform(2, 5), 2),
-                analyzed_at=datetime.utcnow()
+                analyzed_at=get_vietnam_time()
             )
             
             db.session.add(analysis_result)
             
             # Cập nhật trạng thái video
             video.processing_status = 'completed'
-            video.processed_at = datetime.utcnow()
+            video.processed_at = get_vietnam_time()
             
             db.session.commit()
             

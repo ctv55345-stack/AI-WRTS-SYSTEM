@@ -1,5 +1,6 @@
 from . import db
 from datetime import datetime
+from app.utils.helpers import get_vietnam_time_naive
 
 class Assignment(db.Model):
     __tablename__ = 'assignments'
@@ -29,14 +30,14 @@ class Assignment(db.Model):
         """Check if assignment has passed deadline"""
         if not self.deadline:
             return False
-        return datetime.utcnow() > self.deadline
+        return get_vietnam_time_naive() > self.deadline
     
     @property
     def status(self):
         """Get assignment status based on deadline"""
         if not self.deadline:
             return 'active'
-        if datetime.utcnow() > self.deadline:
+        if get_vietnam_time_naive() > self.deadline:
             return 'expired'
         return 'active'
     

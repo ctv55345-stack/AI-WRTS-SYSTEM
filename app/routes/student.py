@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, session, flash, redirect, url_for, request
 from app.utils.decorators import login_required, role_required
+from app.utils.helpers import get_vietnam_time, get_vietnam_time_naive
 from app.models.class_enrollment import ClassEnrollment
 from app.models.class_model import Class
 from app.models.class_schedule import ClassSchedule
@@ -38,8 +39,7 @@ def dashboard():
     ).count()
 
     # Lấy lịch học hôm nay (lấy 5 lịch gần nhất)
-    from datetime import datetime
-    today = datetime.now()
+    today = get_vietnam_time_naive()
     day_map = {
         0: 'monday', 1: 'tuesday', 2: 'wednesday', 3: 'thursday',
         4: 'friday', 5: 'saturday', 6: 'sunday'
@@ -292,10 +292,11 @@ def submit_assignment(assignment_id):
 @role_required('STUDENT')
 def my_exams():
     exams = ExamService.get_exams_for_student(session['user_id'])
-    from datetime import datetime
-    now = datetime.utcnow()
+    now = get_vietnam_time_naive()
     upcoming = []
+    active = []  # Đang trong thời gian thi
     past = []
+    
     for exam in exams:
         results = ExamService.get_student_exam_result(exam.exam_id, session['user_id'])
         exam_info = {
@@ -304,11 +305,23 @@ def my_exams():
             'attempts_used': len(results),
             'can_attempt': len(results) < exam.max_attempts and now < exam.end_time,
         }
+        
+        # Phân loại exam theo thời gian
         if now < exam.start_time:
+            # Chưa đến giờ thi
             upcoming.append(exam_info)
+        elif now <= exam.end_time:
+            # Đang trong thời gian thi
+            active.append(exam_info)
         else:
+            # Đã hết hạn thi
             past.append(exam_info)
-    return render_template('student/my_exams.html', upcoming=upcoming, past=past)
+    
+    return render_template('student/my_exams.html', 
+                         upcoming=upcoming, 
+                         active=active,
+                         past=past, 
+                         now=now)
 
 
 # ============ ANALYTICS & GOALS ============
@@ -385,3 +398,92 @@ def delete_goal(goal_id):
         flash(result['message'], 'error')
     
     return redirect(url_for('student.goals'))
+
+
+# ============ EXAM TAKING (THÊM MỚI) ============
+
+@student_bp.route('/exams/<int:exam_id>/take', methods=['GET'])
+@login_required
+@role_required('STUDENT')
+def take_exam(exam_id: int):
+    """Trang làm bài thi"""
+    # Lấy thông tin exam
+    exam = ExamService.get_exam_by_id(exam_id)
+    if not exam or not exam.is_published:
+        flash('Không tìm thấy bài kiểm tra hoặc chưa được xuất bản', 'error')
+        return redirect(url_for('student.my_exams'))
+    
+    # Kiểm tra điều kiện vào thi
+    can_take, message = ExamService.can_take_exam(exam_id, session['user_id'])
+    if not can_take:
+        flash(message, 'error')
+        return redirect(url_for('student.my_exams'))
+    
+    # Lấy số lần đã thi
+    results = ExamService.get_student_exam_result(exam_id, session['user_id'])
+    attempt_number = len(results) + 1
+    
+    # Lấy video URL
+    video_url = exam.get_video_url()
+    
+    return render_template(
+        'student/take_exam.html',
+        exam=exam,
+        attempt_number=attempt_number,
+        video_url=video_url
+    )
+
+
+@student_bp.route('/exams/<int:exam_id>/submit', methods=['POST'])
+@login_required
+@role_required('STUDENT')
+def submit_exam(exam_id: int):
+    """Nộp bài thi"""
+    # Kiểm tra điều kiện
+    exam = ExamService.get_exam_by_id(exam_id)
+    if not exam:
+        flash('Không tìm thấy bài kiểm tra', 'error')
+        return redirect(url_for('student.my_exams'))
+    
+    can_take, message = ExamService.can_take_exam(exam_id, session['user_id'])
+    if not can_take:
+        flash(message, 'error')
+        return redirect(url_for('student.my_exams'))
+    
+    # Lấy video file
+    if 'student_video' not in request.files:
+        flash('Vui lòng ghi video làm bài', 'error')
+        return redirect(url_for('student.take_exam', exam_id=exam_id))
+    
+    video_file = request.files['student_video']
+    if not video_file or video_file.filename == '':
+        flash('Vui lòng chọn video', 'error')
+        return redirect(url_for('student.take_exam', exam_id=exam_id))
+    
+    # Validate video format
+    allowed_extensions = {'mp4', 'avi', 'mov', 'webm'}
+    file_ext = video_file.filename.rsplit('.', 1)[1].lower() if '.' in video_file.filename else ''
+    
+    if file_ext not in allowed_extensions:
+        flash(f'Định dạng không hợp lệ. Chỉ chấp nhận: {", ".join(allowed_extensions)}', 'error')
+        return redirect(url_for('student.take_exam', exam_id=exam_id))
+    
+    try:
+        # Nộp bài và lưu kết quả
+        result = ExamService.submit_exam_result(
+            exam_id=exam_id,
+            student_id=session['user_id'],
+            video_file=video_file,
+            notes=request.form.get('notes', '')
+        )
+        
+        if result['success']:
+            flash('Nộp bài thành công! Hệ thống đang chấm điểm...', 'success')
+            return redirect(url_for('student.my_exams'))
+        else:
+            flash(result['message'], 'error')
+            return redirect(url_for('student.take_exam', exam_id=exam_id))
+            
+    except Exception as e:
+        flash(f'Lỗi khi nộp bài: {str(e)}', 'error')
+        return redirect(url_for('student.take_exam', exam_id=exam_id))

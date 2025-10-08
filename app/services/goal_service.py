@@ -1,5 +1,6 @@
 from app.models import db
 from app.models.goal import Goal
+from app.utils.helpers import get_vietnam_time, get_vietnam_time_naive
 from datetime import datetime
 
 class GoalService:
@@ -45,10 +46,10 @@ class GoalService:
         # Tự động hoàn thành nếu đạt target
         if new_value >= goal.target_value:
             goal.goal_status = 'completed'
-            goal.completed_at = datetime.utcnow()
+            goal.completed_at = get_vietnam_time()
         
         # Kiểm tra quá hạn
-        if datetime.utcnow().date() > goal.deadline and goal.goal_status == 'active':
+        if get_vietnam_time_naive().date() > goal.deadline and goal.goal_status == 'active':
             goal.goal_status = 'failed'
         
         db.session.commit()

@@ -2,6 +2,7 @@ from app.models import db
 from app.models.exam import Exam
 from app.models.exam_result import ExamResult
 from app.models.class_enrollment import ClassEnrollment
+from app.utils.helpers import get_vietnam_time, get_vietnam_time_naive, vietnam_to_utc
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
@@ -66,7 +67,7 @@ class ExamService:
         
         # Tạo tên file mới: exam_{id}_{timestamp}.ext
         ext = filename.rsplit('.', 1)[1].lower()
-        new_filename = f"exam_{exam_id}_{int(datetime.utcnow().timestamp())}.{ext}"
+        new_filename = f"exam_{exam_id}_{int(get_vietnam_time().timestamp())}.{ext}"
         file_path = os.path.join(upload_folder, new_filename)
         
         # Lưu file
@@ -221,5 +222,135 @@ class ExamService:
             exam_id=exam_id,
             student_id=student_id
         ).order_by(ExamResult.attempt_number.desc()).all()
+
+    @staticmethod
+    def can_take_exam(exam_id: int, student_id: int):
+        """
+        Kiểm tra xem học sinh có thể vào thi không
+        
+        Returns:
+            tuple: (can_take: bool, message: str)
+        """
+        exam = Exam.query.get(exam_id)
+        if not exam:
+            return False, "Không tìm thấy bài kiểm tra"
+        
+        if not exam.is_published:
+            return False, "Bài kiểm tra chưa được xuất bản"
+        
+        # Kiểm tra thời gian
+        now = get_vietnam_time_naive()
+        
+        if now < exam.start_time:
+            return False, f"Chưa đến giờ thi. Bắt đầu lúc {exam.start_time.strftime('%d/%m/%Y %H:%M')}"
+        
+        if now > exam.end_time:
+            return False, "Đã hết hạn nộp bài"
+        
+        # Kiểm tra lớp học (nếu exam có class_id)
+        if exam.class_id:
+            enrollment = ClassEnrollment.query.filter_by(
+                student_id=student_id,
+                class_id=exam.class_id,
+                enrollment_status='active'
+            ).first()
+            
+            if not enrollment:
+                return False, "Bạn không thuộc lớp học này"
+        
+        # Kiểm tra số lần thi
+        results = ExamResult.query.filter_by(
+            exam_id=exam_id,
+            student_id=student_id
+        ).all()
+        
+        if len(results) >= exam.max_attempts:
+            return False, f"Đã hết lượt thi ({exam.max_attempts} lần)"
+        
+        return True, "OK"
+    
+    @staticmethod
+    def submit_exam_result(exam_id: int, student_id: int, video_file, notes: str = ''):
+        """
+        Nộp bài thi và lưu kết quả
+        
+        Args:
+            exam_id: ID bài thi
+            student_id: ID học sinh
+            video_file: Video file đã ghi
+            notes: Ghi chú của học sinh
+            
+        Returns:
+            dict: {'success': bool, 'message': str, 'result': ExamResult}
+        """
+        from app.services.video_service import VideoService
+        from app.services.ai_service import AIService
+        
+        # Kiểm tra điều kiện
+        can_take, message = ExamService.can_take_exam(exam_id, student_id)
+        if not can_take:
+            return {'success': False, 'message': message}
+        
+        exam = Exam.query.get(exam_id)
+        
+        # Tính attempt number
+        existing_results = ExamResult.query.filter_by(
+            exam_id=exam_id,
+            student_id=student_id
+        ).all()
+        attempt_number = len(existing_results) + 1
+        
+        try:
+            # Lưu video (sử dụng VideoService có sẵn)
+            routine_id = exam.routine_id if exam.video_upload_method == 'routine' else None
+            
+            video = VideoService.save_video(
+                file=video_file,
+                student_id=student_id,
+                routine_id=routine_id,
+                assignment_id=None,  # Exam không có assignment_id
+                notes=f"Exam: {exam.exam_name} - Lần {attempt_number}"
+            )
+            
+            # Tạo exam result
+            exam_result = ExamResult(
+                exam_id=exam_id,
+                student_id=student_id,
+                video_id=video.video_id,
+                attempt_number=attempt_number,
+                submitted_at=get_vietnam_time(),
+                score=None,  # Chờ AI chấm
+                feedback=notes,
+                graded_by=None,
+                graded_at=None
+            )
+            
+            db.session.add(exam_result)
+            db.session.commit()
+            
+            # Trigger AI phân tích (background task)
+            try:
+                # Gọi AI service để chấm điểm
+                AIService.process_video_mock(video.video_id)
+                
+                # Sau khi AI xong, cập nhật score vào exam_result
+                # (Phần này sẽ được xử lý bởi AI service callback)
+                
+            except Exception as ai_error:
+                print(f"AI processing error: {ai_error}")
+                # Không fail submission nếu AI lỗi
+            
+            return {
+                'success': True,
+                'message': 'Nộp bài thành công',
+                'result': exam_result
+            }
+            
+        except Exception as e:
+            db.session.rollback()
+            return {
+                'success': False,
+                'message': f'Lỗi khi nộp bài: {str(e)}'
+            }
 
 

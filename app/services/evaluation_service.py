@@ -2,6 +2,7 @@ from app.models import db
 from app.models.manual_evaluation import ManualEvaluation
 from app.models.training_video import TrainingVideo
 from app.models.notification import Notification
+from app.utils.helpers import get_vietnam_time
 from datetime import datetime
 
 class EvaluationService:
@@ -104,7 +105,7 @@ class EvaluationService:
             evaluation_method=data.get('evaluation_method', 'manual'),
             ai_analysis_id=data.get('ai_analysis_id'),
             ai_confidence=data.get('ai_confidence'),
-            evaluated_at=datetime.utcnow()
+            evaluated_at=get_vietnam_time()
         )
         
         db.session.add(evaluation)

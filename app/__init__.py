@@ -25,8 +25,9 @@ def create_app():
     # Jinja global: now()
     @app.context_processor
     def inject_now():
+        from app.utils.helpers import get_vietnam_time_naive
         return {
-            'now': lambda: datetime.utcnow()
+            'now': lambda: get_vietnam_time_naive()
         }
     
     # Error handlers

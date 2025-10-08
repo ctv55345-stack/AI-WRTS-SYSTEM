@@ -4,6 +4,7 @@ from app.models.class_model import Class
 from app.models.class_enrollment import ClassEnrollment
 from app.models.user import User
 from app.models.role import Role
+from app.utils.helpers import get_vietnam_time
 
 
 class ClassService:
@@ -51,7 +52,7 @@ class ClassService:
 
         class_obj.approval_status = 'approved'
         class_obj.approved_by = manager_id
-        class_obj.approved_at = datetime.utcnow()
+        class_obj.approved_at = get_vietnam_time()
         class_obj.is_active = True
 
         db.session.commit()
@@ -67,7 +68,7 @@ class ClassService:
 
         class_obj.approval_status = 'rejected'
         class_obj.approved_by = manager_id
-        class_obj.approved_at = datetime.utcnow()
+        class_obj.approved_at = get_vietnam_time()
         class_obj.rejection_reason = reason
         class_obj.is_active = False
 
@@ -253,7 +254,7 @@ class ClassService:
 
         enrollment.enrollment_status = status
         if status == 'completed':
-            enrollment.completed_at = datetime.utcnow()
+            enrollment.completed_at = get_vietnam_time()
 
         db.session.commit()
         return {'success': True, 'enrollment': enrollment}

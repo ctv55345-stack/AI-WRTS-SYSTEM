@@ -1,6 +1,7 @@
 from app.models.training_video import TrainingVideo
 from app.models.ai_analysis import AIAnalysisResult
 from app import db
+from app.utils.helpers import get_vietnam_time
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
@@ -68,7 +69,7 @@ class VideoService:
                 resolution=metadata['resolution'],
                 upload_status='completed',
                 processing_status='pending',
-                uploaded_at=datetime.utcnow()
+                uploaded_at=get_vietnam_time()
             )
             
             db.session.add(video)

@@ -6,6 +6,7 @@ from app.models.manual_evaluation import ManualEvaluation
 from app.models.class_enrollment import ClassEnrollment
 from app.models.class_model import Class
 from app.models.user import User
+from app.utils.helpers import get_vietnam_time, get_vietnam_time_naive
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
 
@@ -45,7 +46,7 @@ class AnalyticsService:
     @staticmethod
     def get_score_progression(student_id, days=30):
         """Biểu đồ điểm số theo thời gian"""
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = get_vietnam_time_naive() - timedelta(days=days)
         
         videos = TrainingVideo.query.filter(
             TrainingVideo.student_id == student_id,
@@ -280,7 +281,7 @@ class AnalyticsService:
     @staticmethod
     def get_trends_data(days=30):
         """Xu hướng theo thời gian"""
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = get_vietnam_time_naive() - timedelta(days=days)
         
         # Video uploads per day
         videos_by_day = db.session.query(

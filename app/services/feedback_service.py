@@ -1,5 +1,6 @@
 from app.models import db
 from app.models.feedback import Feedback
+from app.utils.helpers import get_vietnam_time
 from datetime import datetime, timedelta
 from sqlalchemy import func
 
@@ -51,10 +52,10 @@ class FeedbackService:
         feedback.priority = data.get('priority', feedback.priority)
         feedback.feedback_status = data.get('feedback_status', feedback.feedback_status)
         feedback.resolution_notes = data.get('resolution_notes', feedback.resolution_notes)
-        feedback.updated_at = datetime.utcnow()
+        feedback.updated_at = get_vietnam_time()
         
         if data.get('feedback_status') in ['resolved', 'rejected', 'implemented']:
-            feedback.resolved_at = datetime.utcnow()
+            feedback.resolved_at = get_vietnam_time()
         
         db.session.commit()
         return {'success': True, 'feedback': feedback}

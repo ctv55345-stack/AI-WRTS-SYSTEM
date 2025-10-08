@@ -2,6 +2,7 @@ from app.models import db
 from app.models.user import User
 from app.models.role import Role
 from app.models.auth_token import AuthToken
+from app.utils.helpers import get_vietnam_time
 from datetime import datetime, timedelta
 import secrets
 
@@ -11,7 +12,7 @@ class AuthService:
     def login(username, password):
         user = User.query.filter_by(username=username, is_active=True).first()
         if user and user.check_password(password):
-            user.last_login_at = datetime.utcnow()
+            user.last_login_at = get_vietnam_time()
             db.session.commit()
             return user
         return None
@@ -61,7 +62,7 @@ class AuthService:
             user_id=user.user_id,
             token_hash=token,
             token_type='reset_password',
-            expires_at=datetime.utcnow() + timedelta(hours=24)
+            expires_at=get_vietnam_time() + timedelta(hours=24)
         )
         db.session.add(auth_token)
         db.session.commit()
@@ -82,7 +83,7 @@ class AuthService:
         if not auth_token:
             return {'success': False, 'message': 'Token không hợp lệ'}
         
-        if auth_token.expires_at < datetime.utcnow():
+        if auth_token.expires_at < get_vietnam_time():
             return {'success': False, 'message': 'Token đã hết hạn'}
         
         # Đặt lại mật khẩu
@@ -91,7 +92,7 @@ class AuthService:
         
         # Revoke token
         auth_token.is_revoked = True
-        auth_token.used_at = datetime.utcnow()
+        auth_token.used_at = get_vietnam_time()
         
         db.session.commit()
         return {'success': True}
