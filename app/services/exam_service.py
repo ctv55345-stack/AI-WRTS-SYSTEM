@@ -4,6 +4,7 @@ from app.models.exam_result import ExamResult
 from app.models.class_enrollment import ClassEnrollment
 from app.utils.helpers import get_vietnam_time, get_vietnam_time_naive, vietnam_to_utc
 from datetime import datetime
+import uuid
 import os
 from werkzeug.utils import secure_filename
 import cv2
@@ -65,13 +66,18 @@ class ExamService:
         )
         os.makedirs(upload_folder, exist_ok=True)
         
-        # Tạo tên file mới: exam_{id}_{timestamp}.ext
+        # Tạo tên file ASCII-only với phần mở rộng gốc
         ext = filename.rsplit('.', 1)[1].lower()
-        new_filename = f"exam_{exam_id}_{int(get_vietnam_time().timestamp())}.{ext}"
+        timestamp = int(get_vietnam_time().timestamp())
+        new_filename = f"exam_{exam_id}_{timestamp}.{ext}"
         file_path = os.path.join(upload_folder, new_filename)
-        
-        # Lưu file
-        file.save(file_path)
+
+        # Lưu file với xử lý lỗi encoding/log
+        try:
+            file.save(file_path)
+        except Exception as e:
+            print(f"Error saving file: {repr(e)}")
+            return None, "Loi luu file"
         
         # Lấy duration
         duration = ExamService._get_video_duration(file_path)
@@ -320,8 +326,7 @@ class ExamService:
                 attempt_number=attempt_number,
                 submitted_at=get_vietnam_time(),
                 score=None,  # Chờ AI chấm
-                feedback=notes,
-                graded_by=None,
+                instructor_comments=notes,
                 graded_at=None
             )
             

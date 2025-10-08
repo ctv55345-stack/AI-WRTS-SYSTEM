@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, session,
 import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
+import uuid
 from app.services.class_service import ClassService
 from app.services.routine_service import RoutineService
 from app.services.assignment_service import AssignmentService
@@ -355,11 +356,9 @@ def create_routine():
         if form.reference_video_file.data:
             video_file = form.reference_video_file.data
             filename = secure_filename(video_file.filename)
-            
-            # Tạo tên unique
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"{timestamp}_{filename}"
-            
+            # Tạo tên ngẫu nhiên, giữ phần mở rộng
+            ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'mp4'
+            filename = f"{uuid.uuid4().hex}.{ext}"
             # Lưu file
             upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'routines')
             os.makedirs(upload_path, exist_ok=True)
@@ -428,11 +427,8 @@ def edit_routine(routine_id: int):
         if form.reference_video_file.data:
             video_file = form.reference_video_file.data
             filename = secure_filename(video_file.filename)
-            
-            # Tạo tên unique
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"{timestamp}_{filename}"
-            
+            ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'mp4'
+            filename = f"{uuid.uuid4().hex}.{ext}"
             # Lưu file
             upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'routines')
             os.makedirs(upload_path, exist_ok=True)
@@ -592,8 +588,8 @@ def create_assignment():
                     flash(f'File video quá lớn! Vui lòng chọn file nhỏ hơn {max_size_mb}MB.', 'error')
                     return render_template('instructor/assignment_create.html', form=form)
                 
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f"assignment_{session['user_id']}_{timestamp}_{filename}"
+                ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'mp4'
+                filename = f"{uuid.uuid4().hex}.{ext}"
                 
                 upload_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'static/uploads'), 'assignments')
                 os.makedirs(upload_path, exist_ok=True)

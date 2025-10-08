@@ -203,7 +203,7 @@
                     <div class="col-6">
                         <div class="text-center">
                             <div class="h4 text-success mb-1">
-                                {% set passed = results|selectattr('score', '>=', exam.pass_score)|list|length %}
+                                {% set passed = results|selectattr('score', 'number')|selectattr('score', '>=', exam.pass_score)|list|length %}
                                 {{ passed }}
                             </div>
                             <div class="small text-muted">Đạt yêu cầu</div>

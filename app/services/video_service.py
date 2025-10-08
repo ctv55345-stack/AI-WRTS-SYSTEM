@@ -3,6 +3,7 @@ from app.models.ai_analysis import AIAnalysisResult
 from app import db
 from app.utils.helpers import get_vietnam_time
 from datetime import datetime
+import uuid
 from werkzeug.utils import secure_filename
 import os
 import random
@@ -29,22 +30,27 @@ class VideoService:
     def save_video(file, student_id, routine_id, assignment_id=None, notes=None):
         """Lưu video và metadata"""
         try:
-            # Tạo tên file an toàn
+            # Tạo tên file ngẫu nhiên, giữ nguyên phần mở rộng
             filename = secure_filename(file.filename)
+            ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'mp4'
+            unique_filename = f"{uuid.uuid4().hex}.{ext}"
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            unique_filename = f"{student_id}_{timestamp}_{filename}"
             
             # Tạo đường dẫn lưu trữ
             upload_folder = os.path.join('static', 'uploads', 'videos')
             os.makedirs(upload_folder, exist_ok=True)
             
             filepath = os.path.join(upload_folder, unique_filename)
-            file.save(filepath)
+            try:
+                file.save(filepath)
+            except Exception as e:
+                # Avoid non-ASCII in error message to prevent codec issues on some consoles
+                raise Exception(f"Save file error: {repr(e)}")
             
             # Trích xuất metadata từ video (fallback to simple method if cv2 fails)
             try:
                 metadata = VideoService.extract_video_metadata(filepath)
-                thumbnail_path = VideoService.generate_thumbnail(filepath, student_id, timestamp)
+                thumbnail_path = VideoService.generate_thumbnail(filepath)
             except:
                 # Fallback to simple metadata extraction
                 file_size_bytes = os.path.getsize(filepath)
@@ -117,7 +123,7 @@ class VideoService:
             }
     
     @staticmethod
-    def generate_thumbnail(video_path, student_id, timestamp):
+    def generate_thumbnail(video_path):
         """Tạo thumbnail từ video"""
         try:
             cap = cv2.VideoCapture(video_path)
@@ -130,12 +136,15 @@ class VideoService:
                 # Tạo đường dẫn thumbnail
                 thumb_folder = os.path.join('static', 'uploads', 'thumbnails')
                 os.makedirs(thumb_folder, exist_ok=True)
-                
-                thumb_filename = f"thumb_{student_id}_{timestamp}.jpg"
+                # Tạo tên thumbnail ngẫu nhiên
+                thumb_filename = f"{uuid.uuid4().hex}.jpg"
                 thumb_path = os.path.join(thumb_folder, thumb_filename)
                 
                 # Lưu thumbnail
-                cv2.imwrite(thumb_path, frame)
+                try:
+                    cv2.imwrite(thumb_path, frame)
+                except Exception as _e:
+                    return None
                 return thumb_path
             
             return None
