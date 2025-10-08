@@ -47,11 +47,52 @@
                 <h5 class="mb-0"><i class="fas fa-info-circle text-info me-2"></i>Thông tin bài kiểm tra</h5>
             </div>
             <div class="card-body">
+                <!-- Mô tả -->
+                {% if exam.description %}
+                <div class="mb-4">
+                    <label class="text-muted small">Mô tả</label>
+                    <div class="p-3 bg-light rounded">{{ exam.description }}</div>
+                </div>
+                {% endif %}
+                
                 <div class="row g-3">
+                    <!-- Video Source -->
                     <div class="col-md-6">
-                        <label class="text-muted small">Bài võ</label>
-                        <div class="fw-semibold">{{ exam.routine.routine_name }}</div>
+                        <label class="text-muted small">Video tham chiếu</label>
+                        <div>
+                            {% if exam.video_upload_method == 'routine' and exam.routine %}
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-list text-primary me-2"></i>
+                                    <span class="fw-semibold">{{ exam.routine.routine_name }}</span>
+                                </div>
+                                {% if exam.routine.reference_video_url %}
+                                <div class="mt-2">
+                                    <a href="{{ exam.routine.reference_video_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-play me-1"></i>Xem video
+                                    </a>
+                                </div>
+                                {% endif %}
+                            {% elif exam.video_upload_method == 'upload' %}
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-cloud-upload-alt text-success me-2"></i>
+                                    <span class="fw-semibold">Video upload</span>
+                                </div>
+                                {% if exam.reference_video_path %}
+                                <div class="mt-2">
+                                    <a href="{{ exam.get_video_url() }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-play me-1"></i>Xem video
+                                    </a>
+                                    {% if exam.video_duration %}
+                                    <span class="badge bg-info ms-2">{{ exam.video_duration // 60 }}:{{ "%02d"|format(exam.video_duration % 60) }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">Không có video</span>
+                            {% endif %}
+                        </div>
                     </div>
+                    
                     <div class="col-md-6">
                         <label class="text-muted small">Loại</label>
                         <div>
@@ -59,11 +100,16 @@
                                 <span class="badge bg-info">Giữa kỳ</span>
                             {% elif exam.exam_type == 'final' %}
                                 <span class="badge bg-danger">Cuối kỳ</span>
+                            {% elif exam.exam_type == 'practice' %}
+                                <span class="badge bg-secondary">Thi thử</span>
+                            {% elif exam.exam_type == 'certification' %}
+                                <span class="badge bg-warning text-dark">Chứng chỉ</span>
                             {% else %}
                                 <span class="badge bg-secondary">Thực hành</span>
                             {% endif %}
                         </div>
                     </div>
+                    
                     <div class="col-md-6">
                         <label class="text-muted small">Thời gian</label>
                         <div>{{ exam.start_time.strftime('%d/%m/%Y %H:%M') }} - {{ exam.end_time.strftime('%d/%m/%Y %H:%M') }}</div>
@@ -86,15 +132,102 @@
                         <div>{{ exam.class_obj.class_name }}</div>
                     </div>
                     {% endif %}
+                    
+                    <!-- Thông tin tạo -->
+                    <div class="col-md-6">
+                        <label class="text-muted small">Ngày tạo</label>
+                        <div>{{ exam.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">Cập nhật lần cuối</label>
+                        <div>{{ exam.updated_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                    </div>
                 </div>
             </div>
         </div>
+        
+        <!-- Video Section -->
+        {% if exam.has_video() %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0"><i class="fas fa-video text-success me-2"></i>Video tham chiếu</h5>
+            </div>
+            <div class="card-body">
+                {% if exam.video_upload_method == 'routine' and exam.routine and exam.routine.reference_video_url %}
+                    <div class="ratio ratio-16x9">
+                        <video controls class="rounded">
+                            <source src="{{ exam.routine.reference_video_url }}" type="video/mp4">
+                            Trình duyệt không hỗ trợ video.
+                        </video>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-list me-1"></i>Video từ routine: {{ exam.routine.routine_name }}
+                        </small>
+                    </div>
+                {% elif exam.video_upload_method == 'upload' and exam.reference_video_path %}
+                    <div class="ratio ratio-16x9">
+                        <video controls class="rounded">
+                            <source src="{{ exam.get_video_url() }}" type="video/mp4">
+                            Trình duyệt không hỗ trợ video.
+                        </video>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-cloud-upload-alt me-1"></i>Video upload
+                            {% if exam.video_duration %}
+                            | Độ dài: {{ exam.video_duration // 60 }}:{{ "%02d"|format(exam.video_duration % 60) }}
+                            {% endif %}
+                        </small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <div class="col-lg-4">
+        <!-- Thống kê nhanh -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="mb-0"><i class="fas fa-chart-bar text-info me-2"></i>Thống kê</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-primary mb-1">{{ results|length }}</div>
+                            <div class="small text-muted">Tổng kết quả</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-success mb-1">
+                                {% set passed = results|selectattr('score', '>=', exam.pass_score)|list|length %}
+                                {{ passed }}
+                            </div>
+                            <div class="small text-muted">Đạt yêu cầu</div>
+                        </div>
+                    </div>
+                </div>
+                {% if results %}
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Tỷ lệ đạt</span>
+                        <span>{{ ((passed / results|length) * 100)|round(1) }}%</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: {{ ((passed / results|length) * 100)|round(1) }}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Kết quả chi tiết -->
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white border-0 py-3">
-                <h5 class="mb-0"><i class="fas fa-clipboard-list text-primary me-2"></i>Kết quả</h5>
+                <h5 class="mb-0"><i class="fas fa-clipboard-list text-primary me-2"></i>Kết quả chi tiết</h5>
             </div>
             <div class="card-body">
                 {% if results %}
@@ -105,7 +238,7 @@
                                 <th>Học viên</th>
                                 <th>Lần</th>
                                 <th>Điểm</th>
-                                <th>Giờ nộp</th>
+                                <th>Trạng thái</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -113,8 +246,24 @@
                             <tr>
                                 <td class="fw-semibold">{{ r.student.full_name }}</td>
                                 <td>{{ r.attempt_number }}</td>
-                                <td>{{ r.score if r.score is not none else '—' }}</td>
-                                <td>{{ r.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    {% if r.score is not none %}
+                                        <span class="fw-bold">{{ r.score }}</span>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if r.score is not none %}
+                                        {% if r.score >= exam.pass_score %}
+                                            <span class="badge bg-success">Đạt</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Không đạt</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Chưa chấm</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>

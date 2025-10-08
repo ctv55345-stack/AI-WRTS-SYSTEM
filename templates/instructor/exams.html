@@ -125,10 +125,19 @@
                             <strong>{{ exam.exam_name }}</strong>
                         </td>
                         <td>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-dumbbell text-muted me-2"></i>
-                                <span>{{ exam.routine.routine_name }}</span>
-                            </div>
+                            {% if exam.video_upload_method == 'routine' and exam.routine %}
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-list text-primary me-2"></i>
+                                    <span>{{ exam.routine.routine_name }}</span>
+                                </div>
+                            {% elif exam.video_upload_method == 'upload' %}
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-cloud-upload-alt text-success me-2"></i>
+                                    <span>Video upload</span>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">--</span>
+                            {% endif %}
                         </td>
                         <td>
                             {% if exam.exam_type == 'midterm' %}

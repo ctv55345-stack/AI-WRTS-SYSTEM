@@ -674,30 +674,43 @@ def exams():
 @role_required('INSTRUCTOR')
 def create_exam():
     form = ExamCreateForm()
+    
+    # Load choices
     routines = RoutineService.get_routines_by_instructor(session['user_id'], {'is_published': True})
     form.routine_id.choices = [(0, '-- Chọn bài võ --')] + [(r.routine_id, r.routine_name) for r in routines]
+    
     classes = ClassService.get_classes_by_instructor(session['user_id'])
     form.class_id.choices = [(0, '-- Không chọn (tất cả) --')] + [(c.class_id, c.class_name) for c in classes]
+    
     if form.validate_on_submit():
+        # Chuẩn bị data
         data = {
             'exam_code': form.exam_code.data,
             'exam_name': form.exam_name.data,
             'description': form.description.data,
             'class_id': form.class_id.data if form.class_id.data else None,
-            'routine_id': form.routine_id.data,
+            'routine_id': form.routine_id.data if form.routine_id.data else None,
             'exam_type': form.exam_type.data,
             'start_time': form.start_time.data,
             'end_time': form.end_time.data,
             'duration_minutes': form.duration_minutes.data,
             'pass_score': form.pass_score.data,
             'max_attempts': form.max_attempts.data,
+            'video_source': form.video_source.data,  # THÊM
         }
-        result = ExamService.create_exam(data, session['user_id'])
+        
+        # Lấy video file nếu có
+        video_file = form.reference_video.data if form.video_source.data == 'upload' else None  # THÊM
+        
+        # Tạo exam với video file
+        result = ExamService.create_exam(data, session['user_id'], video_file)  # SỬA: thêm video_file
+        
         if result['success']:
-            flash('Tạo bài kiểm tra thành công! (Nháp)', 'success')
+            flash('Tạo bài kiểm tra thành công! (Trạng thái: Nháp)', 'success')
             return redirect(url_for('instructor.exam_detail', exam_id=result['exam'].exam_id))
         else:
             flash(result['message'], 'error')
+    
     return render_template('instructor/exam_create.html', form=form)
 
 

@@ -3,180 +3,308 @@
 {% block title %}Tạo bài kiểm tra{% endblock %}
 
 {% block instructor_content %}
-<div class="page-header">
+<div class="page-header mb-4">
     <h1 class="page-title">
-        <i class="fas fa-file-alt me-2"></i>Tạo bài kiểm tra mới
+        <i class="fas fa-plus-circle me-2"></i>
+        Tạo bài kiểm tra mới
     </h1>
 </div>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="mb-3">
-        {% for category, message in messages %}
-            {% set bs = 'danger' if category == 'error' else category %}
-            <div class="alert alert-{{ bs }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            
+            <!-- Thông tin cơ bản -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    {{ form.exam_code.label(class="form-label required") }}
+                    {{ form.exam_code(class="form-control") }}
+                    {% if form.exam_code.errors %}
+                        <div class="text-danger small">{{ form.exam_code.errors[0] }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    {{ form.exam_name.label(class="form-label required") }}
+                    {{ form.exam_name(class="form-control") }}
+                    {% if form.exam_name.errors %}
+                        <div class="text-danger small">{{ form.exam_name.errors[0] }}</div>
+                    {% endif %}
+                </div>
             </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-{% endwith %}
-
-<form method="POST">
-    {{ form.hidden_tag() }}
-    
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0"><i class="fas fa-info-circle text-primary me-2"></i>Thông tin cơ bản</h5>
+            
+            <div class="mb-3">
+                {{ form.description.label(class="form-label") }}
+                {{ form.description(class="form-control", rows=3) }}
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    {{ form.exam_type.label(class="form-label required") }}
+                    {{ form.exam_type(class="form-select") }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.class_id.label(class="form-label") }}
+                    {{ form.class_id(class="form-select") }}
+                </div>
+            </div>
+            
+            <!-- VIDEO SOURCE SELECTION -->
+            <div class="card bg-light mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-video me-2"></i>
+                        Chọn Video Tham Chiếu
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label required">Mã kiểm tra</label>
-                            {{ form.exam_code(class="form-control", placeholder="KT-001") }}
-                            {% if form.exam_code.errors %}
-                            <div class="invalid-feedback d-block">{{ form.exam_code.errors[0] }}</div>
-                            {% endif %}
-                        </div>
+                    <!-- Radio buttons -->
+                    <div class="btn-group mb-3" role="group">
+                        {{ form.video_source(class="d-none") }}
+                        <input type="radio" class="btn-check" name="video_source" id="source_routine" 
+                               value="routine" {% if form.video_source.data == 'routine' %}checked{% endif %}>
+                        <label class="btn btn-outline-primary" for="source_routine">
+                            <i class="fas fa-list me-1"></i> Chọn từ Routine
+                        </label>
                         
-                        <div class="col-md-6">
-                            <label class="form-label required">Loại kiểm tra</label>
-                            {{ form.exam_type(class="form-select") }}
-                        </div>
+                        <input type="radio" class="btn-check" name="video_source" id="source_upload" 
+                               value="upload" {% if form.video_source.data == 'upload' %}checked{% endif %}>
+                        <label class="btn btn-outline-success" for="source_upload">
+                            <i class="fas fa-cloud-upload-alt me-1"></i> Upload Video Mới
+                        </label>
+                    </div>
+                    
+                    <!-- Routine selection -->
+                    <div id="routine-section" {% if form.video_source.data == 'upload' %}style="display:none"{% endif %}>
+                        {{ form.routine_id.label(class="form-label") }}
+                        {{ form.routine_id(class="form-select") }}
+                        {% if form.routine_id.errors %}
+                            <div class="text-danger small">{{ form.routine_id.errors[0] }}</div>
+                        {% endif %}
+                        <small class="text-muted">Chọn bài võ có sẵn với video mẫu</small>
+                    </div>
+                    
+                    <!-- Video upload -->
+                    <div id="upload-section" {% if form.video_source.data != 'upload' %}style="display:none"{% endif %}>
+                        {{ form.reference_video.label(class="form-label") }}
+                        {{ form.reference_video(class="form-control", id="videoFileInput") }}
+                        {% if form.reference_video.errors %}
+                            <div class="text-danger small">{{ form.reference_video.errors[0] }}</div>
+                        {% endif %}
+                        <small class="text-muted d-block mt-1">
+                            <i class="fas fa-info-circle"></i>
+                            Định dạng: MP4, AVI, MOV, MKV | Tối đa: 500MB
+                        </small>
                         
-                        <div class="col-12">
-                            <label class="form-label required">Tên bài kiểm tra</label>
-                            {{ form.exam_name(class="form-control", placeholder="Kiểm tra giữa kỳ") }}
-                            {% if form.exam_name.errors %}
-                            <div class="invalid-feedback d-block">{{ form.exam_name.errors[0] }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="col-12">
-                            <label class="form-label">Mô tả</label>
-                            {{ form.description(class="form-control", rows="3") }}
+                        <!-- Video preview -->
+                        <div id="video-preview" class="mt-3" style="display:none">
+                            <div class="alert alert-info">
+                                <i class="fas fa-eye me-2"></i>
+                                <strong>Xem trước:</strong>
+                            </div>
+                            <video id="preview-video" controls class="w-100" style="max-height:400px; border-radius:8px;">
+                                <source id="preview-source" src="" type="video/mp4">
+                            </video>
+                            <div class="mt-2">
+                                <span class="badge bg-primary" id="file-size"></span>
+                                <span class="badge bg-info" id="video-duration"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0"><i class="fas fa-dumbbell text-success me-2"></i>Nội dung</h5>
+            <!-- Thời gian -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    {{ form.start_time.label(class="form-label required") }}
+                    {{ form.start_time(class="form-control", type="datetime-local") }}
+                    {% if form.start_time.errors %}
+                        <div class="text-danger small">{{ form.start_time.errors[0] }}</div>
+                    {% endif %}
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label required">Bài võ</label>
-                            {{ form.routine_id(class="form-select") }}
-                            {% if form.routine_id.errors %}
-                            <div class="invalid-feedback d-block">{{ form.routine_id.errors[0] }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label class="form-label">Lớp học</label>
-                            {{ form.class_id(class="form-select") }}
-                            <small class="form-text text-muted">Bỏ trống = tất cả lớp</small>
-                        </div>
-                    </div>
+                <div class="col-md-4">
+                    {{ form.end_time.label(class="form-label required") }}
+                    {{ form.end_time(class="form-control", type="datetime-local") }}
+                    {% if form.end_time.errors %}
+                        <div class="text-danger small">{{ form.end_time.errors[0] }}</div>
+                    {% endif %}
                 </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0"><i class="fas fa-clock text-warning me-2"></i>Thời gian</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label required">Bắt đầu</label>
-                        <div class="input-group">
-                            {{ form.start_time(class="form-control datetimepicker") }}
-                            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                        </div>
-                        {% if form.start_time.errors %}
-                        <div class="invalid-feedback d-block">{{ form.start_time.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label required">Kết thúc</label>
-                        <div class="input-group">
-                            {{ form.end_time(class="form-control datetimepicker") }}
-                            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                        </div>
-                        {% if form.end_time.errors %}
-                        <div class="invalid-feedback d-block">{{ form.end_time.errors[0] }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Thời lượng (phút)</label>
-                        {{ form.duration_minutes(class="form-control", type="number", placeholder="60") }}
-                    </div>
+                <div class="col-md-4">
+                    {{ form.duration_minutes.label(class="form-label required") }}
+                    {{ form.duration_minutes(class="form-control") }}
+                    {% if form.duration_minutes.errors %}
+                        <div class="text-danger small">{{ form.duration_minutes.errors[0] }}</div>
+                    {% endif %}
                 </div>
             </div>
             
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0"><i class="fas fa-star text-info me-2"></i>Yêu cầu</h5>
+            <!-- Cài đặt -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    {{ form.pass_score.label(class="form-label") }}
+                    {{ form.pass_score(class="form-control") }}
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Điểm đạt</label>
-                        {{ form.pass_score(class="form-control", type="number", step="0.01", placeholder="70") }}
-                    </div>
-                    
-                    <div>
-                        <label class="form-label">Số lần thi tối đa</label>
-                        {{ form.max_attempts(class="form-control", type="number", placeholder="3") }}
-                    </div>
+                <div class="col-md-6">
+                    {{ form.max_attempts.label(class="form-label") }}
+                    {{ form.max_attempts(class="form-control") }}
                 </div>
             </div>
-        </div>
+            
+            <!-- Buttons -->
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Tạo bài kiểm tra
+                </button>
+                <a href="{{ url_for('instructor.exams') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </a>
+            </div>
+        </form>
     </div>
-    
-    <div class="card border-0 shadow-sm mt-4">
-        <div class="card-body d-flex justify-content-between">
-            <a href="{{ url_for('instructor.exams') }}" class="btn btn-secondary">
-                <i class="fas fa-times me-2"></i>Hủy
-            </a>
-            <button type="submit" class="btn btn-primary btn-lg">
-                <i class="fas fa-save me-2"></i>Tạo bài kiểm tra
-            </button>
-        </div>
-    </div>
-</form>
-
-<style>
-.form-label.required::after {
-    content: " *";
-    color: #dc2626;
-}
-</style>
+</div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const pickers = document.querySelectorAll('.datetimepicker');
-    if (typeof flatpickr !== 'undefined') {
-        pickers.forEach(picker => {
-            flatpickr(picker, {
-                enableTime: true,
-                time_24hr: true,
-                allowInput: true,
-                // WTForms DateTimeField expects '%Y-%m-%dT%H:%M'
-                dateFormat: 'Y-m-d\\TH:i',
-                altInput: true,
-                altFormat: 'd/m/Y H:i',
-                minDate: 'today'
-            });
+// Toggle giữa routine và upload
+document.querySelectorAll('input[name="video_source"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const routineSection = document.getElementById('routine-section');
+        const uploadSection = document.getElementById('upload-section');
+        
+        if (this.value === 'routine') {
+            routineSection.style.display = 'block';
+            uploadSection.style.display = 'none';
+            document.getElementById('video-preview').style.display = 'none';
+        } else {
+            routineSection.style.display = 'none';
+            uploadSection.style.display = 'block';
+        }
+    });
+});
+
+// Video preview
+document.getElementById('videoFileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Show preview
+        const url = URL.createObjectURL(file);
+        document.getElementById('preview-source').src = url;
+        document.getElementById('preview-video').load();
+        document.getElementById('video-preview').style.display = 'block';
+        
+        // Show file info
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        document.getElementById('file-size').textContent = `Kích thước: ${sizeMB} MB`;
+        
+        // Get duration
+        const video = document.getElementById('preview-video');
+        video.addEventListener('loadedmetadata', function() {
+            const duration = Math.floor(video.duration);
+            const minutes = Math.floor(duration / 60);
+            const seconds = duration % 60;
+            document.getElementById('video-duration').textContent = 
+                `Độ dài: ${minutes}:${seconds.toString().padStart(2, '0')}`;
         });
     }
 });
+
+// Datetime picker improvements
+document.addEventListener('DOMContentLoaded', function() {
+    const startTimeInput = document.querySelector('input[name="start_time"]');
+    const endTimeInput = document.querySelector('input[name="end_time"]');
+    
+    // Set minimum date to today
+    const today = new Date();
+    const todayString = today.toISOString().slice(0, 16);
+    startTimeInput.min = todayString;
+    endTimeInput.min = todayString;
+    
+    // Auto-update end time when start time changes
+    startTimeInput.addEventListener('change', function() {
+        if (this.value) {
+            const startDate = new Date(this.value);
+            const minEndDate = new Date(startDate.getTime() + 30 * 60000); // +30 minutes
+            endTimeInput.min = minEndDate.toISOString().slice(0, 16);
+            
+            // If end time is before start time, update it
+            if (endTimeInput.value && new Date(endTimeInput.value) <= startDate) {
+                endTimeInput.value = minEndDate.toISOString().slice(0, 16);
+            }
+        }
+    });
+    
+    // Validate end time
+    endTimeInput.addEventListener('change', function() {
+        if (startTimeInput.value && this.value) {
+            const startDate = new Date(startTimeInput.value);
+            const endDate = new Date(this.value);
+            
+            if (endDate <= startDate) {
+                alert('Thời gian kết thúc phải sau thời gian bắt đầu!');
+                this.focus();
+            }
+        }
+    });
+});
 </script>
+
+<style>
+/* Datetime picker styling */
+input[type="datetime-local"] {
+    position: relative;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+    background: rgba(0, 123, 255, 0.1);
+    border-radius: 4px;
+}
+
+/* Form improvements */
+.required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Video upload section */
+#upload-section {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+#upload-section:hover {
+    border-color: #0d6efd;
+}
+
+/* Video preview */
+#video-preview {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Button group styling */
+.btn-group .btn-check:checked + .btn {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+</style>
 {% endblock %}
