@@ -64,38 +64,38 @@
 <!-- Filter Section -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label">Loại bài tập</label>
-                <select class="form-select">
-                    <option value="">Tất cả</option>
-                    <option value="individual">Cá nhân</option>
-                    <option value="class">Lớp học</option>
-                </select>
+        <form method="get" action="{{ url_for('instructor.assignments') }}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Loại bài tập</label>
+                    <select class="form-select" name="assignment_type">
+                        <option value="" {{ 'selected' if (assignment_type == '' or not assignment_type) else '' }}>Tất cả</option>
+                        <option value="individual" {{ 'selected' if assignment_type == 'individual' else '' }}>Cá nhân</option>
+                        <option value="class" {{ 'selected' if assignment_type == 'class' else '' }}>Lớp học</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Độ ưu tiên</label>
+                    <select class="form-select" name="priority">
+                        <option value="" {{ 'selected' if (priority == '' or not priority) else '' }}>Tất cả</option>
+                        <option value="urgent" {{ 'selected' if priority == 'urgent' else '' }}>Khẩn cấp</option>
+                        <option value="high" {{ 'selected' if priority == 'high' else '' }}>Cao</option>
+                        <option value="normal" {{ 'selected' if priority == 'normal' else '' }}>Trung bình</option>
+                        <option value="low" {{ 'selected' if priority == 'low' else '' }}>Thấp</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Trạng thái</label>
+                    <select class="form-select" disabled>
+                        <option value="">(Sắp có)</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1"><i class="fas fa-filter me-1"></i>Lọc</button>
+                    <a href="{{ url_for('instructor.assignments') }}" class="btn btn-outline-secondary">Đặt lại</a>
+                </div>
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Độ ưu tiên</label>
-                <select class="form-select">
-                    <option value="">Tất cả</option>
-                    <option value="high">Cao</option>
-                    <option value="medium">Trung bình</option>
-                    <option value="low">Thấp</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Trạng thái</label>
-                <select class="form-select">
-                    <option value="">Tất cả</option>
-                    <option value="pending">Chờ nộp</option>
-                    <option value="submitted">Đã nộp</option>
-                    <option value="graded">Đã chấm</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Tìm kiếm</label>
-                <input type="text" class="form-control" placeholder="Tìm theo bài võ, học viên...">
-            </div>
-        </div>
+        </form>
     </div>
 </div>
 

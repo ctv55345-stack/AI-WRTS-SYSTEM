@@ -43,7 +43,16 @@
                     <div><strong>Mã bài:</strong> {{ assignment.routine.routine_code }}</div>
                 </div>
                 <div class="col-md-6">
-                    <div><strong>Hạn nộp:</strong> <span class="text-danger fw-semibold">{{ assignment.deadline.strftime('%d/%m/%Y %H:%M') }}</span></div>
+                    <div>
+                        <strong>Hạn nộp:</strong>
+                        <span class="text-danger fw-semibold">
+                            {% if assignment.deadline %}
+                                {{ assignment.deadline.strftime('%d/%m/%Y %H:%M') }}
+                            {% else %}
+                                Không có deadline
+                            {% endif %}
+                        </span>
+                    </div>
                 </div>
                 {% if assignment.instructions %}
                 <div class="col-12">

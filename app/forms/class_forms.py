@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SelectField, DateField, IntegerField, BooleanField, TimeField, SelectMultipleField, RadioField
+from wtforms import StringField, TextAreaField, SelectField, DateField, IntegerField, BooleanField, RadioField
 from wtforms.validators import DataRequired, Length, Optional, NumberRange, ValidationError
 
 
@@ -26,13 +26,7 @@ class ClassCreateForm(FlaskForm):
         DataRequired(message='Vui lòng chọn ngày bắt đầu')
     ], format='%Y-%m-%d')
     end_date = DateField('Ngày kết thúc', validators=[Optional()], format='%Y-%m-%d')
-    # Structured schedule inputs
-    schedule_days = SelectMultipleField('Ngày học trong tuần', choices=[
-        ('2', 'Thứ 2'), ('3', 'Thứ 3'), ('4', 'Thứ 4'), ('5', 'Thứ 5'), ('6', 'Thứ 6'), ('7', 'Thứ 7'), ('cn', 'Chủ nhật')
-    ], validators=[Optional()])
-    schedule_time_start = TimeField('Giờ bắt đầu', validators=[Optional()], format='%H:%M')
-    schedule_time_end = TimeField('Giờ kết thúc', validators=[Optional()], format='%H:%M')
-    schedule_note = StringField('Ghi chú lịch học', validators=[Optional(), Length(max=200, message='Ghi chú tối đa 200 ký tự')])
+    # Schedule inputs removed; manage via class schedules pages
 
     def validate_end_date(self, field):
         if field.data and self.start_date.data and field.data < self.start_date.data:
@@ -55,13 +49,7 @@ class ClassEditForm(FlaskForm):
         NumberRange(min=1, max=100, message='Số học viên từ 1-100')
     ])
     end_date = DateField('Ngày kết thúc', validators=[Optional()], format='%Y-%m-%d')
-    # Structured schedule inputs
-    schedule_days = SelectMultipleField('Ngày học trong tuần', choices=[
-        ('2', 'Thứ 2'), ('3', 'Thứ 3'), ('4', 'Thứ 4'), ('5', 'Thứ 5'), ('6', 'Thứ 6'), ('7', 'Thứ 7'), ('cn', 'Chủ nhật')
-    ], validators=[Optional()])
-    schedule_time_start = TimeField('Giờ bắt đầu', validators=[Optional()], format='%H:%M')
-    schedule_time_end = TimeField('Giờ kết thúc', validators=[Optional()], format='%H:%M')
-    schedule_note = StringField('Ghi chú lịch học', validators=[Optional(), Length(max=200, message='Ghi chú tối đa 200 ký tự')])
+    # Schedule inputs removed; manage via class schedules pages
     is_active = BooleanField('Kích hoạt lớp')
 
 

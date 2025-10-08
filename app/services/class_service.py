@@ -91,8 +91,6 @@ class ClassService:
         if Class.query.filter_by(class_code=data['class_code']).first():
             return {'success': False, 'message': 'Mã lớp đã tồn tại'}
 
-        schedule_days_str = ','.join(data.get('schedule_days', [])) if data.get('schedule_days') else None
-
         new_class = Class(
             class_code=data['class_code'],
             class_name=data['class_name'],
@@ -102,10 +100,6 @@ class ClassService:
             max_students=data['max_students'],
             start_date=data['start_date'],
             end_date=data.get('end_date'),
-            schedule_days=schedule_days_str,
-            schedule_time_start=data.get('schedule_time_start'),
-            schedule_time_end=data.get('schedule_time_end'),
-            schedule_note=data.get('schedule_note'),
             is_active=True,
         )
 
@@ -119,17 +113,11 @@ class ClassService:
         if not class_obj:
             return {'success': False, 'message': 'Không tìm thấy lớp học'}
 
-        schedule_days_str = ','.join(data.get('schedule_days', [])) if data.get('schedule_days') else None
-
         class_obj.class_name = data['class_name']
         class_obj.description = data.get('description')
         class_obj.level = data['level']
         class_obj.max_students = data['max_students']
         class_obj.end_date = data.get('end_date')
-        class_obj.schedule_days = schedule_days_str
-        class_obj.schedule_time_start = data.get('schedule_time_start')
-        class_obj.schedule_time_end = data.get('schedule_time_end')
-        class_obj.schedule_note = data.get('schedule_note')
         class_obj.is_active = data.get('is_active', True)
 
         db.session.commit()
@@ -290,17 +278,4 @@ class ClassService:
             from app.services.schedule_service import ScheduleService
             return ScheduleService.format_schedules(class_obj.schedules)
         
-        if not class_obj.schedule_days:
-            return "Chưa có lịch học"
-        
-        days_map = {'2': 'T2', '3': 'T3', '4': 'T4', '5': 'T5', '6': 'T6', '7': 'T7', 'cn': 'CN'}
-        days = [days_map.get(d, d) for d in class_obj.schedule_days.split(',')]
-        
-        time_range = ""
-        if class_obj.schedule_time_start and class_obj.schedule_time_end:
-            time_range = f" - {class_obj.schedule_time_start.strftime('%H:%M')}-{class_obj.schedule_time_end.strftime('%H:%M')}"
-        
-        schedule_str = f"{', '.join(days)}{time_range}"
-        if class_obj.schedule_note:
-            schedule_str += f" ({class_obj.schedule_note})"
-        return schedule_str
+        return "Chưa có lịch học"

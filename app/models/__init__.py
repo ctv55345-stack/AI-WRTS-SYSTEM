@@ -11,13 +11,11 @@ from .class_model import Class
 from .class_enrollment import ClassEnrollment
 from .class_schedule import ClassSchedule
 from .martial_routine import MartialRoutine
-from .evaluation_criteria import EvaluationCriteria
 from .assignment import Assignment
 from .training_video import TrainingVideo
 from .ai_analysis import AIAnalysisResult
 from .manual_evaluation import ManualEvaluation
 from .training_history import TrainingHistory
-from .goal import Goal
 from .notification import Notification
 from .exam import Exam
 from .exam_result import ExamResult

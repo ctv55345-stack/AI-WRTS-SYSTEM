@@ -130,6 +130,9 @@ def change_password():
 @login_required
 def profile():
     user = AuthService.get_user_by_id(session['user_id'])
+    if not user:
+        flash('Tài khoản không tồn tại hoặc đã bị vô hiệu hóa.', 'error')
+        return redirect(url_for('auth.login'))
     return render_template('auth/profile.html', user=user)
 
 

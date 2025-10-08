@@ -1,4 +1,5 @@
 from datetime import datetime, timezone, timedelta
+from markupsafe import Markup, escape
 
 def get_vietnam_time():
     """
@@ -42,3 +43,9 @@ def vietnam_to_utc(vietnam_datetime):
         vietnam_datetime = vietnam_datetime.replace(tzinfo=vietnam_tz)
     
     return vietnam_datetime.astimezone(timezone.utc)
+
+def nl2br(value: str) -> Markup:
+    if value is None:
+        return Markup("")
+    escaped = escape(value)
+    return Markup(escaped.replace("\n", "<br>\n"))

@@ -30,6 +30,10 @@ def create_app():
             'now': lambda: get_vietnam_time_naive()
         }
     
+    # Jinja filters
+    from app.utils.helpers import nl2br
+    app.jinja_env.filters['nl2br'] = nl2br
+    
     # Error handlers
     @app.errorhandler(413)
     def too_large(e):

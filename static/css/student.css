@@ -210,12 +210,21 @@
     padding: 0.5rem 1rem;
     font-size: 0.95rem;
     transition: all 0.3s ease;
+    background-color: #ffffff !important;
+    color: #212529 !important; /* ensure readable text */
+    -webkit-text-fill-color: #212529 !important; /* Safari */
 }
 
 .student-filter-select:focus {
     border-color: #667eea;
     box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
     outline: none;
+}
+
+/* Ensure options are visible on all themes */
+.student-filter-select option {
+    background-color: #ffffff !important;
+    color: #212529 !important;
 }
 
 .student-weapon-badge {

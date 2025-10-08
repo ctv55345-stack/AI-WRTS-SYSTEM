@@ -94,15 +94,9 @@
         </div>
     </div>
     
-    <div class="report-section">
-        <div class="report-header">
-            <div class="report-title">Export báo cáo</div>
-            <div class="export-buttons">
-                <a href="{{ url_for('manager.export_system_report') }}" target="_blank" class="btn-export"><i class="fas fa-file-export"></i>Tải JSON</a>
-                <a href="{{ url_for('manager.dashboard') }}" class="btn-export"><i class="fas fa-home"></i>Về Dashboard</a>
-            </div>
-        </div>
-    </div>
+
+    {# Data payload for charts #}
+    <script id="analytics-json" type="application/json">{{ analytics_payload | tojson }}</script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>

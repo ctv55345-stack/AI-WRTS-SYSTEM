@@ -163,6 +163,14 @@
                         <span class="badge bg-success" style="font-size: 1rem;">
                             <i class="fas fa-check me-1"></i>Đã nộp
                         </span>
+                        {% if item.video.processing_status == 'completed' %}
+                        <a href="{{ url_for('student_videos.view_result', video_id=item.video.video_id) }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-chart-bar me-1"></i>Xem kết quả
+                        </a>
+                        {% else %}
+                        <small class="text-muted">Video đang xử lý...</small>
+                        {% endif %}
                         {% if item.assignment.instructor_video_url %}
                         <a href="{{ item.assignment.instructor_video_url }}" target="_blank" 
                            class="btn btn-outline-success btn-sm">

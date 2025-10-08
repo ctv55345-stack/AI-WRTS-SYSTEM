@@ -5,6 +5,11 @@ from app.services.feedback_service import FeedbackService
 
 shared_bp = Blueprint('shared', __name__)
 
+@shared_bp.route('/')
+def home():
+    """Trang chủ (landing page)"""
+    return render_template('home.html')
+
 @shared_bp.route('/feedback/submit', methods=['GET', 'POST'])
 @login_required
 def submit_feedback():

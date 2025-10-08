@@ -197,7 +197,6 @@
     if (ctx) {
         const dates = {{ score_data.dates|tojson|safe }};
         const scores = {{ score_data.scores|tojson|safe }};
-        
         if (dates && scores && dates.length > 0) {
             new Chart(ctx, {
                 type: 'line',
@@ -216,26 +215,14 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return 'Điểm: ' + context.parsed.y + '%';
-                                }
-                            }
-                        }
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: function(context) { return 'Điểm: ' + context.parsed.y + '%'; } } }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
                             max: 100,
-                            ticks: {
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
+                            ticks: { callback: function(value) { return value + '%'; } }
                         }
                     }
                 }
@@ -245,3 +232,5 @@
     {% endif %}
 </script>
 {% endblock %}
+
+

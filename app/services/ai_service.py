@@ -53,6 +53,8 @@ class AIService:
             
             db.session.commit()
             
+            # Goals feature removed: no-op
+            
             return analysis_result
             
         except Exception as e:

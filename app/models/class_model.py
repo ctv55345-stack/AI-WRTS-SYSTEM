@@ -20,11 +20,7 @@ class Class(db.Model):
     approved_by = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='SET NULL'))
     approved_at = db.Column(db.DateTime)
     rejection_reason = db.Column(db.Text)
-    # Structured schedule fields
-    schedule_days = db.Column(db.String(50))  # e.g., "2,4,6"
-    schedule_time_start = db.Column(db.Time)  # e.g., 18:00
-    schedule_time_end = db.Column(db.Time)    # e.g., 20:00
-    schedule_note = db.Column(db.String(200))
+    # Schedule fields removed; use related `class_schedules` instead
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

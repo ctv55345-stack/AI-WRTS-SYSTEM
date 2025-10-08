@@ -436,11 +436,15 @@ a {
     border-radius: var(--border-radius-sm);
     padding: 0.75rem 1rem;
     transition: var(--transition);
+    background-color: #ffffff !important;
+    color: var(--text-primary) !important;
 }
 
 .form-control:focus, .form-select:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background-color: #ffffff !important;
+    color: var(--text-primary) !important;
 }
 
 .form-control.is-invalid {

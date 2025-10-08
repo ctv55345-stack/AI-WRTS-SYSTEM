@@ -6,6 +6,7 @@ from app.models.manual_evaluation import ManualEvaluation
 from app.models.class_enrollment import ClassEnrollment
 from app.models.class_model import Class
 from app.models.user import User
+from app.models.assignment import Assignment
 from app.utils.helpers import get_vietnam_time, get_vietnam_time_naive
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
@@ -58,9 +59,19 @@ class AnalyticsService:
             ai_score = video.ai_analysis.overall_score if video.ai_analysis else None
             manual_score = video.manual_evaluations[0].overall_score if video.manual_evaluations else None
             
+            # Safely resolve routine name if available
+            routine_name = None
+            try:
+                if getattr(video, 'routine', None) and getattr(video.routine, 'routine_name', None):
+                    routine_name = video.routine.routine_name
+                elif getattr(video, 'assignment', None) and getattr(video.assignment, 'routine', None) and getattr(video.assignment.routine, 'routine_name', None):
+                    routine_name = video.assignment.routine.routine_name
+            except Exception:
+                routine_name = None
+
             data.append({
                 'date': video.uploaded_at.strftime('%Y-%m-%d'),
-                'routine': video.routine.routine_name,
+                'routine': routine_name,
                 'ai_score': float(ai_score) if ai_score else None,
                 'manual_score': float(manual_score) if manual_score else None
             })
@@ -122,10 +133,25 @@ class AnalyticsService:
                 'pass_rate': 0
             }
         
-        # Điểm trung bình lớp
-        avg_score = db.session.query(func.avg(ManualEvaluation.overall_score)).join(
-            TrainingVideo
-        ).filter(TrainingVideo.student_id.in_(student_ids)).scalar() or 0
+        # Điểm trung bình lớp: chỉ tính các video thuộc bài tập của lớp này
+        class_videos = (
+            TrainingVideo.query
+            .join(Assignment, TrainingVideo.assignment_id == Assignment.assignment_id)
+            .filter(
+                TrainingVideo.student_id.in_(student_ids),
+                Assignment.assigned_to_class == class_id
+            ).all()
+        )
+
+        scores = []
+        for v in class_videos:
+            manual_score = v.manual_evaluations[0].overall_score if v.manual_evaluations else None
+            ai_score = v.ai_analysis.overall_score if v.ai_analysis else None
+            picked = manual_score if manual_score is not None else ai_score
+            if picked is not None:
+                scores.append(float(picked))
+
+        avg_score = round(sum(scores) / len(scores), 2) if scores else 0
         
         # Tỷ lệ hoàn thành (đã nộp video)
         total_assignments = db.session.query(func.count()).select_from(
@@ -146,12 +172,36 @@ class AnalyticsService:
         
         return {
             'total_students': len(student_ids),
-            'avg_score': round(float(avg_score), 2),
+            'avg_score': float(avg_score),
             'total_submissions': TrainingVideo.query.filter(
                 TrainingVideo.student_id.in_(student_ids)
             ).count(),
             'pass_rate': round((passed / total_evaluated * 100) if total_evaluated > 0 else 0, 2)
         }
+
+    @staticmethod
+    def get_student_avg_for_class(student_id: int, class_id: int) -> float:
+        """Điểm trung bình của một học viên trong phạm vi các assignment của lớp chỉ định.
+        Ưu tiên điểm chấm tay; nếu không có thì dùng điểm AI.
+        """
+        videos = (
+            TrainingVideo.query
+            .join(Assignment, TrainingVideo.assignment_id == Assignment.assignment_id)
+            .filter(
+                TrainingVideo.student_id == student_id,
+                Assignment.assigned_to_class == class_id
+            ).all()
+        )
+
+        scores: list[float] = []
+        for v in videos:
+            manual_score = v.manual_evaluations[0].overall_score if v.manual_evaluations else None
+            ai_score = v.ai_analysis.overall_score if v.ai_analysis else None
+            picked = manual_score if manual_score is not None else ai_score
+            if picked is not None:
+                scores.append(float(picked))
+
+        return round(sum(scores) / len(scores), 2) if scores else 0.0
     
     @staticmethod
     def get_student_ranking(class_id):

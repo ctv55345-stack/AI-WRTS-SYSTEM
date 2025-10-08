@@ -83,7 +83,7 @@ class UserService:
     @staticmethod
     def get_total_users_count():
         """Get total number of users"""
-        return User.query.count()
+        return User.query.filter(User.is_active == True).count()
     
     @staticmethod
     def get_users_count_by_role(role_code):
@@ -121,10 +121,14 @@ class UserService:
             current_period_start = datetime.now() - timedelta(days=days)
             previous_period_start = current_period_start - timedelta(days=days)
             
-            current_count = User.query.filter(User.created_at >= current_period_start).count()
+            current_count = User.query.filter(
+                User.created_at >= current_period_start,
+                User.is_active == True
+            ).count()
             previous_count = User.query.filter(
                 User.created_at >= previous_period_start,
-                User.created_at < current_period_start
+                User.created_at < current_period_start,
+                User.is_active == True
             ).count()
             
             if previous_count == 0:

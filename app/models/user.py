@@ -31,7 +31,6 @@ class User(db.Model):
     videos = db.relationship('TrainingVideo', backref='student', lazy=True)
     manual_evaluations = db.relationship('ManualEvaluation', foreign_keys='ManualEvaluation.instructor_id', backref='evaluator', lazy=True)
     training_histories = db.relationship('TrainingHistory', backref='student', lazy=True)
-    goals = db.relationship('Goal', backref='student', lazy=True)
     notifications_received = db.relationship('Notification', foreign_keys='Notification.recipient_id', backref='recipient', lazy=True)
     notifications_sent = db.relationship('Notification', foreign_keys='Notification.sender_id', backref='sender', lazy=True)
     exams_created = db.relationship('Exam', backref='instructor', lazy=True)

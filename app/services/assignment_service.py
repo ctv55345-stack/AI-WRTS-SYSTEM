@@ -83,8 +83,19 @@ class AssignmentService:
             return {'success': False, 'message': str(e)}
 
     @staticmethod
-    def get_assignments_by_instructor(instructor_id: int):
-        return Assignment.query.filter_by(assigned_by=instructor_id).order_by(Assignment.created_at.desc()).all()
+    def get_assignments_by_instructor(instructor_id: int, filters: dict | None = None):
+        query = Assignment.query.filter_by(assigned_by=instructor_id)
+        if filters:
+            assignment_type = filters.get('assignment_type')
+            if assignment_type in ['individual', 'class']:
+                query = query.filter_by(assignment_type=assignment_type)
+
+            priority = filters.get('priority')
+            if priority in ['low', 'normal', 'high', 'urgent']:
+                query = query.filter_by(priority=priority)
+
+            # status filter (pending/submitted/graded) requires joins/aggregation; skipping server-side for now
+        return query.order_by(Assignment.created_at.desc()).all()
 
     @staticmethod
     def get_assignment_by_id(assignment_id: int):

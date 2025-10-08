@@ -66,15 +66,7 @@
         </div>
     </div>
     
-    <div class="stat-card">
-        <div class="stat-icon bg-info bg-opacity-10">
-            <i class="fas fa-list text-info"></i>
-        </div>
-        <div class="stat-content">
-            <div class="stat-value">{{ criteria|length }}</div>
-            <div class="stat-label">Tiêu chí đánh giá</div>
-        </div>
-    </div>
+    
     
     <div class="stat-card">
         <div class="stat-icon bg-success bg-opacity-10">
@@ -146,60 +138,7 @@
             </div>
         </div>
         
-        <!-- Evaluation Criteria -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-clipboard-check text-success me-2"></i>
-                        Tiêu chí đánh giá ({{ criteria|length }})
-                    </h5>
-                    <a class="btn btn-sm btn-primary" href="{{ url_for('instructor.add_criteria', routine_id=routine.routine_id) }}">
-                        <i class="fas fa-plus me-1"></i>Thêm tiêu chí
-                    </a>
-                </div>
-            </div>
-            <div class="card-body">
-                {% if criteria %}
-                <div class="criteria-list">
-                    {% for criterion in criteria %}
-                    <div class="criteria-item">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1">{{ criterion.criteria_name }}</h6>
-                                <p class="text-muted small mb-2">{{ criterion.description }}</p>
-                                <div class="d-flex gap-3 small text-muted">
-                                    <span>
-                                        <i class="fas fa-weight-hanging me-1"></i>
-                                        Trọng số: {{ '%.2f' % criterion.weight_percentage }}%
-                                    </span>
-                                    <span>
-                                        <i class="fas fa-star me-1"></i>
-                                        Mã: {{ criterion.criteria_code }}
-                                    </span>
-                                </div>
-                            </div>
-                            <form class="btn-group" method="POST" action="{{ url_for('instructor.delete_criteria', criteria_id=criterion.criteria_id) }}">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa tiêu chí này?')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <i class="fas fa-clipboard-list fa-2x text-muted mb-2"></i>
-                    <p class="text-muted mb-3">Chưa có tiêu chí đánh giá nào</p>
-                    <a class="btn btn-primary" href="{{ url_for('instructor.add_criteria', routine_id=routine.routine_id) }}">
-                        <i class="fas fa-plus me-2"></i>Thêm tiêu chí đầu tiên
-                    </a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
+        
     </div>
     
     <!-- Sidebar -->

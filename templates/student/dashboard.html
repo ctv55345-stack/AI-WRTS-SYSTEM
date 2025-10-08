@@ -9,9 +9,16 @@
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Welcome Header -->
-    <div class="mb-4">
-        <h1 class="h3 mb-1">Xin chào, <strong>{{ session.full_name }}</strong></h1>
-        <p class="text-muted">Chào mừng bạn quay trở lại hệ thống</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Xin chào, <strong>{{ session.full_name }}</strong></h1>
+            <p class="text-muted mb-0">Chào mừng bạn quay trở lại hệ thống</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('student_videos.history') }}" class="btn btn-outline-primary">
+                <i class="fas fa-chart-bar me-2"></i>Kết quả
+            </a>
+        </div>
     </div>
     
     <!-- Statistics Cards -->
@@ -163,12 +170,7 @@
                         <small>Phân tích</small>
                     </a>
                 </div>
-                <div class="col-6 col-md-3">
-                    <a href="{{ url_for('student.goals') }}" class="student-quick-action">
-                        <i class="fas fa-bullseye text-danger"></i>
-                        <small>Mục tiêu</small>
-                    </a>
-                </div>
+                
                 
             </div>
         </div>

@@ -76,38 +76,43 @@
 <!-- Filter Section -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label">Cấp độ</label>
-                <select class="form-select">
-                    <option value="">Tất cả</option>
-                    <option value="beginner">Sơ cấp</option>
-                    <option value="intermediate">Trung cấp</option>
-                    <option value="advanced">Cao cấp</option>
-                </select>
+        <form method="get" action="{{ url_for('instructor.routines') }}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Cấp độ</label>
+                    <select class="form-select" name="level">
+                        <option value="" {{ 'selected' if (level_filter == '' or not level_filter) else '' }}>Tất cả</option>
+                        <option value="beginner" {{ 'selected' if level_filter == 'beginner' else '' }}>Sơ cấp</option>
+                        <option value="intermediate" {{ 'selected' if level_filter == 'intermediate' else '' }}>Trung cấp</option>
+                        <option value="advanced" {{ 'selected' if level_filter == 'advanced' else '' }}>Cao cấp</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Vũ khí</label>
+                    <select class="form-select" name="weapon_id">
+                        <option value="" {{ 'selected' if (weapon_filter == '' or not weapon_filter) else '' }}>Tất cả</option>
+                        {% for w in weapons %}
+                        <option value="{{ w.weapon_id }}" {{ 'selected' if weapon_filter == w.weapon_id else '' }}>
+                            {{ w.weapon_name_vi or w.weapon_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Trạng thái</label>
+                    <select class="form-select" name="status">
+                        <option value="" {{ 'selected' if (status_filter == '' or not status_filter) else '' }}>Tất cả</option>
+                        <option value="published" {{ 'selected' if status_filter == 'published' else '' }}>Đã xuất bản</option>
+                        <option value="draft" {{ 'selected' if status_filter == 'draft' else '' }}>Bản nháp</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1"><i class="fas fa-filter me-1"></i>Lọc</button>
+                    <a href="{{ url_for('instructor.routines') }}" class="btn btn-outline-secondary">Đặt lại</a>
+                </div>
             </div>
-            <div class="col-md-3">
-                <label class="form-label">Vũ khí</label>
-                <select class="form-select">
-                    <option value="">Tất cả</option>
-                    <option value="sword">Kiếm</option>
-                    <option value="staff">Côn</option>
-                    <option value="spear">Thương</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Trạng thái</label>
-                <select class="form-select">
-                    <option value="">Tất cả</option>
-                    <option value="published">Đã xuất bản</option>
-                    <option value="draft">Bản nháp</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Tìm kiếm</label>
-                <input type="text" class="form-control" placeholder="Tìm theo tên...">
-            </div>
-        </div>
+        </form>
+    </div>
     </div>
 </div>
 

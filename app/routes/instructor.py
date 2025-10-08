@@ -12,7 +12,7 @@ from app.services.analytics_service import AnalyticsService
 from app.services.report_service import ReportService
 from app.utils.decorators import login_required, role_required
 from app.forms.class_forms import ClassCreateForm, ClassEditForm, EnrollStudentForm
-from app.forms.routine_forms import RoutineCreateForm, RoutineEditForm, CriteriaForm
+from app.forms.routine_forms import RoutineCreateForm, RoutineEditForm
 from app.forms.assignment_forms import AssignmentCreateForm
 from app.forms.exam_forms import ExamCreateForm
 from app.forms.class_forms import ClassCreateForm, ClassEditForm, EnrollStudentForm
@@ -68,17 +68,66 @@ def class_detail(class_id: int):
     # Lấy thống kê lớp học
     class_overview = AnalyticsService.get_class_overview(class_id)
     
-    # Lấy điểm trung bình từng học viên
+    # Lấy điểm trung bình từng học viên (chỉ trong phạm vi assignment của lớp)
     student_scores = {}
     for enrollment in enrollments:
-        student_overview = AnalyticsService.get_student_overview(enrollment.student_id)
-        student_scores[enrollment.student_id] = student_overview['avg_manual_score']
+        student_scores[enrollment.student_id] = AnalyticsService.get_student_avg_for_class(enrollment.student_id, class_id)
     
+    # Tiến độ 4 tuần gần nhất: trung bình theo tuần, tính trung bình mỗi học viên/tuần để không bị lệch
+    from datetime import timedelta
+    from app.models.training_video import TrainingVideo
+    now = datetime.now()
+    cutoff = now - timedelta(days=30)
+    start_of_week = (now - timedelta(days=now.weekday())).date()
+    week_starts = [start_of_week - timedelta(weeks=3), start_of_week - timedelta(weeks=2), start_of_week - timedelta(weeks=1), start_of_week]
+    week_labels = [f"Tuần {i+1}" for i in range(4)]
+    week_student_scores = {i: {} for i in range(4)}
+
+    student_ids = [e.student_id for e in enrollments]
+    if student_ids:
+        # Chỉ lấy video thuộc assignment của lớp này
+        from app.models.assignment import Assignment
+        videos = (
+            TrainingVideo.query
+            .join(Assignment, TrainingVideo.assignment_id == Assignment.assignment_id)
+            .filter(
+                TrainingVideo.student_id.in_(student_ids),
+                TrainingVideo.uploaded_at >= cutoff,
+                Assignment.assigned_to_class == class_id
+            ).all()
+        )
+        for v in videos:
+            manual_score = v.manual_evaluations[0].overall_score if v.manual_evaluations else None
+            ai_score = v.ai_analysis.overall_score if v.ai_analysis else None
+            score_val = manual_score if manual_score is not None else ai_score
+            if score_val is None:
+                continue
+            vid_date = v.uploaded_at.date()
+            idx = None
+            for i, ws in enumerate(week_starts):
+                we = ws + timedelta(days=6)
+                if ws <= vid_date <= we:
+                    idx = i
+                    break
+            if idx is not None and 0 <= idx < 4:
+                sid = v.student_id
+                week_student_scores[idx].setdefault(sid, []).append(float(score_val))
+
+    class_progress_scores = []
+    for i in range(4):
+        per_student = []
+        for sid, vals in week_student_scores[i].items():
+            if vals:
+                per_student.append(sum(vals) / len(vals))
+        class_progress_scores.append(round(sum(per_student) / len(per_student), 1) if per_student else 0)
+
     return render_template('instructor/class_detail.html', 
                          class_obj=class_obj, 
                          enrollments=enrollments, 
                          class_overview=class_overview,
                          student_scores=student_scores,
+                         class_progress_labels=week_labels,
+                         class_progress_scores=class_progress_scores,
                          ClassService=ClassService)
 
 
@@ -313,11 +362,13 @@ def remove_student(enrollment_id: int):
 @login_required
 @role_required('INSTRUCTOR')
 def routines():
-    level_filter = None
-    weapon_filter = None
-    status_filter = None
+    # Read filters from query params
+    level_filter = request.args.get('level')  # beginner | intermediate | advanced | ''
+    weapon_filter = request.args.get('weapon_id', type=int)
+    status_filter = request.args.get('status')  # published | draft | ''
+
     filters = {}
-    if level_filter:
+    if level_filter in ['beginner', 'intermediate', 'advanced']:
         filters['level'] = level_filter
     if weapon_filter:
         filters['weapon_id'] = weapon_filter
@@ -325,9 +376,17 @@ def routines():
         filters['is_published'] = True
     elif status_filter == 'draft':
         filters['is_published'] = False
+
     routines = RoutineService.get_routines_by_instructor(session['user_id'], filters)
     weapons = RoutineService.get_all_weapons()
-    return render_template('instructor/routines.html', routines=routines, weapons=weapons)
+    return render_template(
+        'instructor/routines.html',
+        routines=routines,
+        weapons=weapons,
+        level_filter=level_filter or '',
+        weapon_filter=weapon_filter or '',
+        status_filter=status_filter or ''
+    )
 
 @instructor_bp.route('/routines/create', methods=['GET', 'POST'])
 @login_required
@@ -403,9 +462,7 @@ def routine_detail(routine_id: int):
     if not routine or routine.instructor_id != session['user_id']:
         flash('Không tìm thấy bài võ', 'error')
         return redirect(url_for('instructor.routines'))
-    criteria = RoutineService.get_criteria_by_routine(routine_id)
-    total_weight = sum(c.weight_percentage for c in criteria)
-    return render_template('instructor/routine_detail.html', routine=routine, criteria=criteria, total_weight=total_weight)
+    return render_template('instructor/routine_detail.html', routine=routine)
 
 
 @instructor_bp.route('/routines/<int:routine_id>/edit', methods=['GET', 'POST'])
@@ -495,45 +552,7 @@ def delete_routine(routine_id: int):
         return redirect(url_for('instructor.routine_detail', routine_id=routine_id))
 
 
-@instructor_bp.route('/routines/<int:routine_id>/criteria/add', methods=['GET', 'POST'])
-@login_required
-@role_required('INSTRUCTOR')
-def add_criteria(routine_id: int):
-    routine = RoutineService.get_routine_by_id(routine_id)
-    if not routine or routine.instructor_id != session['user_id']:
-        flash('Không tìm thấy bài võ', 'error')
-        return redirect(url_for('instructor.routines'))
-    form = CriteriaForm()
-    if form.validate_on_submit():
-        data = {
-            'criteria_name': form.criteria_name.data,
-            'criteria_code': form.criteria_code.data,
-            'weight_percentage': form.weight_percentage.data,
-            'description': form.description.data,
-            'evaluation_method': form.evaluation_method.data,
-        }
-        result = RoutineService.add_criteria(routine_id, data)
-        if result['success']:
-            flash('Thêm tiêu chí đánh giá thành công!', 'success')
-            return redirect(url_for('instructor.routine_detail', routine_id=routine_id))
-        else:
-            flash(result['message'], 'error')
-    return render_template('instructor/criteria_add.html', form=form, routine=routine)
-
-
-@instructor_bp.route('/criteria/<int:criteria_id>/delete', methods=['POST'])
-@login_required
-@role_required('INSTRUCTOR')
-def delete_criteria(criteria_id: int):
-    from app.models.evaluation_criteria import EvaluationCriteria
-    criteria = EvaluationCriteria.query.get(criteria_id)
-    if not criteria or criteria.routine.instructor_id != session['user_id']:
-        flash('Không tìm thấy tiêu chí', 'error')
-        return redirect(url_for('instructor.routines'))
-    routine_id = criteria.routine_id
-    result = RoutineService.delete_criteria(criteria_id)
-    flash('Xóa tiêu chí thành công!' if result['success'] else result['message'], 'success' if result['success'] else 'error')
-    return redirect(url_for('instructor.routine_detail', routine_id=routine_id))
+    # Criteria features removed
 
 
 # ============ ASSIGNMENT MANAGEMENT ============
@@ -542,8 +561,21 @@ def delete_criteria(criteria_id: int):
 @login_required
 @role_required('INSTRUCTOR')
 def assignments():
-    assignments = AssignmentService.get_assignments_by_instructor(session['user_id'])
-    return render_template('instructor/assignments.html', assignments=assignments)
+    # Read filters
+    assignment_type = request.args.get('assignment_type')  # individual | class | ''
+    priority = request.args.get('priority')  # low | normal | high | urgent | ''
+
+    filters = {}
+    if assignment_type in ['individual', 'class']:
+        filters['assignment_type'] = assignment_type
+    if priority in ['low', 'normal', 'high', 'urgent']:
+        filters['priority'] = priority
+
+    assignments = AssignmentService.get_assignments_by_instructor(session['user_id'], filters)
+    return render_template('instructor/assignments.html', 
+                           assignments=assignments,
+                           assignment_type=assignment_type or '',
+                           priority=priority or '')
 
 
 @instructor_bp.route('/assignments/create', methods=['GET', 'POST'])

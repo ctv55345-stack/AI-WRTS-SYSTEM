@@ -83,26 +83,27 @@
 
 <div class="report-section">
     <div class="report-header">
-        <div class="report-title">Báo cáo & Phân tích</div>
+        <div class="report-title">Phản hồi hệ thống</div>
         <div class="export-buttons">
-            <a href="{{ url_for('manager.analytics') }}" class="btn-export" title="Phân tích"><i class="fas fa-chart-pie"></i>Phân tích</a>
-            <a href="{{ url_for('manager.export_system_report') }}" class="btn-export" title="Xuất báo cáo"><i class="fas fa-file-export"></i>Xuất báo cáo</a>
+            <a href="{{ url_for('shared.submit_feedback') }}" class="btn-export" title="Gửi phản hồi"><i class="fas fa-paper-plane"></i>Gửi phản hồi</a>
+            <a href="{{ url_for('shared.my_feedback') }}" class="btn-export" title="Xem phản hồi"><i class="fas fa-comments"></i>Xem phản hồi</a>
         </div>
     </div>
     <div class="insights-grid">
         <div class="insight-card">
-            <div class="insight-icon"><i class="fas fa-chart-line"></i></div>
-            <div class="insight-title">Thống kê chi tiết</div>
+            <div class="insight-icon"><i class="fas fa-paper-plane"></i></div>
+            <div class="insight-title">Gửi phản hồi nhanh</div>
             <div class="insight-description">
-                Tổng lớp: {{ stats.total_classes }} | Đang hoạt động: {{ stats.active_classes }}<br>
-                Tổng học viên: {{ stats.total_students }} | Đang học: {{ stats.total_enrollments }}
+                Chia sẻ góp ý, báo lỗi hoặc đề xuất tính năng để cải thiện hệ thống.
+                <a href="{{ url_for('shared.submit_feedback') }}" class="ms-1">Bắt đầu gửi</a>
             </div>
         </div>
         <div class="insight-card">
             <div class="insight-icon"><i class="fas fa-comments"></i></div>
-            <div class="insight-title">Phản hồi hệ thống</div>
+            <div class="insight-title">Xem phản hồi đã gửi</div>
             <div class="insight-description">
-                <a href="{{ url_for('shared.submit_feedback') }}">Gửi phản hồi</a> · <a href="{{ url_for('shared.my_feedback') }}">Xem phản hồi của tôi</a>
+                Theo dõi trạng thái và phản hồi từ hệ thống cho các góp ý của bạn.
+                <a href="{{ url_for('shared.my_feedback') }}" class="ms-1">Xem danh sách</a>
             </div>
         </div>
     </div>

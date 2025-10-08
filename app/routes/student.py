@@ -12,8 +12,6 @@ from app.services.exam_service import ExamService
 from app.services.video_service import VideoService
 from app.services.ai_service import AIService
 from app.services.analytics_service import AnalyticsService
-from app.services.goal_service import GoalService
-from app.forms.goal_forms import GoalCreateForm
 
 
 student_bp = Blueprint('student', __name__, url_prefix='/student')
@@ -208,13 +206,16 @@ def all_schedules():
 @login_required
 @role_required('STUDENT')
 def routines():
-    level_filter = None
-    weapon_filter = None
+    # Read filters from query params
+    level_filter = request.args.get('level')  # beginner | intermediate | advanced | ''
+    weapon_filter = request.args.get('weapon_id', type=int)
+
     filters = {}
-    if level_filter:
+    if level_filter in ['beginner', 'intermediate', 'advanced']:
         filters['level'] = level_filter
     if weapon_filter:
         filters['weapon_id'] = weapon_filter
+
     routines = RoutineService.get_published_routines(filters)
     weapons = RoutineService.get_all_weapons()
     return render_template('student/routines.html', routines=routines, weapons=weapons)
@@ -228,8 +229,7 @@ def routine_detail(routine_id: int):
     if not routine or not routine.is_published:
         flash('Không tìm thấy bài võ', 'error')
         return redirect(url_for('student.routines'))
-    criteria = RoutineService.get_criteria_by_routine(routine_id)
-    return render_template('student/routine_detail.html', routine=routine, criteria=criteria)
+    return render_template('student/routine_detail.html', routine=routine)
 
 
 @student_bp.route('/my-assignments')
@@ -374,71 +374,101 @@ def analytics():
     """Dashboard phân tích học viên"""
     student_id = session['user_id']
     
-    overview = AnalyticsService.get_student_overview(student_id)
-    score_data = AnalyticsService.get_score_progression(student_id, days=30)
-    completion = AnalyticsService.get_routine_completion(student_id)
-    strengths = AnalyticsService.get_strengths_weaknesses(student_id)
-    
-    return render_template('student/analytics.html',
-                         overview=overview,
-                         score_data=score_data,
-                         completion=completion,
-                         strengths=strengths)
+    # Base analytics from service
+    overview = AnalyticsService.get_student_overview(student_id) or {}
+    score_list = AnalyticsService.get_score_progression(student_id, days=30) or []
+    completion_stats = AnalyticsService.get_routine_completion(student_id) or {}
+    strengths_raw = AnalyticsService.get_strengths_weaknesses(student_id) or {}
 
-@student_bp.route('/goals')
-@login_required
-@role_required('STUDENT')
-def goals():
-    """Quản lý mục tiêu"""
-    student_id = session['user_id']
-    active_goals = GoalService.get_student_goals(student_id, status='active')
-    completed_goals = GoalService.get_student_goals(student_id, status='completed')
+    # Derive additional overview fields expected by template
+    try:
+        from app.models.training_video import TrainingVideo
+    except Exception:
+        TrainingVideo = None
     
-    return render_template('student/goals.html',
-                         active_goals=active_goals,
-                         completed_goals=completed_goals)
+    # avg_score preference: manual then AI
+    avg_score = overview.get('avg_manual_score') or overview.get('avg_ai_score') or 0
+    
+    routines_practiced = 0
+    practice_days = 0
+    if TrainingVideo is not None:
+        try:
+            from sqlalchemy import func
+            # distinct routines
+            routines_practiced = (
+                TrainingVideo.query
+                .with_entities(func.count(func.distinct(TrainingVideo.routine_id)))
+                .filter(TrainingVideo.student_id == student_id)
+                .scalar() or 0
+            )
+            # distinct practice days
+            distinct_days = (
+                TrainingVideo.query
+                .with_entities(func.date(TrainingVideo.uploaded_at))
+                .filter(TrainingVideo.student_id == student_id)
+                .distinct()
+                .all()
+            )
+            practice_days = len(distinct_days)
+        except Exception:
+            pass
+    
+    overview_mapped = {
+        **overview,
+        'avg_score': round(float(avg_score), 1) if isinstance(avg_score, (int, float)) else 0,
+        'routines_practiced': int(routines_practiced),
+        'practice_days': int(practice_days),
+    }
+    
+    # Build chart-friendly score data { dates: [...], scores: [...] }
+    dates = []
+    scores = []
+    for item in score_list:
+        score_val = item.get('manual_score') if item.get('manual_score') is not None else item.get('ai_score')
+        if score_val is not None:
+            dates.append(item.get('date'))
+            # Normalize to percentage-like scale if needed
+            scores.append(float(score_val))
+    score_chart = { 'dates': dates, 'scores': scores }
+    
+    # Map completion stats to the template's expected list items
+    completion_list = []
+    if completion_stats:
+        completion_list.append({
+            'routine_name': 'Tất cả bài võ',
+            'completion_rate': completion_stats.get('completion_rate', 0),
+            'completed': completion_stats.get('completed', 0),
+            'total': completion_stats.get('total_routines', 0),
+        })
+    
+    # Synthesize strengths/weaknesses lists from technique/posture/timing
+    sw_mapped = { 'strengths': [], 'weaknesses': [] }
+    if strengths_raw:
+        crits = [
+            { 'criteria_name': 'Kỹ thuật', 'key': 'technique', 'avg_score': strengths_raw.get('technique') },
+            { 'criteria_name': 'Tư thế', 'key': 'posture', 'avg_score': strengths_raw.get('posture') },
+            { 'criteria_name': 'Nhịp điệu', 'key': 'timing', 'avg_score': strengths_raw.get('timing') },
+        ]
+        for c in crits:
+            val = c.get('avg_score')
+            if val is None:
+                continue
+            entry = { 'criteria_name': c['criteria_name'], 'avg_score': round(float(val), 1) }
+            # Simple heuristic thresholds
+            if val >= 70:
+                sw_mapped['strengths'].append(entry)
+            elif val <= 50:
+                sw_mapped['weaknesses'].append(entry)
+    
+    return render_template(
+        'student/analytics.html',
+        overview=overview_mapped,
+        score_data=score_chart,
+        completion=completion_list,
+        strengths=sw_mapped
+    )
 
-@student_bp.route('/goals/create', methods=['GET', 'POST'])
-@login_required
-@role_required('STUDENT')
-def create_goal():
-    """Tạo mục tiêu mới"""
-    form = GoalCreateForm()
-    
-    if form.validate_on_submit():
-        data = {
-            'goal_type': form.goal_type.data,
-            'goal_title': form.goal_title.data,
-            'goal_description': form.goal_description.data,
-            'target_value': form.target_value.data,
-            'unit_of_measurement': form.unit_of_measurement.data,
-            'start_date': form.start_date.data,
-            'deadline': form.deadline.data
-        }
-        
-        result = GoalService.create_goal(session['user_id'], data)
-        
-        if result['success']:
-            flash('Tạo mục tiêu thành công!', 'success')
-            return redirect(url_for('student.goals'))
-        else:
-            flash('Có lỗi xảy ra', 'error')
-    
-    return render_template('student/goal_create.html', form=form)
-
-@student_bp.route('/goals/<int:goal_id>/delete', methods=['POST'])
-@login_required
-@role_required('STUDENT')
-def delete_goal(goal_id):
-    """Xóa mục tiêu"""
-    result = GoalService.delete_goal(goal_id)
-    
-    if result['success']:
-        flash('Xóa mục tiêu thành công!', 'success')
-    else:
-        flash(result['message'], 'error')
-    
-    return redirect(url_for('student.goals'))
+ 
 
 
 # ============ EXAM TAKING (THÊM MỚI) ============

@@ -74,10 +74,25 @@ def analytics():
     instructor_perf = AnalyticsService.get_instructor_performance()
     trends = AnalyticsService.get_trends_data(days=30)
     
+    # Chuẩn hóa dữ liệu cho biểu đồ để template không cần comprehension
+    instructor_names = [p['instructor'].full_name for p in instructor_perf]
+    total_classes = [p['total_classes'] for p in instructor_perf]
+    total_students = [p['total_students'] for p in instructor_perf]
+    avg_scores = [p['avg_student_score'] for p in instructor_perf]
+
+    analytics_payload = {
+        'instructorNames': instructor_names,
+        'totalClasses': total_classes,
+        'totalStudents': total_students,
+        'avgScores': avg_scores,
+        'trends': trends
+    }
+    
     return render_template('manager/analytics.html',
                          overview=overview,
                          instructor_perf=instructor_perf,
-                         trends=trends)
+                         trends=trends,
+                         analytics_payload=analytics_payload)
 
 @manager_bp.route('/report/system')
 @login_required

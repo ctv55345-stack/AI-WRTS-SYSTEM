@@ -81,6 +81,8 @@ class VideoService:
             db.session.add(video)
             db.session.commit()
             
+            # Goals feature removed: no-op
+            
             return video
             
         except Exception as e:

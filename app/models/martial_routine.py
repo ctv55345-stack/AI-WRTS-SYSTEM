@@ -23,7 +23,6 @@ class MartialRoutine(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    evaluation_criteria = db.relationship('EvaluationCriteria', backref='routine', lazy=True, cascade='all, delete-orphan')
     assignments = db.relationship('Assignment', backref='routine', lazy=True, cascade='all, delete-orphan')
     videos = db.relationship('TrainingVideo', backref='routine', lazy=True)
     training_histories = db.relationship('TrainingHistory', backref='routine', lazy=True)

@@ -99,6 +99,10 @@ def history():
     if status == '':
         status = None
     
+    # Gán lại giá trị vào form để giữ trạng thái đã chọn
+    filter_form.routine_id.data = routine_id if routine_id is not None else 0
+    filter_form.status.data = status if status is not None else ''
+
     # Lấy danh sách video
     videos = VideoService.get_student_videos(
         student_id=session.get('user_id'),

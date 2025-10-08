@@ -1,6 +1,5 @@
 from app.models import db
 from app.models.martial_routine import MartialRoutine
-from app.models.evaluation_criteria import EvaluationCriteria
 from app.models.weapon import Weapon
 from datetime import datetime
 
@@ -122,40 +121,7 @@ class RoutineService:
         db.session.commit()
         return {'success': True}
 
-    @staticmethod
-    def get_criteria_by_routine(routine_id: int):
-        return EvaluationCriteria.query.filter_by(routine_id=routine_id).order_by(EvaluationCriteria.display_order).all()
-
-    @staticmethod
-    def add_criteria(routine_id: int, data: dict):
-        existing_total = db.session.query(db.func.sum(EvaluationCriteria.weight_percentage)).filter_by(routine_id=routine_id).scalar() or 0
-
-        if existing_total + data['weight_percentage'] > 100:
-            return {'success': False, 'message': f'Tổng trọng số vượt quá 100% (hiện tại: {existing_total}%)'}
-
-        criteria = EvaluationCriteria(
-            routine_id=routine_id,
-            criteria_name=data['criteria_name'],
-            criteria_code=data['criteria_code'],
-            weight_percentage=data['weight_percentage'],
-            description=data.get('description'),
-            evaluation_method=data.get('evaluation_method'),
-            display_order=data.get('display_order', 0),
-        )
-
-        db.session.add(criteria)
-        db.session.commit()
-        return {'success': True, 'criteria': criteria}
-
-    @staticmethod
-    def delete_criteria(criteria_id: int):
-        criteria = EvaluationCriteria.query.get(criteria_id)
-        if not criteria:
-            return {'success': False, 'message': 'Không tìm thấy tiêu chí'}
-
-        db.session.delete(criteria)
-        db.session.commit()
-        return {'success': True}
+    # Evaluation criteria removed
 
     @staticmethod
     def get_published_routines(filters=None):
