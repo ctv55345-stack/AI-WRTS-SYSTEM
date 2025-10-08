@@ -36,7 +36,7 @@
                 <div class="card-body">
                     <div class="ratio ratio-16x9">
                         <video controls>
-                            <source src="{{ url_for('static', filename=video.video_url.replace('static/', '')) }}" type="video/mp4">
+                            <source src="/{{ video.video_url }}" type="video/mp4">
                         </video>
                     </div>
                 </div>

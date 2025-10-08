@@ -9,6 +9,20 @@
     </h1>
 </div>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="mb-3">
+        {% for category, message in messages %}
+            {% set bs = 'danger' if category == 'error' else category %}
+            <div class="alert alert-{{ bs }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endwith %}
+
 <form method="POST">
     {{ form.hidden_tag() }}
     
@@ -85,6 +99,9 @@
                             {{ form.start_time(class="form-control datetimepicker") }}
                             <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                         </div>
+                        {% if form.start_time.errors %}
+                        <div class="invalid-feedback d-block">{{ form.start_time.errors[0] }}</div>
+                        {% endif %}
                     </div>
                     
                     <div class="mb-3">
@@ -93,6 +110,9 @@
                             {{ form.end_time(class="form-control datetimepicker") }}
                             <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                         </div>
+                        {% if form.end_time.errors %}
+                        <div class="invalid-feedback d-block">{{ form.end_time.errors[0] }}</div>
+                        {% endif %}
                     </div>
                     
                     <div class="mb-3">
@@ -147,9 +167,13 @@ document.addEventListener('DOMContentLoaded', function() {
         pickers.forEach(picker => {
             flatpickr(picker, {
                 enableTime: true,
-                dateFormat: "d/m/Y H:i",
                 time_24hr: true,
-                minDate: "today"
+                allowInput: true,
+                // WTForms DateTimeField expects '%Y-%m-%dT%H:%M'
+                dateFormat: 'Y-m-d\\TH:i',
+                altInput: true,
+                altFormat: 'd/m/Y H:i',
+                minDate: 'today'
             });
         });
     }

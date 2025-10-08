@@ -1,9 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Phân tích toàn hệ thống</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
+{% extends "base/manager_base.html" %}
+
+{% block title %}Phân tích toàn hệ thống{% endblock %}
+
+{% block manager_content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">
+            <i class="fas fa-chart-pie me-2"></i>
+            Phân tích toàn hệ thống
+        </h1>
+    </div>
+</div>
+
+<style>
         .overview-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -39,9 +48,7 @@
             margin: 20px 0;
         }
     </style>
-</head>
-<body>
-    <h1>📊 PHÂN TÍCH TOÀN HỆ THỐNG</h1>
+<div class="analytics-panel">
     
     <h2>Tổng quan</h2>
     <div class="overview-grid">
@@ -87,19 +94,20 @@
         </div>
     </div>
     
-    <h2>Export báo cáo</h2>
-    <p><a href="{{ url_for('manager.export_system_report') }}" target="_blank">📥 Tải báo cáo toàn hệ thống (JSON)</a></p>
-    
-    <p><a href="{{ url_for('manager.dashboard') }}">← Về Dashboard</a></p>
-    
+    <div class="report-section">
+        <div class="report-header">
+            <div class="report-title">Export báo cáo</div>
+            <div class="export-buttons">
+                <a href="{{ url_for('manager.export_system_report') }}" target="_blank" class="btn-export"><i class="fas fa-file-export"></i>Tải JSON</a>
+                <a href="{{ url_for('manager.dashboard') }}" class="btn-export"><i class="fas fa-home"></i>Về Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
-        // 1. BAR CHART - Instructor Performance
-        const instructorData = {{ instructor_perf | tojson }};
-        
-        const instructorNames = instructorData.map(i => i.instructor.full_name);
-        const totalClasses = instructorData.map(i => i.total_classes);
-        const totalStudents = instructorData.map(i => i.total_students);
-        const avgScores = instructorData.map(i => i.avg_student_score);
+        const analyticsData = JSON.parse(document.getElementById('analytics-json').textContent);
+        const { instructorNames, totalClasses, totalStudents, avgScores, trends } = analyticsData;
         
         const ctxInstructor = document.getElementById('instructorChart').getContext('2d');
         new Chart(ctxInstructor, {
@@ -169,12 +177,10 @@
                 }
             }
         });
-        
+    
         // 2. LINE CHART - Trends
-        const trendsData = {{ trends | tojson }};
-        
-        const videoTrends = trendsData.videos;
-        const evalTrends = trendsData.evaluations;
+        const videoTrends = trends.videos;
+        const evalTrends = trends.evaluations;
         
         // Merge dates
         const allDates = [...new Set([
@@ -242,5 +248,4 @@
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

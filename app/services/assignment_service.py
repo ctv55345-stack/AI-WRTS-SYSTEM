@@ -4,11 +4,22 @@ from app.models.martial_routine import MartialRoutine
 from app.models.user import User
 from app.models.class_enrollment import ClassEnrollment
 from app.models.training_video import TrainingVideo
+from app.models.class_model import Class
 
 
 class AssignmentService:
     @staticmethod
     def create_assignment(data: dict, assigned_by: int):
+        # Validate that the class is approved if assignment is for a class
+        if data.get('assigned_to_class'):
+            class_obj = Class.query.get(data['assigned_to_class'])
+            if not class_obj:
+                return {'success': False, 'message': 'Không tìm thấy lớp học'}
+            if class_obj.approval_status != 'approved':
+                return {'success': False, 'message': 'Chỉ có thể tạo bài tập cho lớp đã được duyệt'}
+            if class_obj.instructor_id != assigned_by:
+                return {'success': False, 'message': 'Bạn không có quyền tạo bài tập cho lớp này'}
+
         assignment = Assignment(
             routine_id=data['routine_id'],
             assigned_by=assigned_by,

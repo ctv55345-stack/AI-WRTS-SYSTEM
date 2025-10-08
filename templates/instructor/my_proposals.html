@@ -40,16 +40,25 @@
                         <td><code>{{ p.class_code }}</code></td>
                         <td class="fw-semibold">{{ p.class_name }}</td>
                         <td>
-                            <span class="badge bg-info">{{ p.level }}</span>
+                            {% if p.level == 'beginner' %}
+                                <span class="badge bg-success">Sơ cấp</span>
+                            {% elif p.level == 'intermediate' %}
+                                <span class="badge bg-info">Trung cấp</span>
+                            {% elif p.level == 'advanced' %}
+                                <span class="badge bg-danger">Nâng cao</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ p.level }}</span>
+                            {% endif %}
                         </td>
                         <td>
-                            {% set status = p.approval_status_display %}
-                            {% if status == 'APPROVED' %}
-                                <span class="badge bg-success">Đã duyệt</span>
-                            {% elif status == 'PENDING' %}
-                                <span class="badge bg-warning text-dark">Đang chờ</span>
+                            {% if p.approval_status == 'approved' %}
+                                <span class="badge bg-success">{{ p.approval_status_display }}</span>
+                            {% elif p.approval_status == 'pending' %}
+                                <span class="badge bg-warning text-dark">{{ p.approval_status_display }}</span>
+                            {% elif p.approval_status == 'rejected' %}
+                                <span class="badge bg-danger">{{ p.approval_status_display }}</span>
                             {% else %}
-                                <span class="badge bg-danger">Từ chối</span>
+                                <span class="badge bg-secondary">{{ p.approval_status }}</span>
                             {% endif %}
                         </td>
                         <td>{{ p.created_at.strftime('%d/%m/%Y %H:%M') }}</td>

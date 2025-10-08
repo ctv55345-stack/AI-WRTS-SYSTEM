@@ -1,78 +1,111 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Manager Dashboard</title>
-</head>
-<body>
-    <h1>MANAGER DASHBOARD</h1>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p><strong>[{{ category }}]</strong> {{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
-    <p>Xin chào, {{ session.full_name }}</p>
-    
-    <h2>DUYỆT LỚP HỌC</h2>
-    <p>
-        <a href="{{ url_for('manager.pending_classes') }}"><strong>Lớp chờ duyệt: {{ pending_count }}</strong></a>
-    </p>
+{% extends "base/manager_base.html" %}
 
-    <h2>THỐNG KÊ TỔNG QUAN</h2>
-    <table border="1">
-        <tr>
-            <td><strong>Tổng số lớp học:</strong></td>
-            <td>{{ stats.total_classes }}</td>
-        </tr>
-        <tr>
-            <td><strong>Lớp đang hoạt động:</strong></td>
-            <td>{{ stats.active_classes }}</td>
-        </tr>
-        <tr>
-            <td><strong>Tổng số học viên:</strong></td>
-            <td>{{ stats.total_students }}</td>
-        </tr>
-        <tr>
-            <td><strong>Học viên đang học:</strong></td>
-            <td>{{ stats.total_enrollments }}</td>
-        </tr>
-    </table>
-    
-    <h2>THỐNG KÊ THEO CẤP ĐỘ</h2>
-    <table border="1">
-        <tr>
-            <td><strong>Lớp sơ cấp:</strong></td>
-            <td>{{ stats.beginner_classes }}</td>
-        </tr>
-        <tr>
-            <td><strong>Lớp trung cấp:</strong></td>
-            <td>{{ stats.intermediate_classes }}</td>
-        </tr>
-        <tr>
-            <td><strong>Lớp nâng cao:</strong></td>
-            <td>{{ stats.advanced_classes }}</td>
-        </tr>
-    </table>
-    
-    <h2>HỖ TRỢ & PHẢN HỒI</h2>
-    <p>
-        <a href="{{ url_for('shared.submit_feedback') }}">Gửi phản hồi</a> |
-        <a href="{{ url_for('shared.my_feedback') }}">Phản hồi của tôi</a>
-    </p>
-    
-    <h2>PHÂN TÍCH & BÁO CÁO</h2>
-    <p>
-        <a href="{{ url_for('manager.analytics') }}">📊 Phân tích toàn hệ thống</a> |
-        <a href="{{ url_for('manager.export_system_report') }}">📄 Xuất báo cáo</a>
-    </p>
-    
-    <p>
-        <a href="{{ url_for('manager.statistics') }}">Xem chi tiết thống kê</a> |
-        <a href="{{ url_for('auth.profile') }}">Thông tin cá nhân</a> |
-        <a href="{{ url_for('auth.logout') }}">Đăng xuất</a>
-    </p>
-</body>
-</html>
+{% block title %}Quản trị - Dashboard{% endblock %}
+
+{% block manager_content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">
+            <i class="fas fa-chart-line me-2"></i>
+            Dashboard Quản trị
+        </h1>
+        <p class="text-muted mb-0">Xin chào, {{ session.full_name }}</p>
+    </div>
+</div>
+
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-chalkboard"></i></div>
+        <div class="kpi-value">{{ stats.total_classes }}</div>
+        <div class="kpi-label">Tổng số lớp học</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-toggle-on"></i></div>
+        <div class="kpi-value">{{ stats.active_classes }}</div>
+        <div class="kpi-label">Lớp đang hoạt động</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-user-graduate"></i></div>
+        <div class="kpi-value">{{ stats.total_students }}</div>
+        <div class="kpi-label">Tổng học viên</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon"><i class="fas fa-users"></i></div>
+        <div class="kpi-value">{{ stats.total_enrollments }}</div>
+        <div class="kpi-label">Học viên đang học</div>
+    </div>
+</div>
+
+<div class="report-section">
+    <div class="report-header">
+        <div class="report-title">Duyệt lớp học</div>
+        <a href="{{ url_for('manager.pending_classes') }}" class="btn btn-primary">
+            <i class="fas fa-tasks me-2"></i>Lớp chờ duyệt: {{ pending_count }}
+        </a>
+    </div>
+    <div class="row g-3">
+        <div class="col-sm-4">
+            <div class="insight-card">
+                <div class="insight-icon"><i class="fas fa-level-up-alt"></i></div>
+                <div class="insight-title">Theo cấp độ</div>
+                <div class="insight-description">
+                    Sơ cấp: {{ stats.beginner_classes }}<br>
+                    Trung cấp: {{ stats.intermediate_classes }}<br>
+                    Nâng cao: {{ stats.advanced_classes }}
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-8">
+            <div class="comparison-table">
+                <div class="comparison-header">Phân bổ lớp theo cấp độ</div>
+                <div class="comparison-row">
+                    <div class="comparison-item"><span class="comparison-rank">1</span> Sơ cấp</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-bar-fill" data-percentage="{{ (stats.beginner_classes / (stats.total_classes or 1) * 100)|round(0, 'floor') }}">{{ (stats.beginner_classes / (stats.total_classes or 1) * 100)|round(0, 'floor') }}%</div>
+                    </div>
+                </div>
+                <div class="comparison-row">
+                    <div class="comparison-item"><span class="comparison-rank">2</span> Trung cấp</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-bar-fill" data-percentage="{{ (stats.intermediate_classes / (stats.total_classes or 1) * 100)|round(0, 'floor') }}">{{ (stats.intermediate_classes / (stats.total_classes or 1) * 100)|round(0, 'floor') }}%</div>
+                    </div>
+                </div>
+                <div class="comparison-row">
+                    <div class="comparison-item"><span class="comparison-rank">3</span> Nâng cao</div>
+                    <div class="comparison-bar">
+                        <div class="comparison-bar-fill" data-percentage="{{ (stats.advanced_classes / (stats.total_classes or 1) * 100)|round(0, 'floor') }}">{{ (stats.advanced_classes / (stats.total_classes or 1) * 100)|round(0, 'floor') }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="report-section">
+    <div class="report-header">
+        <div class="report-title">Báo cáo & Phân tích</div>
+        <div class="export-buttons">
+            <a href="{{ url_for('manager.analytics') }}" class="btn-export" title="Phân tích"><i class="fas fa-chart-pie"></i>Phân tích</a>
+            <a href="{{ url_for('manager.export_system_report') }}" class="btn-export" title="Xuất báo cáo"><i class="fas fa-file-export"></i>Xuất báo cáo</a>
+        </div>
+    </div>
+    <div class="insights-grid">
+        <div class="insight-card">
+            <div class="insight-icon"><i class="fas fa-chart-line"></i></div>
+            <div class="insight-title">Thống kê chi tiết</div>
+            <div class="insight-description">
+                Tổng lớp: {{ stats.total_classes }} | Đang hoạt động: {{ stats.active_classes }}<br>
+                Tổng học viên: {{ stats.total_students }} | Đang học: {{ stats.total_enrollments }}
+            </div>
+        </div>
+        <div class="insight-card">
+            <div class="insight-icon"><i class="fas fa-comments"></i></div>
+            <div class="insight-title">Phản hồi hệ thống</div>
+            <div class="insight-description">
+                <a href="{{ url_for('shared.submit_feedback') }}">Gửi phản hồi</a> · <a href="{{ url_for('shared.my_feedback') }}">Xem phản hồi của tôi</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -44,6 +44,37 @@ class EvaluationService:
         return sorted(pending, key=lambda x: x.uploaded_at, reverse=True)
     
     @staticmethod
+    def get_all_submissions(instructor_id):
+        """Lấy tất cả video (cả đã chấm và chưa chấm)"""
+        from app.models.assignment import Assignment
+        from app.models.class_enrollment import ClassEnrollment
+        
+        # Lấy tất cả lớp của giảng viên
+        from app.models.class_model import Class
+        instructor_classes = Class.query.filter_by(
+            instructor_id=instructor_id,
+            is_active=True
+        ).all()
+        
+        class_ids = [c.class_id for c in instructor_classes]
+        
+        # Lấy học viên trong các lớp
+        enrollments = ClassEnrollment.query.filter(
+            ClassEnrollment.class_id.in_(class_ids),
+            ClassEnrollment.enrollment_status == 'active'
+        ).all()
+        
+        student_ids = [e.student_id for e in enrollments]
+        
+        # Lấy tất cả video
+        videos = TrainingVideo.query.filter(
+            TrainingVideo.student_id.in_(student_ids),
+            TrainingVideo.processing_status == 'completed'
+        ).all()
+        
+        return sorted(videos, key=lambda x: x.uploaded_at, reverse=True)
+    
+    @staticmethod
     def create_evaluation(video_id, instructor_id, data):
         """Tạo đánh giá thủ công"""
         video = TrainingVideo.query.get(video_id)

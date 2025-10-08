@@ -1,6 +1,8 @@
 from app.models import db
 from app.models.user import User
 from app.models.role import Role
+from datetime import datetime, timedelta
+from sqlalchemy import func
 
 class UserService:
     
@@ -77,3 +79,58 @@ class UserService:
         db.session.delete(user)
         db.session.commit()
         return {'success': True}
+    
+    @staticmethod
+    def get_total_users_count():
+        """Get total number of users"""
+        return User.query.count()
+    
+    @staticmethod
+    def get_users_count_by_role(role_code):
+        """Get count of users by role code"""
+        return db.session.query(User).join(Role).filter(
+            Role.role_code == role_code,
+            User.is_active == True
+        ).count()
+    
+    @staticmethod
+    def get_recent_users(days=7, limit=10):
+        """Get recent users registered in the last N days"""
+        cutoff_date = datetime.now() - timedelta(days=days)
+        return User.query.filter(
+            User.created_at >= cutoff_date
+        ).order_by(User.created_at.desc()).limit(limit).all()
+    
+    @staticmethod
+    def get_user_stats_by_role():
+        """Get user statistics grouped by role"""
+        stats = db.session.query(
+            Role.role_code,
+            Role.role_name,
+            func.count(User.user_id).label('count')
+        ).join(User).filter(
+            User.is_active == True
+        ).group_by(Role.role_code, Role.role_name).all()
+        
+        return {stat.role_code: {'name': stat.role_name, 'count': stat.count} for stat in stats}
+    
+    @staticmethod
+    def get_user_growth_percentage(days=30):
+        """Get user growth percentage compared to previous period"""
+        try:
+            current_period_start = datetime.now() - timedelta(days=days)
+            previous_period_start = current_period_start - timedelta(days=days)
+            
+            current_count = User.query.filter(User.created_at >= current_period_start).count()
+            previous_count = User.query.filter(
+                User.created_at >= previous_period_start,
+                User.created_at < current_period_start
+            ).count()
+            
+            if previous_count == 0:
+                return 100 if current_count > 0 else 0
+            
+            return round(((current_count - previous_count) / previous_count) * 100, 1)
+        except Exception as e:
+            print(f"Error calculating user growth: {e}")
+            return 0

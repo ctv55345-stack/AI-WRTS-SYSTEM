@@ -59,7 +59,20 @@
 <!-- Filter Section -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
-        <div class="row g-3">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Trạng thái</label>
+                <div class="btn-group w-100" role="group">
+                    <a href="{{ url_for('instructor.pending_evaluations') }}" 
+                       class="btn {% if not show_all %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        Chờ chấm
+                    </a>
+                    <a href="{{ url_for('instructor.pending_evaluations', show_all='true') }}" 
+                       class="btn {% if show_all %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        Tất cả
+                    </a>
+                </div>
+            </div>
             <div class="col-md-3">
                 <label class="form-label">Bài võ</label>
                 <select class="form-select">
@@ -70,14 +83,6 @@
                 <label class="form-label">Lớp học</label>
                 <select class="form-select">
                     <option value="">Tất cả</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Sắp xếp</label>
-                <select class="form-select">
-                    <option value="oldest">Cũ nhất trước</option>
-                    <option value="newest">Mới nhất trước</option>
-                    <option value="priority">Ưu tiên cao</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -100,6 +105,7 @@
                         <th>Bài võ</th>
                         <th>Ngày nộp</th>
                         <th>AI Score</th>
+                        <th>Trạng thái</th>
                         <th>Thời lượng</th>
                         <th class="text-end">Thao tác</th>
                     </tr>
@@ -154,15 +160,38 @@
                             {% endif %}
                         </td>
                         <td>
+                            {% if video.manual_evaluations %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Đã chấm
+                            </span>
+                            <br>
+                            <small class="text-muted">
+                                {{ video.manual_evaluations[0].overall_score }}/100
+                            </small>
+                            {% else %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-clock me-1"></i>
+                                Chờ chấm
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
                             <span class="badge bg-secondary">
                                 <i class="fas fa-clock me-1"></i>
                                 {{ video.duration // 60 if video.duration else 0 }}:{{ '%02d' % ((video.duration % 60) if video.duration else 0) }}
                             </span>
                         </td>
                         <td class="text-end">
+                            {% if video.manual_evaluations %}
+                            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('instructor.evaluate_video', video_id=video.video_id) }}">
+                                <i class="fas fa-eye me-1"></i>Xem kết quả
+                            </a>
+                            {% else %}
                             <a class="btn btn-sm btn-primary" href="{{ url_for('instructor.evaluate_video', video_id=video.video_id) }}">
                                 <i class="fas fa-star me-1"></i>Chấm điểm
                             </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

@@ -118,16 +118,18 @@
         <div class="col-md-6 col-lg-4">
             <div class="card routine-card border-0 shadow-sm h-100">
                 <div class="routine-video-preview">
-                    {% if routine.demo_video_url %}
-                    <img src="/static/img/video-placeholder.png" alt="Video" class="w-100">
-                    <div class="video-play-overlay">
-                        <i class="fas fa-play-circle"></i>
-                    </div>
+                    {% if routine.thumbnail_url %}
+                        <img src="{{ routine.thumbnail_url }}" alt="Thumbnail" class="w-100">
+                    {% elif routine.reference_video_url %}
+                        <img src="/static/img/video-placeholder.png" alt="Video" class="w-100">
+                        <div class="video-play-overlay">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
                     {% else %}
-                    <div class="no-video-placeholder">
-                        <i class="fas fa-video-slash"></i>
-                        <span>Chưa có video</span>
-                    </div>
+                        <div class="no-video-placeholder">
+                            <i class="fas fa-video-slash"></i>
+                            <span>Chưa có video</span>
+                        </div>
                     {% endif %}
                 </div>
                 

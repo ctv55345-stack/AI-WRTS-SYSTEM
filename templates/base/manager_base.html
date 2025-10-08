@@ -1,7 +1,9 @@
 {% extends "base/base.html" %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
+    .page-header { margin-bottom: 1.5rem; }
     .manager-dashboard .stat-card::before {
         background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
     }
@@ -358,11 +360,14 @@
 
 {% block content %}
 <div class="manager-dashboard">
+    {% include 'components/alerts.html' %}
     {% block manager_content %}{% endblock %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
 <script>
     // Manager-specific JavaScript
     document.addEventListener('DOMContentLoaded', function() {

@@ -198,7 +198,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             flatpickr(deadlineInput, {
                 enableTime: true,
-                dateFormat: "d/m/Y H:i",
+                // WTForms DateTimeField expects '%Y-%m-%dT%H:%M' format
+                dateFormat: 'Y-m-d\\TH:i',
+                altInput: true,
+                altFormat: 'd/m/Y H:i',
                 time_24hr: true,
                 minDate: "today",
                 locale: "vn"

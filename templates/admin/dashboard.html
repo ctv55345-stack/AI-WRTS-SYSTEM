@@ -1,33 +1,421 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin Dashboard</title>
-</head>
-<body>
-    <h1>ADMIN DASHBOARD</h1>
+{% extends "base/admin_base.html" %}
+
+{% block title %}Admin Dashboard - AI-WRTS System{% endblock %}
+
+{% block admin_content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1 gradient-text">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Admin Dashboard
+        </h1>
+        <p class="text-muted mb-0">Chào mừng trở lại, {{ session.full_name }}! Quản lý hệ thống AI-WRTS</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary" onclick="refreshDashboard()">
+            <i class="fas fa-sync-alt"></i>
+            Làm mới
+        </button>
+        <a href="{{ url_for('admin.users') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i>
+            Thêm người dùng
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); color: #667eea;">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-value" style="color: #667eea;">{{ total_users or 0 }}</div>
+            <div class="stat-label">Tổng người dùng</div>
+            <div class="stat-change {{ 'text-success' if (user_growth_percentage or 0) >= 0 else 'text-danger' }}">
+                <i class="fas fa-arrow-{{ 'up' if (user_growth_percentage or 0) >= 0 else 'down' }}"></i>
+                {{ '+' if (user_growth_percentage or 0) >= 0 else '' }}{{ user_growth_percentage or 0 }}% so với tháng trước
+            </div>
+        </div>
+    </div>
     
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p><strong>[{{ category }}]</strong> {{ message }}</p>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%); color: #f5576c;">
+                <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <div class="stat-value" style="color: #f5576c;">{{ total_instructors or 0 }}</div>
+            <div class="stat-label">Giảng viên</div>
+            <div class="stat-change text-info">
+                <i class="fas fa-info-circle"></i>
+                {{ total_instructors or 0 }} giảng viên
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, rgba(17, 153, 142, 0.1) 0%, rgba(56, 239, 125, 0.1) 100%); color: #11998e;">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            <div class="stat-value" style="color: #11998e;">{{ total_students or 0 }}</div>
+            <div class="stat-label">Học viên</div>
+            <div class="stat-change text-info">
+                <i class="fas fa-info-circle"></i>
+                {{ total_students or 0 }} học viên
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, rgba(235, 51, 73, 0.1) 0%, rgba(244, 92, 67, 0.1) 100%); color: #eb3349;">
+                <i class="fas fa-comments"></i>
+            </div>
+            <div class="stat-value" style="color: #eb3349;">{{ total_feedback or 0 }}</div>
+            <div class="stat-label">Phản hồi</div>
+            <div class="stat-change text-info">
+                <i class="fas fa-info-circle"></i>
+                {{ pending_feedback or 0 }} chờ xử lý
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="row g-4">
+    <!-- Quick Actions -->
+    <div class="col-12">
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <h3 class="admin-panel-title">
+                    <i class="fas fa-bolt"></i>
+                    Thao tác nhanh
+                </h3>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-users-cog mb-2" style="font-size: 1.5rem;"></i>
+                        <span>Quản lý người dùng</span>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <a href="{{ url_for('admin.create_user') }}" class="btn btn-outline-success btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-user-plus mb-2" style="font-size: 1.5rem;"></i>
+                        <span>Tạo người dùng mới</span>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <a href="{{ url_for('admin.feedback_list') }}" class="btn btn-outline-warning btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-comments mb-2" style="font-size: 1.5rem;"></i>
+                        <span>Xem phản hồi</span>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-info btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-user-cog mb-2" style="font-size: 1.5rem;"></i>
+                        <span>Thông tin cá nhân</span>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <a href="{{ url_for('shared.submit_feedback') }}" class="btn btn-outline-secondary btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-comment-dots mb-2" style="font-size: 1.5rem;"></i>
+                        <span>Gửi phản hồi</span>
+                    </a>
+                </div>
+                <div class="col-lg-2 col-md-4 col-sm-6">
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-dark btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                        <i class="fas fa-sync-alt mb-2" style="font-size: 1.5rem;"></i>
+                        <span>Làm mới</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity & Feedback -->
+<div class="row g-4 mt-4">
+    <!-- Recent Activity -->
+    <div class="col-lg-6">
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <h3 class="admin-panel-title">
+                    <i class="fas fa-history"></i>
+                    Hoạt động gần đây
+                </h3>
+                <a href="#" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+            </div>
+            <div class="activity-feed">
+                {% if recent_activities %}
+                    {% for activity in recent_activities %}
+                    <div class="activity-item">
+                        <div class="activity-icon {{ activity.color }}">
+                            <i class="{{ activity.icon }}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">{{ activity.title }}</div>
+                            <div class="activity-desc">{{ activity.description }}</div>
+                            <div class="activity-time">
+                                {% if activity.timestamp %}
+                                    <span class="time-ago" data-timestamp="{{ activity.timestamp.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                                        {{ activity.timestamp.strftime('%d/%m/%Y %H:%M') }}
+                                    </span>
+                                {% else %}
+                                    Không xác định
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
             {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clock fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Chưa có hoạt động gần đây</p>
+                    </div>
         {% endif %}
-    {% endwith %}
+            </div>
+        </div>
+    </div>
     
-    <p>Xin chào, {{ session.full_name }}</p>
+    <!-- Recent Feedback -->
+    <div class="col-lg-6">
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <h3 class="admin-panel-title">
+                    <i class="fas fa-comments"></i>
+                    Phản hồi gần đây
+                </h3>
+                <a href="{{ url_for('admin.feedback_list') }}" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+            </div>
+            <div class="feedback-list">
+                {% if recent_feedback %}
+                    {% for fb in recent_feedback %}
+                    <div class="feedback-item">
+                        <div class="feedback-header">
+                            <div class="feedback-user">
+                                <div class="user-avatar-admin">
+                                    {{ fb.user.full_name[0].upper() if fb.user.full_name else fb.user.username[0].upper() }}
+                                </div>
+                                <div class="user-details">
+                                    <div class="user-name">{{ fb.user.full_name or fb.user.username }}</div>
+                                    <div class="user-email">{{ fb.user.email }}</div>
+                                </div>
+                            </div>
+                            <div class="priority-badge priority-{{ fb.priority or 'normal' }}">
+                                {% if fb.priority == 'low' %}
+                                    Thấp
+                                {% elif fb.priority == 'normal' %}
+                                    Trung bình
+                                {% elif fb.priority == 'high' %}
+                                    Cao
+                                {% elif fb.priority == 'urgent' %}
+                                    Khẩn cấp
+                                {% else %}
+                                    {{ (fb.priority or 'normal').title() }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="feedback-content">
+                            <p class="mb-2">{{ fb.subject or 'Không có tiêu đề' }}</p>
+                            {% if fb.content %}
+                            <p class="mb-2 text-muted">{{ fb.content[:100] }}{% if fb.content|length > 100 %}...{% endif %}</p>
+                            {% endif %}
+                            <div class="feedback-meta">
+                                <span class="text-muted">
+                                    <i class="fas fa-clock"></i>
+                                    {% if fb.created_at %}
+                                        {{ fb.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                    {% else %}
+                                        Không xác định
+                                    {% endif %}
+                                </span>
+                                <span class="text-muted">
+                                    <i class="fas fa-tag"></i>
+                                    {% if fb.feedback_type == 'bug_report' %}
+                                        Báo lỗi
+                                    {% elif fb.feedback_type == 'feature_request' %}
+                                        Đề xuất
+                                    {% elif fb.feedback_type == 'complaint' %}
+                                        Khiếu nại
+                                    {% elif fb.feedback_type == 'praise' %}
+                                        Khen ngợi
+                                    {% elif fb.feedback_type == 'suggestion' %}
+                                        Gợi ý
+                                    {% else %}
+                                        {{ fb.feedback_type or 'Khác' }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-comments fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Chưa có phản hồi gần đây</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mt-4">
+    <div class="col-12">
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <h3 class="admin-panel-title">
+                    <i class="fas fa-chart-line"></i>
+                    Thống kê hệ thống
+                </h3>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary active" onclick="changeChartPeriod('week')">Tuần</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="changeChartPeriod('month')">Tháng</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="changeChartPeriod('year')">Năm</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-8">
+                    <canvas id="userGrowthChart" height="100"></canvas>
+                </div>
+                <div class="col-lg-4">
+                    <canvas id="roleDistributionChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Dashboard refresh function
+    function refreshDashboard() {
+        location.reload();
+    }
     
-    <h2>QUẢN LÝ</h2>
-    <ul>
-        <li><a href="{{ url_for('admin.users') }}">Quản lý tài khoản</a></li>
-        <li><a href="{{ url_for('admin.feedback_list') }}">Quản lý phản hồi</a></li>
-        <li><a href="{{ url_for('auth.profile') }}">Thông tin cá nhân</a></li>
-        <li><a href="{{ url_for('auth.logout') }}">Đăng xuất</a></li>
-    </ul>
+    // Chart period change
+    function changeChartPeriod(period) {
+        // Remove active class from all buttons
+        document.querySelectorAll('.btn-group .btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Add active class to clicked button
+        event.target.classList.add('active');
+        
+        // Update charts based on period
+        console.log('Changing chart period to:', period);
+        // Implement chart data update logic here
+    }
     
-    <h2>HỖ TRỢ & PHẢN HỒI</h2>
-    <ul>
-        <li><a href="{{ url_for('shared.submit_feedback') }}">Gửi phản hồi</a></li>
-        <li><a href="{{ url_for('shared.my_feedback') }}">Phản hồi của tôi</a></li>
-    </ul>
-</body>
-</html>
+    // Function to calculate time ago
+    function timeAgo(date) {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) {
+            return 'Vừa xong';
+        } else if (diffInSeconds < 3600) {
+            const minutes = Math.floor(diffInSeconds / 60);
+            return `${minutes} phút trước`;
+        } else if (diffInSeconds < 86400) {
+            const hours = Math.floor(diffInSeconds / 3600);
+            return `${hours} giờ trước`;
+        } else {
+            const days = Math.floor(diffInSeconds / 86400);
+            return `${days} ngày trước`;
+        }
+    }
+    
+    // Update time ago displays
+    function updateTimeAgo() {
+        document.querySelectorAll('.time-ago').forEach(function(element) {
+            const timestamp = element.getAttribute('data-timestamp');
+            if (timestamp) {
+                const date = new Date(timestamp);
+                element.textContent = timeAgo(date);
+            }
+        });
+    }
+    
+    // Initialize charts when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update time ago on page load
+        updateTimeAgo();
+        
+        // Update time ago every minute
+        setInterval(updateTimeAgo, 60000);
+        // User Growth Chart
+        const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+        new Chart(userGrowthCtx, {
+            type: 'line',
+            data: {
+                labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+                datasets: [{
+                    label: 'Người dùng mới',
+                    data: [12, 19, 3, 5, 2, 3, 8],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Hoạt động',
+                    data: [8, 15, 7, 12, 6, 9, 11],
+                    borderColor: '#11998e',
+                    backgroundColor: 'rgba(17, 153, 142, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Role Distribution Chart
+        const roleDistCtx = document.getElementById('roleDistributionChart').getContext('2d');
+        new Chart(roleDistCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Học viên', 'Giảng viên', 'Quản lý', 'Admin'],
+                datasets: [{
+                    data: [{{ total_students or 0 }}, {{ total_instructors or 0 }}, {{ total_managers or 0 }}, {{ total_admins or 0 }}],
+                    backgroundColor: [
+                        '#667eea',
+                        '#f5576c',
+                        '#eb3349',
+                        '#11998e'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

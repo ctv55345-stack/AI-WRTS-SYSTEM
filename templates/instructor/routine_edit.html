@@ -79,8 +79,22 @@
                     </div>
                     {% endif %}
                     
-                    <label class="form-label">Video URL mới</label>
-                    {{ form.reference_video_url(class="form-control", placeholder="Để trống nếu không thay đổi") }}
+                    <div class="mb-3">
+                        <label class="form-label">Thay thế video bằng URL</label>
+                        {{ form.reference_video_url(class="form-control", placeholder="Nhập URL video (YouTube, Vimeo...) hoặc để trống nếu không thay đổi") }}
+                        <small class="form-text text-muted">Hỗ trợ YouTube, Vimeo và các URL video khác</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">HOẶC upload video từ máy</label>
+                        {{ form.reference_video_file(class="form-control") }}
+                        <small class="form-text text-muted">Chấp nhận: MP4, AVI, MOV, MKV (tối đa 100MB)</small>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Lưu ý:</strong> Nếu bạn upload file video mới, nó sẽ thay thế video hiện tại. Nếu chỉ nhập URL mới, nó sẽ thay thế URL hiện tại.
+                    </div>
                 </div>
             </div>
         </div>

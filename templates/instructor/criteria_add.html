@@ -47,29 +47,32 @@
                     </div>
                     
                     <div class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
+                            <label class="form-label required">Mã tiêu chí</label>
+                            {{ form.criteria_code(class="form-control", placeholder="VD: POSTURE") }}
+                            {% if form.criteria_code.errors %}
+                            <div class="invalid-feedback d-block">{{ form.criteria_code.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Phương pháp đánh giá</label>
+                            {{ form.evaluation_method(class="form-control", placeholder="VD: Thủ công / AI / Kết hợp") }}
+                            {% if form.evaluation_method.errors %}
+                            <div class="invalid-feedback d-block">{{ form.evaluation_method.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
                             <label class="form-label required">Trọng số (%)</label>
                             <div class="input-group">
-                                {{ form.weight(class="form-control", type="number", min="0", max="100", step="0.1", value="10") }}
+                                {{ form.weight_percentage(class="form-control", type="number", min="0.01", max="100", step="0.01", value="10") }}
                                 <span class="input-group-text">%</span>
                             </div>
-                            {% if form.weight.errors %}
-                            <div class="invalid-feedback d-block">{{ form.weight.errors[0] }}</div>
+                            {% if form.weight_percentage.errors %}
+                            <div class="invalid-feedback d-block">{{ form.weight_percentage.errors[0] }}</div>
                             {% endif %}
                             <small class="form-text text-muted">Tổng trọng số = 100%</small>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label required">Điểm tối đa</label>
-                            {{ form.max_score(class="form-control", type="number", min="1", max="100", value="100") }}
-                            {% if form.max_score.errors %}
-                            <div class="invalid-feedback d-block">{{ form.max_score.errors[0] }}</div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label required">Điểm đạt tối thiểu</label>
-                            {{ form.pass_score(class="form-control", type="number", min="0", max="100", value="70") }}
                         </div>
                     </div>
                 </div>
@@ -140,8 +143,8 @@
 <script>
 // Calculate total weight
 function updateTotalWeight() {
-    const currentWeight = parseFloat(document.querySelector('[name="weight"]').value) || 0;
-    const existingWeight = {{ existing_weight|default(0) }};
+    const currentWeight = parseFloat(document.querySelector('[name="weight_percentage"]').value) || 0;
+    const existingWeight = {{ (existing_weight|default(0))|tojson }};
     const total = existingWeight + currentWeight;
     
     document.getElementById('totalWeight').textContent = total.toFixed(1);
@@ -157,7 +160,10 @@ function updateTotalWeight() {
     }
 }
 
-document.querySelector('[name="weight"]')?.addEventListener('input', updateTotalWeight);
+const weightInput = document.querySelector('[name="weight_percentage"]');
+if (weightInput) {
+    weightInput.addEventListener('input', updateTotalWeight);
+}
 document.addEventListener('DOMContentLoaded', updateTotalWeight);
 </script>
 {% endblock %}

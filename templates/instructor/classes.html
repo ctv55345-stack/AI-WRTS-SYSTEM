@@ -81,7 +81,17 @@
                             <span class="text-muted">
                                 <i class="fas fa-signal me-1"></i>Cấp độ
                             </span>
-                            <span class="badge bg-info">{{ class.level }}</span>
+                            <span>
+                                {% if class.level == 'beginner' %}
+                                    <span class="badge bg-success">Sơ cấp</span>
+                                {% elif class.level == 'intermediate' %}
+                                    <span class="badge bg-info">Trung cấp</span>
+                                {% elif class.level == 'advanced' %}
+                                    <span class="badge bg-danger">Nâng cao</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ class.level }}</span>
+                                {% endif %}
+                            </span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">
@@ -91,13 +101,17 @@
                         </div>
                         <div class="progress" style="height: 8px;">
                             {% set percent = (class.actual_students_count / class.max_students * 100) if class.max_students > 0 else 0 %}
-                            <div class="progress-bar" style="width: {{ percent }}%"></div>
+                            <div class="progress-bar" style="width: {{ percent|round(0, 'floor') }}%"></div>
                         </div>
                     </div>
                     
-                    {% if class.description %}
-                    <p class="text-muted small mb-3">{{ class.description[:80] }}...</p>
-                    {% endif %}
+                    <p class="text-muted small mb-3">
+                        {% if class.description %}
+                            {{ class.description[:80] }}...
+                        {% else %}
+                            Không có mô tả
+                        {% endif %}
+                    </p>
                     
                     <div class="d-flex gap-2">
                         <a href="{{ url_for('instructor.class_detail', class_id=class.class_id) }}" 

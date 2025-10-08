@@ -11,7 +11,7 @@ from app.services.analytics_service import AnalyticsService
 from app.services.report_service import ReportService
 from app.utils.decorators import login_required, role_required
 from app.forms.class_forms import ClassCreateForm, ClassEditForm, EnrollStudentForm
-from app.forms.routine_forms import RoutineCreateForm, CriteriaForm
+from app.forms.routine_forms import RoutineCreateForm, RoutineEditForm, CriteriaForm
 from app.forms.assignment_forms import AssignmentCreateForm
 from app.forms.exam_forms import ExamCreateForm
 from app.forms.class_forms import ClassCreateForm, ClassEditForm, EnrollStudentForm
@@ -417,7 +417,7 @@ def edit_routine(routine_id: int):
     if not routine or routine.instructor_id != session['user_id']:
         flash('Không tìm thấy bài võ', 'error')
         return redirect(url_for('instructor.routines'))
-    form = RoutineCreateForm(obj=routine)
+    form = RoutineEditForm(obj=routine)
     weapons = RoutineService.get_all_weapons()
     form.weapon_id.choices = [(w.weapon_id, w.weapon_name_vi) for w in weapons]
     
@@ -558,7 +558,7 @@ def create_assignment():
     routines = RoutineService.get_routines_by_instructor(session['user_id'], {'is_published': True})
     form.routine_id.choices = [(0, '-- Chọn bài võ --')] + [(r.routine_id, r.routine_name) for r in routines]
     from app.models.class_enrollment import ClassEnrollment
-    instructor_classes = ClassService.get_classes_by_instructor(session['user_id'])
+    instructor_classes = ClassService.get_approved_classes_by_instructor(session['user_id'])
     student_ids = set()
     for cls in instructor_classes:
         enrollments = ClassEnrollment.query.filter_by(class_id=cls.class_id, enrollment_status='active').all()
@@ -691,8 +691,19 @@ def delete_exam(exam_id: int):
 @role_required('INSTRUCTOR')
 def pending_evaluations():
     """Danh sách video chờ chấm điểm"""
-    videos = EvaluationService.get_pending_submissions(session['user_id'])
-    return render_template('instructor/pending_evaluations.html', videos=videos)
+    from flask import request
+    
+    # Get filter parameter
+    show_all = request.args.get('show_all', 'false').lower() == 'true'
+    
+    if show_all:
+        # Show all videos (both pending and completed)
+        videos = EvaluationService.get_all_submissions(session['user_id'])
+    else:
+        # Show only pending videos
+        videos = EvaluationService.get_pending_submissions(session['user_id'])
+    
+    return render_template('instructor/pending_evaluations.html', videos=videos, show_all=show_all)
 
 @instructor_bp.route('/videos/<int:video_id>/evaluate', methods=['GET', 'POST'])
 @login_required

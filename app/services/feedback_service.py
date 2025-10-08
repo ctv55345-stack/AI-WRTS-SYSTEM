@@ -1,6 +1,7 @@
 from app.models import db
 from app.models.feedback import Feedback
-from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import func
 
 class FeedbackService:
     
@@ -64,3 +65,42 @@ class FeedbackService:
         return Feedback.query.filter_by(user_id=user_id).order_by(
             Feedback.created_at.desc()
         ).all()
+    
+    @staticmethod
+    def get_total_feedback_count():
+        """Get total number of feedback"""
+        return Feedback.query.count()
+    
+    @staticmethod
+    def get_feedback_count_by_status(status):
+        """Get count of feedback by status"""
+        # Map common status names to enum values
+        status_map = {
+            'pending': 'pending',
+            'in_progress': 'in_review', 
+            'resolved': 'resolved',
+            'closed': 'implemented'
+        }
+        actual_status = status_map.get(status, status)
+        return Feedback.query.filter_by(feedback_status=actual_status).count()
+    
+    @staticmethod
+    def get_recent_feedback(days=None, limit=10):
+        """Get recent feedback"""
+        query = Feedback.query
+        
+        if days:
+            cutoff_date = datetime.now() - timedelta(days=days)
+            query = query.filter(Feedback.created_at >= cutoff_date)
+        
+        return query.order_by(Feedback.created_at.desc()).limit(limit).all()
+    
+    @staticmethod
+    def get_feedback_stats():
+        """Get feedback statistics"""
+        stats = db.session.query(
+            Feedback.feedback_status,
+            func.count(Feedback.feedback_id).label('count')
+        ).group_by(Feedback.feedback_status).all()
+        
+        return {stat.feedback_status: stat.count for stat in stats}

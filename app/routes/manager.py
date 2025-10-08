@@ -19,15 +19,6 @@ def dashboard():
     return render_template('manager/dashboard.html', stats=stats, pending_count=pending_count)
 
 
-@manager_bp.route('/statistics')
-@login_required
-@role_required('MANAGER')
-def statistics():
-    stats = ClassService.get_statistics()
-    all_classes = ClassService.get_all_classes()
-    return render_template('manager/statistics.html', stats=stats, classes=all_classes)
-
-
 @manager_bp.route('/pending-classes')
 @login_required
 @role_required('MANAGER')
